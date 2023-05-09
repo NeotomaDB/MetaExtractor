@@ -1,0 +1,241 @@
+---
+title: |
+  Proposal: \
+  Finding Fossils in the Literature \  
+  ![](assets/finding-fossils-logo-symbol_highres.png){width=1.5in} \
+subtitle: In partnership with the Neotoma Paleoecology Database.
+thanks: A huge thanks to Simon Goring & Socorro Dominguez from the Neotoma Database team for their support on this project thus far.
+date: today
+author:   
+  - Ty Andrews  
+  - Jenit Jain
+  - Kelly Wu
+  - Shaun Hutchinson
+execute: 
+  echo: false
+bibliography: assets/references.bib
+format:
+  pdf:
+    toc: false
+    number-sections: true
+    colorlinks: true
+params: 
+  output_file: "reports"
+fig-cap-location: top
+---
+
+**Executive Summary**
+
+Finding Fossils in the Literature is sponsored by the Neotoma database (Neotoma) which houses paleoecology data (e.g. excavation site locations, taxa, etc.). The challenges Neotoma faces are 1) researchers have to manually enter sample data into Neotoma, 2) researchers are not aware of Neotoma or that their research fits into it, and 3) there are too many articles published for the Neotoma team to monitor new research. This project has 3 primary deliverables to solve the challenges, first is an article relevance prediction model which predicts whether newly published articles are relevant to Neotoma. Second, is an article data extraction pipeline which identifies key entities such as taxa or geographic location. Last is a data review tool for Neotoma data stewards to review the extracted data before it is submitted to Neotoma. A mid-project demo is set as a goal for the week of May 29 to have a functioning MVP for each data product with final versions completed by June 15 and project documentation and handoff completed by June 28.
+
+\newpage
+
+```{r}
+# custom table of contents location inspiration from here: https://stackoverflow.com/questions/61104292/how-can-i-separate-the-title-page-from-the-table-of-contents-in-a-rmarkdown-word
+```
+
+```{=latex}
+\setcounter{tocdepth}{4}
+\tableofcontents
+```
+
+\newpage
+
+# Introduction
+
+The Neotoma database (Neotoma) [@NeotomaDB] is used by researchers studying ecological changes over the past 5 million years. However, the data collection process relies heavily on manual submissions by researchers, leading to challenges in data entry and hindering collaborative efforts to comprehend ecological changes comprehensively. This project aims to automate the extraction of data from relevant journal articles which can be added to Neotoma. This will be done in three parts. First article relevancy to the Neotoma will be predicted. Relevant articles will be parsed using natural language processing (NLP) techniques. Finally a tool will be built to review the extracted data before it is submitted to Neotoma.
+
+# Article Relevance Prediction
+
+The first step is to build a document classification model to assess the relevance of the new articles to Neotoma.
+
+## Data
+
+The data to be used for developing the article relevance prediction model comes from the public CrossRef application programming interface (API) which provides data for published journal articles. Articles already in Neotoma are used as the positive examples and non-relevant keyword queries against the CrossRef API will be used for extracting negative examples. Currently, there are 758 articles from Neotoma and the team plan to collect more from both Neotoma and Crossref API to build a representative balanced sample. The data will be preprocessed as follows:
+
++------------------------+----------------------------------------+----------------------------------------------------------------+
+| **Variable**           | **Description**                        | **Preprocessing**                                              |
++========================+========================================+================================================================+
+| abstract               | Abstract of the article                | Text count vectorized                                          |
++------------------------+----------------------------------------+----------------------------------------------------------------+
+| author                 | Author of the article                  | One hot encoding, concatenate author's first initial/last name |
++------------------------+----------------------------------------+----------------------------------------------------------------+
+| container-title        | Title of the article's container       | One hot encoding                                               |
++------------------------+----------------------------------------+----------------------------------------------------------------+
+| is-referenced-by-count | Number of references by other articles | Standard scaling                                               |
++------------------------+----------------------------------------+----------------------------------------------------------------+
+| language               | Article language                       | One hot encoding                                               |
++------------------------+----------------------------------------+----------------------------------------------------------------+
+| published              | Date article was published             | Year month as numeric features                                 |
++------------------------+----------------------------------------+----------------------------------------------------------------+
+| publisher              | Publisher name                         | One-hot encoding                                               |
++------------------------+----------------------------------------+----------------------------------------------------------------+
+| subject                | Subject of the article                 | Text count vectorized                                          |
++------------------------+----------------------------------------+----------------------------------------------------------------+
+| subtitle               | Subtitle of the article                | Text count vectorized                                          |
++------------------------+----------------------------------------+----------------------------------------------------------------+
+| title                  | Title of the article                   | Text count vectorized                                          |
++------------------------+----------------------------------------+----------------------------------------------------------------+
+
+: Proposed preprocessing for article data from the CrossRef API
+
+## Proposed Approaches & Success Criteria
+
+First model baselines will be developed then more advanced techniques will be evaluated.
+
+### Success Criteria
+
+Approaches will be evaluated primarily on F1-Score with recall being monitored to reduce false negatives.
+
++-------------+------------------+
+| **Metric**  | **Target**       |
++:===========:+:================:+
+| F1-Score    | \> 83%           |
+|             |                  |
+|             | [@alex2022raft]  |
++-------------+------------------+
+
+: Proposed evaluation metric and target value for article relevancy prediction.
+
+### Baseline
+
+The baseline approach for this model will be to use logistic regression with a bag of words representation of the article features extracted from the CrossRef API.
+
+### Approach 1: Traditional Machine Learning Models
+
+Exisiting research [@inproceedings] [@unsupervised] has shown the following models to perform well on this type of text based classification problem:
+
+-   Naive Bayes
+
+-   SVM
+
+-   Random Forest/Gradient Boosting
+
+The above models are proposed as they can represent non-linear relationships from the text and can manage highly sparse data.
+
+### Approach 2: Transfer Learning with BERT Models
+
+Additionally, we will leverage pre-trained BERT based large language models for text embeddings for feature engineering. We will explore transfer learning to fine-tune the BERT pre-trained model so that it better learns the contextual information represented in paleoecology-related articles.
+
+# Fossil Data Extraction Pipeline
+
+The fossil data extraction pipeline receives the list of articles which are predicted to be relevant and processes each article's full text to pull out data that fits within the Neotoma DB tables.
+
+## Data
+
+The data for the fossil data extraction comes from GeoDeepDive and contains all the text from each article and is received as a list of sentences from GeoDeepDive. To generate labelled entities, we propose using a privately hosted version of LabelStudio[@LabelStudio] on the HuggingFace hub [@huggingface] with labeling done by team members.
+
+The entities to be extracted and their general formats are:
+
+| **Entity Name**            | **Description**                     |
+|----------------------------|-------------------------------------|
+| Geographic Location - GEOG | Longitude/longitude coordinates     |
+| Site Name - SITE           | Name of the excavation site         |
+| Taxa - TAXA                | Taxa of samples collected           |
+| Age - AGE                  | Dated age of the samples            |
+| Altitude - ALTI            | Altitude where sample was collected |
+| Email Address(es) - EMAIL  | Email addresses of the researchers  |
+
+: Proposed entities to be labelled in the articles.
+
+## Proposed Approaches & Success Criteria
+
+It is proposed that named entity recognition (NER) approaches are used to extract the data from the articles.
+
+### Success Criteria
+
+Approaches will be evaluated primarily on F1-Score with recall being monitored to reduce false negatives.
+
++----------------+----------------------------+
+| Metric         | Target                     |
++:==============:+:==========================:+
+| Micro F1-Score | \> 85%                     |
+|                |                            |
+|                | [@conneau2020unsupervised] |
++----------------+----------------------------+
+
+: Proposed evaluation metrics and target value for fossil data extraction.
+
+### Baselines
+
+For each entity to be extracted the following approaches are proposed.
+
++----------------------------+--------------------------------------------------------------------+
+| **Entity Name**            | **Baseline Approach**                                              |
++============================+====================================================================+
+| Geographic Location - GEOG | Regular Expressions [@Goring]                                      |
++----------------------------+--------------------------------------------------------------------+
+| Site Name - SITE           | spaCy Pre-Trained NER model identifying location entities [@spacy] |
++----------------------------+--------------------------------------------------------------------+
+| Taxa - TAXA                | In-text search for existing taxa already in Neotoma                |
++----------------------------+--------------------------------------------------------------------+
+| Age - AGE                  | Regular Expressions [@Goring]                                      |
++----------------------------+--------------------------------------------------------------------+
+| Altitude - ALTI            | Regular Expressions ("above sea level", "a.s.l.")                  |
++----------------------------+--------------------------------------------------------------------+
+| Email Address(es) - EMAIL  | Regular Expressions                                                |
++----------------------------+--------------------------------------------------------------------+
+
+### Approach 1: Fine Tuned spaCy NER Model
+
+The spaCy python package [@spacy] contains the en_core_web_lg NER model which uses convolutional neural networks which will be fine tuned using the custom entity labels for this dataset. It has been pre-trained on texts from the English language and achieves NER accuracy of 85.5% on the OntoNotes 5.0 corpus[@ontonotes].
+
+### Approach 2: Fine Tuned Transformer NER Model
+
+Two transformer based approaches are proposed to be evaluated. The first is the Text-To-Text Transfer Transformer (T5) model which is unique in that it is a prompt based model that accepts text then generates text at the output. The second model is the XLM-RoBERTa (XLM-R) model which is a cross-language BERT based model which has the advantage that it is able to handle multi-language inputs which is desirable as some example papers are published in French and other languages.
+
+# Data Review Tool
+
+The final step in the process is data stewards from Neotoma reviewing the extracted data. It is proposed to build a data review tool using Plotly Dash. It is expected that use of the dashboard should not require any technical software development experience and ongoing maintenance will be managed by Simon Goring and his team.
+
+## Success Criteria
+
+The following requirements are proposed:
+
++-------------------------------------------------------+-------------------------------------------------+
+| **Requirement**                                       | **Target**                                      |
++=======================================================+=================================================+
+| Options for reviewing extracted data                  | Accept, Reject, Edit then Accept                |
++-------------------------------------------------------+-------------------------------------------------+
+| Other data made available to the user                 | Article DOI, Hyperlink to Article               |
++-------------------------------------------------------+-------------------------------------------------+
+| Extracted data context provided                       | Current sentence and 1-2 sentences before/after |
++-------------------------------------------------------+-------------------------------------------------+
+| User skill to use                                     | Non-Technical (e.g. no code/CLI)                |
++-------------------------------------------------------+-------------------------------------------------+
+| Number of mouse clicks to review single piece of data | 1-2                                             |
++-------------------------------------------------------+-------------------------------------------------+
+| Reviewing workflow                                    | Able to save/resume progress                    |
++-------------------------------------------------------+-------------------------------------------------+
+| Output file format                                    | JSON                                            |
++-------------------------------------------------------+-------------------------------------------------+
+
+: Proposed requirements for the data review tool.
+
+A draft wireframe for how the tool may look is below.
+
+![Data review tool wireframe.](assets/data-review-tool-wireframe.png)
+
+# Timeline
+
+Deadlines and proposed intermediate milestones are outlined below. Tasks will be completed in parallel by the team where appropriate.
+
+-   *Milestone 1 - May 12th*: Initial data cleaning and baselines complete.
+
+-   *Milestone 2 - May 19th*: First iterations of each model complete.
+
+-   *Milestone 3 - May 26th*: Second model iterations complete and MVP data review tool built.
+
+-   *Mid-project demo*: (Tentative) Show end to end demo and get feedback.
+
+-   *Milestone 4 - June 9th*: Solution deployment & final presentation.
+
+![Proposed project timeline.](assets/timeline.png)
+
+# Acknowledgements
+
+Data were obtained from the Neotoma Paleoecology Database (http://www.neotomadb.org) and its constituent database(s). The work of data contributors, data stewards, and the Neotoma community is gratefully acknowledged.
+
+\newpage
+
+# References

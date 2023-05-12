@@ -144,7 +144,9 @@ def extract_altitude(text: str) -> list:
         'start', 'end', and a list containing the label 'ALTI'.
     """
 
-    is_altitude = re.compile(r"(\d+(?:[.]\d+)*) ?m ?(?:above sea level|a.s.l.|asl)")
+    is_altitude = re.compile(
+        r"(\d+(?:[.]\d+)*) ?m ?(?:above sea level|a.s.l.|asl|elevation)"
+    )
 
     # accumalate the labels
     labels = []

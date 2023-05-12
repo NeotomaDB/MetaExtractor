@@ -6,6 +6,7 @@ pages = {},
 title = {A Model Workflow for GeoDeepDive: Locating Pliocene and Pleistocene Ice-Rafted Debris},
 doi = {10.31223/X54312}
 }
+
 @article{NeotomaDB,
 author={Williams, J.W. and Grimm, E.G. and Blois, J. and Charles, D.F. and Davis, E. and Goring, S.J. and Graham, R. and Smith, A.J. and Anderson, M. and Arroyo-Cabrales, J. and Ashworth, A.C. and Betancourt, J.L. and Bills, B.W. and Booth, R.K. and Buckland, P. and Curry, B. and Giesecke, T. and Hausmann, S. and Jackson, S.T. and Latorre, C. and Nichols, J. and Purdum, T. and Roth, R.E. and Stryker, M. and Takahara, H.},
 year={2018},
@@ -14,6 +15,7 @@ journal={Quaternary Research},
 volume={89},
 pages={156-177}
 }
+
 @misc{geodeepdive,
   title = {xDD API},
   author = {{Peters, S.E., I.A. Ross, T. Rekatsinas, M. Livny}},
@@ -23,6 +25,7 @@ pages={156-177}
   license = {Apache License, Version 2.0},
   url = {geodeepdive.org}
 }
+
 @misc{crossref,
   title = {Crossref REST API},
   author = {{Crossref}},
@@ -30,6 +33,7 @@ pages={156-177}
   url = {https://www.crossref.org/services/metadata-delivery/rest-api/},
   note = {[Accessed May 9, 2023]},
 }
+
 @misc{alex2022raft,
       title={RAFT: A Real-World Few-Shot Text Classification Benchmark},
       author={Neel Alex and Eli Lifland and Lewis Tunstall and Abhishek Thakur and Pegah Maham and C. Jess Riedel and Emmie Hine and Carolyn Ashurst and Paul Sedille and Alexis Carlier and Michael Noetel and Andreas Stuhlmüller},
@@ -38,18 +42,23 @@ pages={156-177}
       archivePrefix={arXiv},
       primaryClass={cs.CL}
 }
-@online{spacy,
-  title={spaCy NER},
-  url={https://spacy.io/api/entityrecognizer},
-  urldate = {2023-05-09},
-  publisher={Explosion}
-} 
-@online{huggingface,
-  title={HuggingFace},
-  url={https://huggingface.co/},
-  urldate = {2023-05-09},
-  publisher={HuggingFace}
-} 
+
+@software{spacy,
+  publisher={Explosion},
+  title = {spaCy NER},
+  url = {https://spacy.io/api/entityrecognizer},
+  version = {3.5},
+  date = {2023-05-09}
+
+}
+
+@software{huggingface,
+  title = {HuggingFace},
+  url = {https://huggingface.co/},
+  date = {2023-05-09},
+  version = {4.29.1}
+}
+
 @misc{conneau2020unsupervised,
       title={Unsupervised Cross-lingual Representation Learning at Scale}, 
       author={Alexis Conneau and Kartikay Khandelwal and Naman Goyal and Vishrav Chaudhary and Guillaume Wenzek and Francisco Guzmán and Edouard Grave and Myle Ott and Luke Zettlemoyer and Veselin Stoyanov},
@@ -58,6 +67,7 @@ pages={156-177}
       archivePrefix={arXiv},
       primaryClass={cs.CL}
 }
+
 @misc{ontonotes,
   author={Ralph Weischedel, Martha Palmer, Mitchell Marcus, Eduard Hovy, Sameer Pradhan, Lance Ramshaw, Nianwen Xue, Ann Taylor, Jeff Kaufman, Michelle Franchini, Mohammed El-Bachouti, Robert Belvin, Ann Houston},
   title={OntoNotes Release 5.0},
@@ -65,17 +75,15 @@ pages={156-177}
   year={2013},
   url={https://catalog.ldc.upenn.edu/LDC2013T19}
 }
-@misc{LabelStudio,
-  title={{Label Studio}: Data labeling software},
-  url={https://github.com/heartexlabs/label-studio},
-  note={Open source software available from https://github.com/heartexlabs/label-studio},
-  author={
-    Maxim Tkachenko and
-    Mikhail Malyuk and
-    Andrey Holmanyuk and
-    Nikolai Liubimov},
-  year={2020-2022},
+
+@software{LabelStudio,
+    title = {{Label Studio}: Data labeling software},
+    url = {https://github.com/heartexlabs/label-studio},
+    version = {1.7.3},
+    note={Open source software available from https://github.com/heartexlabs/label-studio},
+    date = {2023-05-09}
 }
+
 @article{inproceedings,
   author = {Tran Thanh, Dien and Loc, Bui and Thai-Nghe, Nguyen},
   year = {2019},
@@ -84,6 +92,7 @@ pages={156-177}
   title = {Article Classification using Natural Language Processing and Machine Learning},
   doi = {10.1109/ACOMP.2019.00019}
 }
+
 @article{unsupervised,
     author = {Weber, Tobias and Kranzlmüller, Dieter and Fromm, Michael and de Sousa, Nelson Tavares},
     title = "{Using supervised learning to classify metadata of research data by field of study}",

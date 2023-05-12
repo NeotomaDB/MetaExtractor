@@ -44,6 +44,9 @@ Finding Fossils in the Literature is sponsored by the Neotoma database (Neotoma)
 
 The Neotoma database (Neotoma) [@NeotomaDB] is used by researchers studying ecological changes over the past 5 million years. However, the data collection process relies heavily on manual submissions by researchers, leading to challenges in data entry and hindering collaborative efforts to comprehend ecological changes comprehensively. This project aims to automate the extraction of data from relevant journal articles which can be added to Neotoma. This will be done in three parts. First article relevancy to the Neotoma will be predicted. Relevant articles will be parsed using natural language processing (NLP) techniques. Finally a tool will be built to review the extracted data before it is submitted to Neotoma.
 
+\newpage
+
+
 # Article Relevance Prediction
 
 The first step is to build a document classification model to assess the relevance of the new articles to Neotoma.
@@ -116,6 +119,9 @@ The above models are proposed as they can represent non-linear relationships fro
 
 Additionally, we will leverage pre-trained BERT based large language models for text embeddings for feature engineering. We will explore transfer learning to fine-tune the BERT pre-trained model so that it better learns the contextual information represented in paleoecology-related articles.
 
+\newpage
+
+
 # Fossil Data Extraction Pipeline
 
 The fossil data extraction pipeline receives the list of articles which are predicted to be relevant and processes each article's full text to pull out data that fits within the Neotoma DB tables.
@@ -157,7 +163,7 @@ Approaches will be evaluated primarily on F1-Score with recall being monitored t
 
 ### Baselines
 
-For each entity to be extracted the following approaches are proposed.
+For each entity to be extracted the following approaches are proposed in Table 5.
 
 +----------------------------+--------------------------------------------------------------------+
 | **Entity Name**            | **Baseline Approach**                                              |
@@ -175,6 +181,9 @@ For each entity to be extracted the following approaches are proposed.
 | Email Address(es) - EMAIL  | Regular Expressions                                                |
 +----------------------------+--------------------------------------------------------------------+
 
+: Proposed baseline approach for each entity.
+
+
 ### Approach 1: Fine Tuned spaCy NER Model
 
 The spaCy python package [@spacy] contains the en_core_web_lg NER model which uses convolutional neural networks which will be fine tuned using the custom entity labels for this dataset. It has been pre-trained on texts from the English language and achieves NER accuracy of 85.5% on the OntoNotes 5.0 corpus[@ontonotes].
@@ -183,13 +192,15 @@ The spaCy python package [@spacy] contains the en_core_web_lg NER model which us
 
 Two transformer based approaches are proposed to be evaluated. The first is the Text-To-Text Transfer Transformer (T5) model which is unique in that it is a prompt based model that accepts text then generates text at the output. The second model is the XLM-RoBERTa (XLM-R) model which is a cross-language BERT based model which has the advantage that it is able to handle multi-language inputs which is desirable as some example papers are published in French and other languages.
 
+\newpage
+
 # Data Review Tool
 
 The final step in the process is data stewards from Neotoma reviewing the extracted data. It is proposed to build a data review tool using Plotly Dash. It is expected that use of the dashboard should not require any technical software development experience and ongoing maintenance will be managed by Simon Goring and his team.
 
 ## Success Criteria
 
-The following requirements are proposed. 
+Requirements are summarized in Table 6. 
 
 +-------------------------------------------------------+-------------------------------------------------+
 | **Requirement**                                       | **Target**                                      |
@@ -215,6 +226,7 @@ A draft wireframe for how the tool may look is below in Figure 1.
 
 ![Data review tool wireframe.](assets/data-review-tool-wireframe.png){width=350 fig.pos='h'}
 
+\newpage
 
 
 # Timeline
@@ -231,7 +243,10 @@ Deadlines and proposed intermediate milestones are outlined below and in Figure 
 
 -   *Milestone 4 - June 9th*: Solution deployment & final presentation.
 
+
+
 ![Proposed project timeline](assets/timeline.png)
+
 \newpage
 
 # Acknowledgements

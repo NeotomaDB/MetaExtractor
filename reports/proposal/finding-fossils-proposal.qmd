@@ -4,7 +4,6 @@ title: |
   Finding Fossils in the Literature \  
   ![](assets/finding-fossils-logo-symbol_highres.png){width=1.5in} \
 subtitle: In partnership with the Neotoma Paleoecology Database.
-thanks: A huge thanks to Simon Goring & Socorro Dominguez from the Neotoma Database team for their support on this project thus far.
 date: today
 author:   
   - Ty Andrews  
@@ -51,22 +50,22 @@ The first step is to build a document classification model to assess the relevan
 
 ## Data
 
-The data to be used for developing the article relevance prediction model comes from the public CrossRef application programming interface (API) which provides data for published journal articles. Articles already in Neotoma are used as the positive examples and non-relevant keyword queries against the CrossRef API will be used for extracting negative examples. Currently, there are 758 articles from Neotoma and the team plan to collect more from both Neotoma and Crossref API to build a representative balanced sample. The data will be preprocessed as follows:
+The data to be used for developing the article relevance prediction model comes from the public CrossRef application programming interface (API) which provides data for published journal articles. Articles already in Neotoma are used as the positive examples and non-relevant keyword queries against the CrossRef API will be used for extracting negative examples. Currently, there are 758 articles from Neotoma and the team plan to collect more from both Neotoma and Crossref API to build a representative balanced sample. The data will be preprocessed as follows in Table 1:
 
 +------------------------+----------------------------------------+----------------------------------------------------------------+
 | **Variable**           | **Description**                        | **Preprocessing**                                              |
 +========================+========================================+================================================================+
 | abstract               | Abstract of the article                | Text count vectorized                                          |
 +------------------------+----------------------------------------+----------------------------------------------------------------+
-| author                 | Author of the article                  | One hot encoding, concatenate author's first initial/last name |
+| author                 | Author of the article                  | One-hot encoding, concatenate author's first initial/last name |
 +------------------------+----------------------------------------+----------------------------------------------------------------+
-| container-title        | Title of the article's container       | One hot encoding                                               |
+| container-title        | Title of the article's container       | One-hot encoding                                               |
 +------------------------+----------------------------------------+----------------------------------------------------------------+
 | is-referenced-by-count | Number of references by other articles | Standard scaling                                               |
 +------------------------+----------------------------------------+----------------------------------------------------------------+
-| language               | Article language                       | One hot encoding                                               |
+| language               | Article language                       | One-hot encoding                                               |
 +------------------------+----------------------------------------+----------------------------------------------------------------+
-| published              | Date article was published             | Year month as numeric features                                 |
+| published              | Date article was published             | Year as numeric features                                 |
 +------------------------+----------------------------------------+----------------------------------------------------------------+
 | publisher              | Publisher name                         | One-hot encoding                                               |
 +------------------------+----------------------------------------+----------------------------------------------------------------+
@@ -81,11 +80,11 @@ The data to be used for developing the article relevance prediction model comes 
 
 ## Proposed Approaches & Success Criteria
 
-First model baselines will be developed then more advanced techniques will be evaluated.
+It is proposed that supervised machine learning approaches are used to predict article relevancy.
 
 ### Success Criteria
 
-Approaches will be evaluated primarily on F1-Score with recall being monitored to reduce false negatives.
+Approaches will be evaluated primarily on F1-Score with recall being monitored to reduce false negatives (Table 2).
 
 +-------------+------------------+
 | **Metric**  | **Target**       |
@@ -103,7 +102,7 @@ The baseline approach for this model will be to use logistic regression with a b
 
 ### Approach 1: Traditional Machine Learning Models
 
-Exisiting research [@inproceedings] [@unsupervised] has shown the following models to perform well on this type of text based classification problem:
+Exisiting research [@inproceedings; also @unsupervised] has shown the following models to perform well on this type of text based classification problem:
 
 -   Naive Bayes
 
@@ -125,7 +124,7 @@ The fossil data extraction pipeline receives the list of articles which are pred
 
 The data for the fossil data extraction comes from GeoDeepDive and contains all the text from each article and is received as a list of sentences from GeoDeepDive. To generate labelled entities, we propose using a privately hosted version of LabelStudio[@LabelStudio] on the HuggingFace hub [@huggingface] with labeling done by team members.
 
-The entities to be extracted and their general formats are:
+The entities to be extracted and their general formats are shown in Table 3:
 
 | **Entity Name**            | **Description**                     |
 |----------------------------|-------------------------------------|
@@ -144,7 +143,7 @@ It is proposed that named entity recognition (NER) approaches are used to extrac
 
 ### Success Criteria
 
-Approaches will be evaluated primarily on F1-Score with recall being monitored to reduce false negatives.
+Approaches will be evaluated primarily on F1-Score with recall being monitored to reduce false negatives (Table 4).
 
 +----------------+----------------------------+
 | Metric         | Target                     |
@@ -190,7 +189,7 @@ The final step in the process is data stewards from Neotoma reviewing the extrac
 
 ## Success Criteria
 
-The following requirements are proposed:
+The following requirements are proposed. 
 
 +-------------------------------------------------------+-------------------------------------------------+
 | **Requirement**                                       | **Target**                                      |
@@ -212,13 +211,15 @@ The following requirements are proposed:
 
 : Proposed requirements for the data review tool.
 
-A draft wireframe for how the tool may look is below.
+A draft wireframe for how the tool may look is below in Figure 1.
 
-![Data review tool wireframe.](assets/data-review-tool-wireframe.png)
+![Data review tool wireframe.](assets/data-review-tool-wireframe.png){width=350 fig.pos='h'}
+
+
 
 # Timeline
 
-Deadlines and proposed intermediate milestones are outlined below. Tasks will be completed in parallel by the team where appropriate.
+Deadlines and proposed intermediate milestones are outlined below and in Figure 2. Tasks will be completed in parallel by the team where appropriate.
 
 -   *Milestone 1 - May 12th*: Initial data cleaning and baselines complete.
 
@@ -230,11 +231,15 @@ Deadlines and proposed intermediate milestones are outlined below. Tasks will be
 
 -   *Milestone 4 - June 9th*: Solution deployment & final presentation.
 
-![Proposed project timeline.](assets/timeline.png)
+![Proposed project timeline](assets/timeline.png)
+\newpage
 
 # Acknowledgements
 
 Data were obtained from the Neotoma Paleoecology Database (http://www.neotomadb.org) and its constituent database(s). The work of data contributors, data stewards, and the Neotoma community is gratefully acknowledged.
+
+A huge thanks to Simon Goring & Socorro Dominguez from the Neotoma Database team for their support on this project thus far.
+
 
 \newpage
 

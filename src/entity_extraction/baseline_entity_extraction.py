@@ -197,3 +197,36 @@ def extract_email(text: str) -> list:
         )
 
     return labels
+
+
+# define baseline method to extract all the labels
+def baseline_extract_all(text: str) -> list:
+    """Runs all baseline extractors on the text.
+
+    Parameters
+    ----------
+    text : str
+        The text to extract the labels from.
+
+    Returns
+    -------
+    list
+        The list of labels as dictionaries with the keys
+        'start', 'end', and a list containing the label.
+    """
+
+    # accumalate the labels
+    labels = []
+
+    # extract the labels from the text
+    labels.extend(extract_age(text))
+    labels.extend(extract_altitude(text))
+    labels.extend(extract_email(text))
+    labels.extend(extract_taxa(text))
+    labels.extend(extract_site_names(text))
+    labels.extend(extract_geographic_coordinates(text))
+
+    # reoirder the labels by start index
+    labels = sorted(labels, key=lambda label: label["start"])
+
+    return labels

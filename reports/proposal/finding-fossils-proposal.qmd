@@ -175,9 +175,9 @@ For each entity to be extracted the following approaches are proposed.
 | Email Address(es) - EMAIL  | Regular Expressions                                                |
 +----------------------------+--------------------------------------------------------------------+
 
-### Approach 1: Fine Tuned spaCy NER Model
+### Approach 1: Fine Tuned SpaCy NER Model
 
-The spaCy python package [@spacy] contains the en_core_web_lg NER model which uses convolutional neural networks which will be fine tuned using the custom entity labels for this dataset. It has been pre-trained on texts from the English language and achieves NER accuracy of 85.5% on the OntoNotes 5.0 corpus[@ontonotes].
+The spaCy Python package (@spacy) includes the en_core_web_lg NER model. This model utilizes convolutional neural networks to generate text embeddings, which are used to classify each token of text according to the custom entity labels specific to the dataset. It has been pre-trained on texts from the English language and achieves NER accuracy of 85.5% on the OntoNotes 5.0 corpus [@ontonotes].
 
 ### Approach 2: Fine Tuned Transformer NER Model
 

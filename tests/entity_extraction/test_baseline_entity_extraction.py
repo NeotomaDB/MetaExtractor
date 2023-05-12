@@ -80,6 +80,8 @@ def test_extract_age(test_sentences, expected_results):
                 "The site was 120 m above sea level",
                 "The site was 120 m a.s.l.",
                 "First site was 120m asl and the second was 300 m asl",
+                "120m elevation",
+                "120 m elevation",
             ],
             [
                 [
@@ -124,6 +126,8 @@ def test_extract_age(test_sentences, expected_results):
                     {"start": 15, "end": 23, "label": ["ALTI"], "text": "120m asl"},
                     {"start": 43, "end": 52, "label": ["ALTI"], "text": "300 m asl"},
                 ],
+                [{"start": 0, "end": 14, "label": ["ALTI"], "text": "120m elevation"}],
+                [{"start": 0, "end": 15, "label": ["ALTI"], "text": "120 m elevation"}],
             ],
         )
     ],

@@ -3,12 +3,55 @@
 
 import os
 import sys
-
 import re
+import json
+import pandas as pd
+from nltk.corpus import stopwords
+import time
 
 # ensure that the parent directory is on the path for relative imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
+def load_data(file_path = "../../data/taxa.csv"):
+    """
+    Loads the taxa names from a CSV file
+
+    Returns
+    -------
+    dataframe
+        Consists of the full taxa name and other metadata
+    list
+        Unique first words (common fossil names) of taxa names
+    """
+    
+    def clean_name(name):
+        #Removes special character at the start of the word#
+        if name[0] == '?':
+            name = name[1:]
+        return name
+
+    taxa = pd.read_csv(file_path, index_col=0)
+    
+    taxa['counts'] = 0
+    taxa['num_words'] = taxa['taxonname'].str.split(' ').str.len()
+    taxa = taxa.sort_values(by='num_words')
+    
+    taxa['taxonname'] = taxa['taxonname'].apply(clean_name)    
+    taxa['words'] = taxa['taxonname'].str.split("/")
+    taxa['first_word'] = taxa['words'].apply(lambda x: x[0].split(" ")[0])
+    
+    all_taxa_words = []
+    for word in taxa['first_word'].tolist():
+        if len(word) > 2 and len(word) <= 25:
+            all_taxa_words.append(word)
+    
+    stop = stopwords.words()
+    all_taxa_words = list(set(all_taxa_words))
+    all_taxa_words = [word for word in all_taxa_words if word not in stop]
+    all_taxa_words.sort(key=lambda x: len(x), reverse= True)
+    
+    return taxa, all_taxa_words
+    
 
 def extract_geographic_coordinates(text: str) -> list:
     """
@@ -48,12 +91,16 @@ def extract_site_names(text: str) -> list:
     return []
 
 
-def extract_taxa(text: str) -> list:
+def extract_taxa(taxa: pd.DataFrame, all_taxa_words: list, text: str) -> list:
     """
     Extracts the taxa from the text.
 
     Parameters
     ----------
+    taxa: dataframe
+        Consists of the full taxa name and other metadata
+    all_taxa_words: list
+        Unique first words (common fossil names) of taxa names
     text : str
         The text to extract the taxa from.
 
@@ -63,8 +110,46 @@ def extract_taxa(text: str) -> list:
         The list of taxa as dictionaries with the keys
         'start', 'end', and a list containing the label 'TAXA'.
     """
+    
+    def get_label(start_index, end_index, text):
+        """ Returns a single label object """
+        return {
+            "start": start_index,
+            "end": end_index,
+            'label': ['TAXA'],
+            "text": text
+        }
 
-    return []
+    labels = []
+    cur_len = 0        
+    
+    # Split them into sentences to capture multiple instances of the same taxa
+    for sentence in text.split('. '):
+        for taxa_word in all_taxa_words:
+            
+            if taxa_word in sentence:    
+                possible_taxas = taxa[ taxa['first_word'].apply(lambda x: taxa_word == x) ]
+                for pt in possible_taxas.iterrows():
+                    name = pt[1]['taxonname']
+                    if name in sentence:
+                        taxa_index = pt[0]#.index
+                        taxa.loc[taxa_index, "counts"] += 1
+                        index = sentence.index(name)
+                        try:
+                            if sentence[index-1] == " " and sentence[index + len(name)] == " ":
+                                labels.append(get_label(cur_len + index, 
+                                                        cur_len + index + len(name),
+                                                        sentence[index: index + len(name)]))
+                            else:
+                                continue
+                        except:
+                            labels.append(get_label(cur_len + index, 
+                                                    cur_len + index + len(name),
+                                                    sentence[index: index + len(name)]))
+                        break
+        cur_len += len(sentence) + 2
+    
+    return labels
 
 
 def extract_age(text: str) -> list:
@@ -200,11 +285,15 @@ def extract_email(text: str) -> list:
 
 
 # define baseline method to extract all the labels
-def baseline_extract_all(text: str) -> list:
+def baseline_extract_all(taxa: pd.DataFrame, all_taxa_words: list, text: str) -> list:
     """Runs all baseline extractors on the text.
 
     Parameters
     ----------
+    taxa: dataframe
+        Consists of the full taxa name and other metadata
+    all_taxa_words: list
+        Unique first words (common fossil names) of taxa names
     text : str
         The text to extract the labels from.
 
@@ -222,7 +311,7 @@ def baseline_extract_all(text: str) -> list:
     labels.extend(extract_age(text))
     labels.extend(extract_altitude(text))
     labels.extend(extract_email(text))
-    labels.extend(extract_taxa(text))
+    labels.extend(extract_taxa(taxa, all_taxa_words, text))
     labels.extend(extract_site_names(text))
     labels.extend(extract_geographic_coordinates(text))
 
@@ -230,3 +319,21 @@ def baseline_extract_all(text: str) -> list:
     labels = sorted(labels, key=lambda label: label["start"])
 
     return labels
+
+
+if __name__ == '__main__':
+    
+    json_path = "../../data/train_files_json/"
+    files = os.listdir(json_path)
+    
+    taxa, all_taxa_words = load_data()
+    
+    for fin in files:
+        # start = time.time()
+        with open(json_path + fin, 'r') as f:
+            data = json.load(f)
+            text = data['text']
+            labels = baseline_extract_all(taxa, all_taxa_words, text)
+        # end=time.time()
+        # times.append(end-start)
+    

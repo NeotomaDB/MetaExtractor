@@ -8,6 +8,7 @@ import json
 import pandas as pd
 from nltk.corpus import stopwords
 import time
+import string
 
 # ensure that the parent directory is on the path for relative imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -68,8 +69,37 @@ def extract_geographic_coordinates(text: str) -> list:
         The list of geographic coordinates as dictionaries with the keys
         'start', 'end', and a list containing the label 'GEOG'.
     """
+    group_1 = ["N", "E", "S", "W"]
+    group_2 = ['°', 'o', '◦', "'", '`', '"', '″']
+    def check_groups(text):
+        check_1 = False
+        check_2 = False
+        for i in group_1:
+            if i in text:
+                check_1 = True
+                break
+        for i in group_2:
+            if i in text:
+                check_2 = True
+                break
+        return check_1 and check_2
+    
+    pattern = r"""[-+]?[NESW\d]+\s?[NESWd\.:°o◦'`"″]\s?[NESW]?\d{1,7}\s?[NESWd\.:°o◦′'`"″]?\s?\d{1,6}[[NESWd\.:°o◦′'`"″]?\s?[NESW]?"""
+    
+    labels = []
+    
+    matches = re.finditer(pattern, text)
+    if matches:
+        for match in matches:
+            if check_groups(match.group()):
+                labels.append({
+                    "start": match.start(),
+                    "end": match.end(),
+                    "label": ["GEOG"],
+                    "text": text[match.start() : match.end()]
+                })
 
-    return []
+    return labels
 
 
 def extract_site_names(text: str) -> list:
@@ -132,7 +162,7 @@ def extract_taxa(taxa: pd.DataFrame, all_taxa_words: list, text: str) -> list:
                 for pt in possible_taxas.iterrows():
                     name = pt[1]['taxonname']
                     if name in sentence:
-                        taxa_index = pt[0]#.index
+                        taxa_index = pt[0]
                         taxa.loc[taxa_index, "counts"] += 1
                         index = sentence.index(name)
                         try:
@@ -315,7 +345,7 @@ def baseline_extract_all(taxa: pd.DataFrame, all_taxa_words: list, text: str) ->
     labels.extend(extract_site_names(text))
     labels.extend(extract_geographic_coordinates(text))
 
-    # reoirder the labels by start index
+    # reorder the labels by start index
     labels = sorted(labels, key=lambda label: label["start"])
 
     return labels

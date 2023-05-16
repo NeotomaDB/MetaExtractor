@@ -374,17 +374,11 @@ if __name__ == '__main__':
     json_path = "../../data/train_files_json/"
     files = os.listdir(json_path)
     nlp = spacy.load("en_core_web_lg")
-    taxa, all_taxa_words = load_data()
+    
+    taxa, all_taxa_words = load_taxa_data()
     
     for fin in files:
-        # start = time.time()
         with open(json_path + fin, 'r') as f:
             data = json.load(f)
             text = data['text']
             labels = baseline_extract_all(text, taxa, all_taxa_words, nlp)
-            if len(labels) > 0:
-                print(labels)
-            
-        # end=time.time()
-        # times.append(end-start)
-    

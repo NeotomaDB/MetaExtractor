@@ -33,21 +33,26 @@ from src.entity_extraction.baseline_entity_extraction import (
                 "1234 BP and 456 to 789 Ma BP",
             ],
             [
-                [{"start": 0, "end": 7, "label": ["AGE"], "text": "1234 BP"}],
-                [{"start": 0, "end": 10, "label": ["AGE"], "text": "1234 Ma BP"}],
-                [{"start": 0, "end": 15, "label": ["AGE"], "text": "1234 to 1235 BP"}],
-                [{"start": 0, "end": 14, "label": ["AGE"], "text": "1234 - 1235 BP"}],
-                [{"start": 0, "end": 15, "label": ["AGE"], "text": "1234 -- 1235 BP"}],
+                [{"start": 0, "end": 7, "labels": ["AGE"], "text": "1234 BP"}],
+                [{"start": 0, "end": 10, "labels": ["AGE"], "text": "1234 Ma BP"}],
+                [{"start": 0, "end": 15, "labels": ["AGE"], "text": "1234 to 1235 BP"}],
+                [{"start": 0, "end": 14, "labels": ["AGE"], "text": "1234 - 1235 BP"}],
+                [{"start": 0, "end": 15, "labels": ["AGE"], "text": "1234 -- 1235 BP"}],
                 [
-                    {"start": 0, "end": 7, "label": ["AGE"], "text": "1234 BP"},
-                    {"start": 12, "end": 25, "label": ["AGE"], "text": "456 to 789 BP"},
+                    {"start": 0, "end": 7, "labels": ["AGE"], "text": "1234 BP"},
+                    {
+                        "start": 12,
+                        "end": 25,
+                        "labels": ["AGE"],
+                        "text": "456 to 789 BP",
+                    },
                 ],
                 [
-                    {"start": 0, "end": 7, "label": ["AGE"], "text": "1234 BP"},
+                    {"start": 0, "end": 7, "labels": ["AGE"], "text": "1234 BP"},
                     {
                         "start": 12,
                         "end": 28,
-                        "label": ["AGE"],
+                        "labels": ["AGE"],
                         "text": "456 to 789 Ma BP",
                     },
                 ],
@@ -88,46 +93,53 @@ def test_extract_age(test_sentences, expected_results):
                     {
                         "start": 0,
                         "end": 20,
-                        "label": ["ALTI"],
+                        "labels": ["ALTI"],
                         "text": "120m above sea level",
                     }
                 ],
-                [{"start": 0, "end": 11, "label": ["ALTI"], "text": "120m a.s.l."}],
+                [{"start": 0, "end": 11, "labels": ["ALTI"], "text": "120m a.s.l."}],
                 [
                     {
                         "start": 0,
                         "end": 21,
-                        "label": ["ALTI"],
+                        "labels": ["ALTI"],
                         "text": "120 m above sea level",
                     }
                 ],
-                [{"start": 0, "end": 12, "label": ["ALTI"], "text": "120 m a.s.l."}],
-                [{"start": 0, "end": 8, "label": ["ALTI"], "text": "120m asl"}],
-                [{"start": 0, "end": 9, "label": ["ALTI"], "text": "120 m asl"}],
+                [{"start": 0, "end": 12, "labels": ["ALTI"], "text": "120 m a.s.l."}],
+                [{"start": 0, "end": 8, "labels": ["ALTI"], "text": "120m asl"}],
+                [{"start": 0, "end": 9, "labels": ["ALTI"], "text": "120 m asl"}],
                 [
                     {
                         "start": 13,
                         "end": 33,
-                        "label": ["ALTI"],
+                        "labels": ["ALTI"],
                         "text": "120m above sea level",
                     }
                 ],
-                [{"start": 13, "end": 24, "label": ["ALTI"], "text": "120m a.s.l."}],
+                [{"start": 13, "end": 24, "labels": ["ALTI"], "text": "120m a.s.l."}],
                 [
                     {
                         "start": 13,
                         "end": 34,
-                        "label": ["ALTI"],
+                        "labels": ["ALTI"],
                         "text": "120 m above sea level",
                     }
                 ],
-                [{"start": 13, "end": 25, "label": ["ALTI"], "text": "120 m a.s.l."}],
+                [{"start": 13, "end": 25, "labels": ["ALTI"], "text": "120 m a.s.l."}],
                 [
-                    {"start": 15, "end": 23, "label": ["ALTI"], "text": "120m asl"},
-                    {"start": 43, "end": 52, "label": ["ALTI"], "text": "300 m asl"},
+                    {"start": 15, "end": 23, "labels": ["ALTI"], "text": "120m asl"},
+                    {"start": 43, "end": 52, "labels": ["ALTI"], "text": "300 m asl"},
                 ],
-                [{"start": 0, "end": 14, "label": ["ALTI"], "text": "120m elevation"}],
-                [{"start": 0, "end": 15, "label": ["ALTI"], "text": "120 m elevation"}],
+                [{"start": 0, "end": 14, "labels": ["ALTI"], "text": "120m elevation"}],
+                [
+                    {
+                        "start": 0,
+                        "end": 15,
+                        "labels": ["ALTI"],
+                        "text": "120 m elevation",
+                    }
+                ],
             ],
         )
     ],
@@ -157,7 +169,7 @@ def test_extract_altitude(test_sentences, expected_results):
                     {
                         "start": 0,
                         "end": 26,
-                        "label": ["EMAIL"],
+                        "labels": ["EMAIL"],
                         "text": "ty.elgin.andrews@gmail.com",
                     }
                 ],
@@ -165,7 +177,7 @@ def test_extract_altitude(test_sentences, expected_results):
                     {
                         "start": 0,
                         "end": 18,
-                        "label": ["EMAIL"],
+                        "labels": ["EMAIL"],
                         "text": "john.smith@aol.com",
                     }
                 ],
@@ -173,7 +185,7 @@ def test_extract_altitude(test_sentences, expected_results):
                     {
                         "start": 0,
                         "end": 23,
-                        "label": ["EMAIL"],
+                        "labels": ["EMAIL"],
                         "text": "andrews9@student.ubc.ca",
                     }
                 ],
@@ -181,13 +193,13 @@ def test_extract_altitude(test_sentences, expected_results):
                     {
                         "start": 19,
                         "end": 40,
-                        "label": ["EMAIL"],
+                        "labels": ["EMAIL"],
                         "text": "carina.hoorn@milne.cc",
                     },
                     {
                         "start": 54,
                         "end": 79,
-                        "label": ["EMAIL"],
+                        "labels": ["EMAIL"],
                         "text": "mauro.cremaschi@libero.it",
                     },
                 ],

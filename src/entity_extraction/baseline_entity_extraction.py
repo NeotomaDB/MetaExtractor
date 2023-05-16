@@ -96,7 +96,7 @@ def extract_geographic_coordinates(text: str) -> list:
                 labels.append({
                     "start": match.start(),
                     "end": match.end(),
-                    "label": ["GEOG"],
+                    "labels": ["GEOG"],
                     "text": text[match.start() : match.end()]
                 })
 
@@ -147,7 +147,7 @@ def extract_taxa(taxa: pd.DataFrame, all_taxa_words: list, text: str) -> list:
         return {
             "start": start_index,
             "end": end_index,
-            'label': ['TAXA'],
+            "labels": ['TAXA'],
             "text": text
         }
 
@@ -217,7 +217,7 @@ def extract_age(text: str) -> list:
             {
                 "start": match.start(),
                 "end": match.end(),
-                "label": ["AGE"],
+                "labels": ["AGE"],
                 "text": match.group(),
             }
         )
@@ -233,7 +233,7 @@ def extract_age(text: str) -> list:
                 {
                     "start": match.start(),
                     "end": match.end(),
-                    "label": ["AGE"],
+                    "labels": ["AGE"],
                     "text": match.group(),
                 }
             )
@@ -271,7 +271,7 @@ def extract_altitude(text: str) -> list:
             {
                 "start": match.start(),
                 "end": match.end(),
-                "label": ["ALTI"],
+                "labels": ["ALTI"],
                 "text": match.group(),
             }
         )
@@ -307,7 +307,7 @@ def extract_email(text: str) -> list:
             {
                 "start": match.start(),
                 "end": match.end(),
-                "label": ["EMAIL"],
+                "labels": ["EMAIL"],
                 "text": match.group(),
             }
         )

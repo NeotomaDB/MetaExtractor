@@ -127,7 +127,7 @@ def extract_site_names(text: str, nlp: spacy.Language) -> list:
             labels.append({
                 "start": ent.start_char,
                 "end": ent.end_char,
-                "label": ["SITE"],
+                "labels": ["SITE"],
                 "text": ent.text
             })
     
@@ -179,17 +179,20 @@ def extract_taxa(text: str, taxa: pd.DataFrame, all_taxa_words: list) -> list:
                         taxa_index = pt[0]
                         taxa.loc[taxa_index, "counts"] += 1
                         index = sentence.index(name)
-                        try:
-                            if sentence[index-1] == " ":
+                        
+                        # If atleast 1 character is capital (i.e. start of the name of the fossil)
+                        if name != name.lower():
+                            try:
+                                if sentence[index-1] == " ":
+                                    labels.append(get_label(cur_len + index, 
+                                                            cur_len + index + len(name),
+                                                            sentence[index: index + len(name)]))
+                                else:
+                                    continue
+                            except:
                                 labels.append(get_label(cur_len + index, 
                                                         cur_len + index + len(name),
                                                         sentence[index: index + len(name)]))
-                            else:
-                                continue
-                        except:
-                            labels.append(get_label(cur_len + index, 
-                                                    cur_len + index + len(name),
-                                                    sentence[index: index + len(name)]))
                         break
         cur_len += len(sentence) + 2
     

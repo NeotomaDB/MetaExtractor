@@ -50,7 +50,7 @@ def load_taxa_data(file_path = os.path.join(os.pardir, "data", "raw", "taxa.csv"
     stop = stopwords.words()
     all_taxa_words = list(set(all_taxa_words))
     all_taxa_words = [word for word in all_taxa_words if word not in stop]
-    all_taxa_words.sort(key=lambda x: len(x), reverse= True)
+    all_taxa_words.sort(key=lambda x: len(x), reverse = True)
     
     return taxa, all_taxa_words
     
@@ -71,7 +71,7 @@ def extract_geographic_coordinates(text: str) -> list:
         'start', 'end', and a list containing the label 'GEOG'.
     """
     group_1 = ["N", "E", "S", "W"]
-    group_2 = ['°', 'o', '◦', "'", '`', '"', '″']
+    group_2 = ['°', 'o', '◦', "'", '`', '"', '″', ":"]
     def check_groups(text):
         check_1 = False
         check_2 = False
@@ -85,7 +85,7 @@ def extract_geographic_coordinates(text: str) -> list:
                 break
         return check_1 and check_2
     
-    pattern = r"""[-]?[NESW\d]+\s?[NESWd.:°o◦'"″]\s?[NESW]?\d{1,7}\s?[NESWd.:°o◦′'`"″]?\s?\d{1,6}[NESWd.:°o◦′'`"″]?\s?[NESW]?"""
+    pattern = r"""[-]?[NESW\d]+\s?[NESWd.:°o◦'"″]\s?[NESW]?\d{1,7}\s?[NESWd.:°o◦′'`"″]?\s?\d{1,6}[NESWd.:°o◦′'`"″]?\s?\d{0,3}[NESW]?"""
     
     labels = []
     
@@ -125,8 +125,8 @@ def extract_site_names(text: str, nlp: spacy.Language) -> list:
     for ent in doc.ents:
         if ent.label_ == "LOC":
             labels.append({
-                "start": ent.start,
-                "end": ent.end,
+                "start": ent.start_char,
+                "end": ent.end_char,
                 "label": ["SITE"],
                 "text": ent.text
             })
@@ -172,6 +172,7 @@ def extract_taxa(text: str, taxa: pd.DataFrame, all_taxa_words: list) -> list:
             
             if taxa_word in sentence:    
                 possible_taxas = taxa[ taxa['first_word'].apply(lambda x: taxa_word == x) ]
+                possible_taxas = possible_taxas.sort_values(by = "taxonname", key = lambda x: x.str.len(), ascending=False)
                 for pt in possible_taxas.iterrows():
                     name = pt[1]['taxonname']
                     if name in sentence:
@@ -179,7 +180,7 @@ def extract_taxa(text: str, taxa: pd.DataFrame, all_taxa_words: list) -> list:
                         taxa.loc[taxa_index, "counts"] += 1
                         index = sentence.index(name)
                         try:
-                            if sentence[index-1] == " " and sentence[index + len(name)] == " ":
+                            if sentence[index-1] == " ":
                                 labels.append(get_label(cur_len + index, 
                                                         cur_len + index + len(name),
                                                         sentence[index: index + len(name)]))
@@ -382,3 +383,7 @@ if __name__ == '__main__':
             data = json.load(f)
             text = data['text']
             labels = baseline_extract_all(text, taxa, all_taxa_words, nlp)
+            if len(labels) > 0:
+                print(text)
+                print(labels)
+                print("---------------------------------------")

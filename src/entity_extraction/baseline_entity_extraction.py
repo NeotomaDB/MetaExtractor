@@ -14,7 +14,8 @@ from spacy.pipeline.ner import DEFAULT_NER_MODEL
 # ensure that the parent directory is on the path for relative imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-def load_taxa_data(file_path = os.path.join(os.pardir, "data", "raw", "taxa.csv")):
+
+def load_taxa_data(file_path=os.path.join(os.pardir, "data", "raw", "taxa.csv")):
     """
     Loads the taxa names from a CSV file
 
@@ -25,35 +26,35 @@ def load_taxa_data(file_path = os.path.join(os.pardir, "data", "raw", "taxa.csv"
     list
         Unique first words (common fossil names) of taxa names
     """
-    
+
     def clean_name(name):
-        #Removes special character at the start of the word#
-        if name[0] == '?':
+        # Removes special character at the start of the word#
+        if name[0] == "?":
             name = name[1:]
         return name
 
     taxa = pd.read_csv(file_path, index_col=0)
-    
-    taxa['counts'] = 0
-    taxa['num_words'] = taxa['taxonname'].str.split(' ').str.len()
-    taxa = taxa.sort_values(by='num_words')
-    
-    taxa['taxonname'] = taxa['taxonname'].apply(clean_name)    
-    taxa['words'] = taxa['taxonname'].str.split("/")
-    taxa['first_word'] = taxa['words'].apply(lambda x: x[0].split(" ")[0])
-    
+
+    taxa["counts"] = 0
+    taxa["num_words"] = taxa["taxonname"].str.split(" ").str.len()
+    taxa = taxa.sort_values(by="num_words")
+
+    taxa["taxonname"] = taxa["taxonname"].apply(clean_name)
+    taxa["words"] = taxa["taxonname"].str.split("/")
+    taxa["first_word"] = taxa["words"].apply(lambda x: x[0].split(" ")[0])
+
     all_taxa_words = []
-    for word in taxa['first_word'].tolist():
+    for word in taxa["first_word"].tolist():
         if len(word) > 2 and len(word) <= 25:
             all_taxa_words.append(word)
-    
+
     stop = stopwords.words()
     all_taxa_words = list(set(all_taxa_words))
     all_taxa_words = [word for word in all_taxa_words if word not in stop]
-    all_taxa_words.sort(key=lambda x: len(x), reverse = True)
-    
+    all_taxa_words.sort(key=lambda x: len(x), reverse=True)
+
     return taxa, all_taxa_words
-    
+
 
 def extract_geographic_coordinates(text: str) -> list:
     """
@@ -71,7 +72,8 @@ def extract_geographic_coordinates(text: str) -> list:
         'start', 'end', and a list containing the label 'GEOG'.
     """
     group_1 = ["N", "E", "S", "W"]
-    group_2 = ['°', 'o', '◦', "'", '`', '"', '″', ":"]
+    group_2 = ["°", "o", "◦", "'", "`", '"', "″", ":"]
+
     def check_groups(text):
         check_1 = False
         check_2 = False
@@ -84,21 +86,23 @@ def extract_geographic_coordinates(text: str) -> list:
                 check_2 = True
                 break
         return check_1 and check_2
-    
+
     pattern = r"""[-]?[NESW\d]+\s?[NESWd.:°o◦'"″]\s?[NESW]?\d{1,7}\s?[NESWd.:°o◦′'`"″]?\s?\d{1,6}[NESWd.:°o◦′'`"″]?\s?\d{0,3}[NESW]?"""
-    
+
     labels = []
-    
+
     matches = re.finditer(pattern, text)
     if matches:
         for match in matches:
             if check_groups(match.group()):
-                labels.append({
-                    "start": match.start(),
-                    "end": match.end(),
-                    "labels": ["GEOG"],
-                    "text": text[match.start() : match.end()]
-                })
+                labels.append(
+                    {
+                        "start": match.start(),
+                        "end": match.end(),
+                        "labels": ["GEOG"],
+                        "text": text[match.start() : match.end()],
+                    }
+                )
 
     return labels
 
@@ -111,7 +115,7 @@ def extract_site_names(text: str, nlp: spacy.Language) -> list:
     ----------
     text : str
         The text to extract the site names from.
-    nlp: spacy.lang.en.English 
+    nlp: spacy.lang.en.English
         Pretrained language model for named entity recognition
     Returns
     -------
@@ -119,18 +123,20 @@ def extract_site_names(text: str, nlp: spacy.Language) -> list:
         The list of site names as dictionaries with the keys
         'start', 'end', and a list containing the label 'SITE'.
     """
-    
+
     doc = nlp(text)
     labels = []
     for ent in doc.ents:
         if ent.label_ == "LOC":
-            labels.append({
-                "start": ent.start_char,
-                "end": ent.end_char,
-                "labels": ["SITE"],
-                "text": ent.text
-            })
-    
+            labels.append(
+                {
+                    "start": ent.start_char,
+                    "end": ent.end_char,
+                    "labels": ["SITE"],
+                    "text": ent.text,
+                }
+            )
+
     return labels
 
 
@@ -153,49 +159,60 @@ def extract_taxa(text: str, taxa: pd.DataFrame, all_taxa_words: list) -> list:
         The list of taxa as dictionaries with the keys
         'start', 'end', and a list containing the label 'TAXA'.
     """
-    
+
     def get_label(start_index, end_index, text):
-        """ Returns a single label object """
+        """Returns a single label object"""
         return {
             "start": start_index,
             "end": end_index,
-            "labels": ['TAXA'],
-            "text": text
+            "labels": ["TAXA"],
+            "text": text,
         }
 
     labels = []
-    cur_len = 0        
-    
+    cur_len = 0
+
     # Split them into sentences to capture multiple instances of the same taxa
-    for sentence in text.split('. '):
+    for sentence in text.split(". "):
         for taxa_word in all_taxa_words:
-            
-            if taxa_word in sentence:    
-                possible_taxas = taxa[ taxa['first_word'].apply(lambda x: taxa_word == x) ]
-                possible_taxas = possible_taxas.sort_values(by = "taxonname", key = lambda x: x.str.len(), ascending=False)
+            if taxa_word in sentence:
+                possible_taxas = taxa[
+                    taxa["first_word"].apply(lambda x: taxa_word == x)
+                ]
+                possible_taxas = possible_taxas.sort_values(
+                    by="taxonname", key=lambda x: x.str.len(), ascending=False
+                )
                 for pt in possible_taxas.iterrows():
-                    name = pt[1]['taxonname']
+                    name = pt[1]["taxonname"]
                     if name in sentence:
                         taxa_index = pt[0]
                         taxa.loc[taxa_index, "counts"] += 1
                         index = sentence.index(name)
-                        
+
                         # If atleast 1 character is capital (i.e. start of the name of the fossil)
                         if name != name.lower():
                             try:
-                                if sentence[index-1] == " ":
-                                    labels.append(get_label(cur_len + index, 
-                                                            cur_len + index + len(name),
-                                                            sentence[index: index + len(name)]))
+                                if sentence[index - 1] == " ":
+                                    labels.append(
+                                        get_label(
+                                            cur_len + index,
+                                            cur_len + index + len(name),
+                                            sentence[index : index + len(name)],
+                                        )
+                                    )
                                 else:
                                     continue
                             except:
-                                labels.append(get_label(cur_len + index, 
-                                                        cur_len + index + len(name),
-                                                        sentence[index: index + len(name)]))
+                                labels.append(
+                                    get_label(
+                                        cur_len + index,
+                                        cur_len + index + len(name),
+                                        sentence[index : index + len(name)],
+                                    )
+                                )
                         break
         cur_len += len(sentence) + 2
-    
+
     return labels
 
 
@@ -332,10 +349,7 @@ def extract_email(text: str) -> list:
 
 
 # define baseline method to extract all the labels
-def baseline_extract_all(text: str,
-                         taxa: pd.DataFrame, 
-                         all_taxa_words: list, 
-                         nlp: spacy.Language) -> list:
+def baseline_extract_all(text: str, spacy_model: str = "en_core_web_lg") -> list:
     """Runs all baseline extractors on the text.
 
     Parameters
@@ -359,6 +373,8 @@ def baseline_extract_all(text: str,
 
     taxa, all_taxa_words = load_taxa_data()
 
+    nlp = spacy.load(spacy_model)
+
     # extract the labels from the text
     labels.extend(extract_age(text))
     labels.extend(extract_altitude(text))
@@ -373,18 +389,17 @@ def baseline_extract_all(text: str,
     return labels
 
 
-if __name__ == '__main__':
-    
+if __name__ == "__main__":
     json_path = "../../data/train_files_json/"
     files = os.listdir(json_path)
     nlp = spacy.load("en_core_web_lg")
-    
+
     taxa, all_taxa_words = load_taxa_data()
-    
+
     for fin in files:
-        with open(json_path + fin, 'r') as f:
+        with open(json_path + fin, "r") as f:
             data = json.load(f)
-            text = data['text']
+            text = data["text"]
             labels = baseline_extract_all(text, taxa, all_taxa_words, nlp)
             if len(labels) > 0:
                 print(text)

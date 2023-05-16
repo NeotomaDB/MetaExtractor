@@ -316,7 +316,7 @@ def extract_email(text: str) -> list:
 
 
 # define baseline method to extract all the labels
-def baseline_extract_all(taxa: pd.DataFrame, all_taxa_words: list, text: str) -> list:
+def baseline_extract_all(text: str) -> list:
     """Runs all baseline extractors on the text.
 
     Parameters
@@ -337,6 +337,8 @@ def baseline_extract_all(taxa: pd.DataFrame, all_taxa_words: list, text: str) ->
 
     # accumalate the labels
     labels = []
+
+    taxa, all_taxa_words = load_taxa_data()
 
     # extract the labels from the text
     labels.extend(extract_age(text))

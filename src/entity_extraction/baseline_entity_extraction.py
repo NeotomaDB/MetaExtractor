@@ -3,6 +3,7 @@
 
 import os
 import sys
+
 import re
 import json
 import pandas as pd
@@ -13,7 +14,7 @@ import string
 # ensure that the parent directory is on the path for relative imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-def load_data(file_path = "../../data/taxa.csv"):
+def load_taxa_data(file_path = os.path.join(os.pardir, "data", "raw", "taxa.csv")):
     """
     Loads the taxa names from a CSV file
 

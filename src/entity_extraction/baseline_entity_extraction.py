@@ -8,8 +8,8 @@ import re
 import json
 import pandas as pd
 from nltk.corpus import stopwords
-import time
-import string
+import spacy
+from spacy.pipeline.ner import DEFAULT_NER_MODEL
 
 # ensure that the parent directory is on the path for relative imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -85,7 +85,7 @@ def extract_geographic_coordinates(text: str) -> list:
                 break
         return check_1 and check_2
     
-    pattern = r"""[-+]?[NESW\d]+\s?[NESWd\.:°o◦'`"″]\s?[NESW]?\d{1,7}\s?[NESWd\.:°o◦′'`"″]?\s?\d{1,6}[[NESWd\.:°o◦′'`"″]?\s?[NESW]?"""
+    pattern = r"""[-]?[NESW\d]+\s?[NESWd.:°o◦'"″]\s?[NESW]?\d{1,7}\s?[NESWd.:°o◦′'`"″]?\s?\d{1,6}[NESWd.:°o◦′'`"″]?\s?[NESW]?"""
     
     labels = []
     
@@ -103,7 +103,7 @@ def extract_geographic_coordinates(text: str) -> list:
     return labels
 
 
-def extract_site_names(text: str) -> list:
+def extract_site_names(text: str, nlp: spacy.Language) -> list:
     """
     Extracts the site names from the text.
 
@@ -111,18 +111,30 @@ def extract_site_names(text: str) -> list:
     ----------
     text : str
         The text to extract the site names from.
-
+    nlp: spacy.lang.en.English 
+        Pretrained language model for named entity recognition
     Returns
     -------
     list
         The list of site names as dictionaries with the keys
         'start', 'end', and a list containing the label 'SITE'.
     """
+    
+    doc = nlp(text)
+    labels = []
+    for ent in doc.ents:
+        if ent.label_ == "LOC":
+            labels.append({
+                "start": ent.start,
+                "end": ent.end,
+                "label": ["SITE"],
+                "text": ent.text
+            })
+    
+    return labels
 
-    return []
 
-
-def extract_taxa(taxa: pd.DataFrame, all_taxa_words: list, text: str) -> list:
+def extract_taxa(text: str, taxa: pd.DataFrame, all_taxa_words: list) -> list:
     """
     Extracts the taxa from the text.
 
@@ -316,7 +328,10 @@ def extract_email(text: str) -> list:
 
 
 # define baseline method to extract all the labels
-def baseline_extract_all(text: str) -> list:
+def baseline_extract_all(text: str,
+                         taxa: pd.DataFrame, 
+                         all_taxa_words: list, 
+                         nlp: spacy.Language) -> list:
     """Runs all baseline extractors on the text.
 
     Parameters
@@ -344,8 +359,8 @@ def baseline_extract_all(text: str) -> list:
     labels.extend(extract_age(text))
     labels.extend(extract_altitude(text))
     labels.extend(extract_email(text))
-    labels.extend(extract_taxa(taxa, all_taxa_words, text))
-    labels.extend(extract_site_names(text))
+    labels.extend(extract_taxa(text, taxa, all_taxa_words))
+    labels.extend(extract_site_names(text, nlp))
     labels.extend(extract_geographic_coordinates(text))
 
     # reorder the labels by start index
@@ -358,7 +373,7 @@ if __name__ == '__main__':
     
     json_path = "../../data/train_files_json/"
     files = os.listdir(json_path)
-    
+    nlp = spacy.load("en_core_web_lg")
     taxa, all_taxa_words = load_data()
     
     for fin in files:
@@ -366,7 +381,10 @@ if __name__ == '__main__':
         with open(json_path + fin, 'r') as f:
             data = json.load(f)
             text = data['text']
-            labels = baseline_extract_all(taxa, all_taxa_words, text)
+            labels = baseline_extract_all(text, taxa, all_taxa_words, nlp)
+            if len(labels) > 0:
+                print(labels)
+            
         # end=time.time()
         # times.append(end-start)
     

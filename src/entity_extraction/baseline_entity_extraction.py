@@ -9,7 +9,6 @@ import json
 import pandas as pd
 from nltk.corpus import stopwords
 import spacy
-from spacy.pipeline.ner import DEFAULT_NER_MODEL
 
 # ensure that the parent directory is on the path for relative imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))

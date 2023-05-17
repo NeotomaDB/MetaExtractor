@@ -99,29 +99,29 @@ def extract_geographic_coordinates(text: str) -> list:
                         "start": match.start(),
                         "end": match.end(),
                         "labels": ["GEOG"],
-                        "text": text[match.start() : match.end()],
+                        "text": text[match.start() : match.end()], 
                     }
                 )
 
     return labels
 
 
-def extract_site_names(text: str, spacy_model: str = "en_core_web_lg") -> list:
+def extract_region_names(text: str, spacy_model: str = "en_core_web_lg") -> list:
     """
-    Extracts the site names from the text.
+    Extracts the region names from the text.
 
     Parameters
     ----------
     text : str
-        The text to extract the site names from.
+        The text to extract the region names from.
     spacy_model: str
         Which spacy pretrained language model for named entity recognition.
         Default is 'en_core_web_lg'.
     Returns
     -------
     list
-        The list of site names as dictionaries with the keys
-        'start', 'end', and a list containing the label 'SITE'.
+        The list of region names as dictionaries with the keys
+        'start', 'end', and a list containing the label 'REGION'.
     """
     nlp = spacy.load(spacy_model)
 
@@ -133,8 +133,8 @@ def extract_site_names(text: str, spacy_model: str = "en_core_web_lg") -> list:
                 {
                     "start": ent.start_char,
                     "end": ent.end_char,
-                    "labels": ["SITE"],
-                    "text": ent.text,
+                    "labels": ["REGION"],
+                    "text": ent.text, 
                 }
             )
 
@@ -308,7 +308,7 @@ def extract_altitude(text: str) -> list:
                 "start": match.start(),
                 "end": match.end(),
                 "labels": ["ALTI"],
-                "text": match.group(),
+                "text": match.group(), 
             }
         )
 
@@ -344,7 +344,7 @@ def extract_email(text: str) -> list:
                 "start": match.start(),
                 "end": match.end(),
                 "labels": ["EMAIL"],
-                "text": match.group(),
+                "text": match.group(),  
             }
         )
 
@@ -379,7 +379,7 @@ def baseline_extract_all(text: str, spacy_model: str = "en_core_web_lg") -> list
     labels.extend(extract_altitude(text))
     labels.extend(extract_email(text))
     labels.extend(extract_taxa(text))
-    labels.extend(extract_site_names(text))
+    labels.extend(extract_region_names(text))
     labels.extend(extract_geographic_coordinates(text))
 
     # reorder the labels by start index

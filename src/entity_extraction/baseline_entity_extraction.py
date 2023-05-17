@@ -143,7 +143,7 @@ def extract_site_names(text: str, spacy_model: str = "en_core_web_lg") -> list:
     return labels
 
 
-def extract_taxa(text: str) -> list:  
+def extract_taxa(text: str) -> list:
     """
     Extracts the taxa from the text.
 
@@ -236,12 +236,12 @@ def extract_age(text: str) -> list:
     """
 
     # matches any standalone date with BP at the end, can have decimal places
-    is_date = re.compile(r"(\d+(?:[.]\d+)*) (([a-zA-Z]| )*BP)")
+    is_date = re.compile(r"(\d+(?:[.]\d+)*) (([a-zA-Z]| |14C)*BP)")
 
     # detects date ranges where its two numbers separated by a dash or to, they can
     # have decimal places then followed by any word to indicate units then BP
     is_date_range = re.compile(
-        r"(\d+(?:[.]\d+)*) ((?:-{1,2})|(?:to)) (\d+(?:[.]\d+)*) (([a-zA-Z]| )*BP)"
+        r"(\d+(?:[.]\d+)*) ((?:-{1,2})|(?:to)) (\d+(?:[.]\d+)*) (([a-zA-Z]| |14C)*BP)"
     )
 
     # accumalate the labels

@@ -4,12 +4,14 @@
 import os, sys
 
 from seqeval.metrics import classification_report
-from seqeval.metrics import accuracy_score
-from seqeval.metrics import f1_score
-from seqeval.metrics import recall_score
+from seqeval.metrics import accuracy_score, f1_score, recall_score, precision_score
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+from spacy import displacy
+from spacy.tokens import Doc
+import spacy
+
 
 
 def get_token_labels(labelled_entities, raw_text):
@@ -132,4 +134,57 @@ def calculate_entity_classification_metrics(
 
     recall = recall_score([labelled_tokens], [predicted_tokens])
 
-    return accuracy, f1, recall
+
+def visualize_mislabelled_entities(actual_labels: list, predicted_labels:list, text_tokens:list):
+    """Shows the text with the mislabelled entities highlighted with false negatives in red, 
+    false positives in orange and correct labels in green.
+
+    Parameters
+    ----------
+    actual_labels : list
+        A list of the actual labels for each token in the text.
+    predicted_labels : list
+        A list of the predicted labels for each token in the text.
+    text : list
+        A list of the text tokens matching the labels.
+    """
+
+    # all lists must be of same length 
+    assert len(actual_labels) == len(predicted_labels) == len(text_tokens), "All lists must be of same length"
+
+
+    # create a list of labels that are mislabelled with how they were mislabelled
+    error_labels = []
+    for i, (actual_lab, predicted_lab) in enumerate(zip(actual_labels, predicted_labels)):
+
+        if actual_lab[2:] != predicted_lab[2:]:
+            error_labels.append(f"B-GOT_{predicted_lab.replace('-', '')}_EXPECTED_{actual_lab.replace('-', '')}")
+        else:
+            error_labels.append(actual_lab)
+
+    colors = {}
+    ents = []
+    # create dict of colors with red for false negative, orange for false positive and green for correct
+    for tag in error_labels:
+        # make false negatives red
+        if "B-GOT_O" in tag:
+            # remove the hyphenated B/I prefix and add to colors dict
+            colors[tag[2:]] = "#ff0000"
+            ents.append(tag.split("-")[1])
+        elif "B-GOT" in tag:
+            colors[tag[2:]] = "#ffa500"
+            ents.append(tag.split("-")[1])
+        elif tag != "O":
+            colors[tag[2:]] = "#00ff00"
+            ents.append(tag.split("-")[1])
+
+    # load spacy model to use it's vocab
+    nlp = spacy.load("en_core_web_lg")
+
+    doc = Doc(
+        vocab=nlp.vocab,
+        words=text_tokens,
+        ents=error_labels
+    )
+        
+    displacy.render(doc, style="ent", jupyter=True, options={"colors": colors, "ents": ents})

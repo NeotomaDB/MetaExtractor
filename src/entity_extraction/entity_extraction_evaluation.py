@@ -187,7 +187,7 @@ def visualize_mislabelled_entities(actual_labels: list, predicted_labels:list, t
     for i, (actual_lab, predicted_lab) in enumerate(zip(actual_labels, predicted_labels)):
 
         if actual_lab[2:] != predicted_lab[2:]:
-            error_labels.append(f"B-GOT_{predicted_lab.replace('-', '')}_EXPECTED_{actual_lab.replace('-', '')}")
+            error_labels.append(f"B-GOT_{predicted_lab.replace('B-', '').replace('I-', '')}_EXPECTED_{actual_lab.replace('B-', '').replace('I-', '')}")
         else:
             error_labels.append(actual_lab)
 

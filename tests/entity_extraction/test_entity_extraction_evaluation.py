@@ -46,10 +46,11 @@ def test_calculate_entity_classification_metrics(sample_text, sample_labelled_en
     sample_token_labels = get_token_labels(sample_labelled_entities, sample_text)
 
     # test that the accuracy, f1, and recall scores are equal to 1
-    accuracy, f1, recall = calculate_entity_classification_metrics(
-        sample_token_labels, sample_token_labels
+    accuracy, f1, recall, precision = calculate_entity_classification_metrics(
+        sample_token_labels, sample_token_labels, method="tokens"
     )
 
     assert accuracy == 1
     assert f1 == 1
     assert recall == 1
+    assert precision == 1

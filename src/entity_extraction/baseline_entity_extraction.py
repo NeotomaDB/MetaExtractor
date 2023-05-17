@@ -143,7 +143,7 @@ def extract_site_names(text: str, spacy_model: str = "en_core_web_lg") -> list:
     return labels
 
 
-def extract_taxa(text: str) -> list:  # taxa: pd.DataFrame, all_taxa_words: list
+def extract_taxa(text: str) -> list:  
     """
     Extracts the taxa from the text.
 
@@ -374,16 +374,12 @@ def baseline_extract_all(text: str, spacy_model: str = "en_core_web_lg") -> list
     # accumalate the labels
     labels = []
 
-    taxa, all_taxa_words = load_taxa_data()
-
-    nlp = spacy.load(spacy_model)
-
     # extract the labels from the text
     labels.extend(extract_age(text))
     labels.extend(extract_altitude(text))
     labels.extend(extract_email(text))
-    labels.extend(extract_taxa(text, taxa, all_taxa_words))
-    labels.extend(extract_site_names(text, nlp))
+    labels.extend(extract_taxa(text))
+    labels.extend(extract_site_names(text))
     labels.extend(extract_geographic_coordinates(text))
 
     # reorder the labels by start index

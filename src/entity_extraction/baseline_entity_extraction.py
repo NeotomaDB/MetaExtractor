@@ -139,6 +139,8 @@ def extract_site_names(text: str, spacy_model: str = "en_core_web_lg") -> list:
                 }
             )
 
+    labels = sorted(labels, key=lambda label: label["start"])
+
     return labels
 
 
@@ -212,6 +214,8 @@ def extract_taxa(text: str) -> list:  # taxa: pd.DataFrame, all_taxa_words: list
                                 )
                         break
         cur_len += len(sentence) + 2
+
+    labels = sorted(labels, key=lambda label: label["start"])
 
     return labels
 

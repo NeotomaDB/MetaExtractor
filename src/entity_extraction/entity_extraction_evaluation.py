@@ -60,7 +60,11 @@ def get_token_labels(labelled_entities, raw_text):
 
 
 def plot_token_classification_report(
-    labelled_tokens: list, predicted_tokens: list, title: str, display: bool = True
+    labelled_tokens: list,
+    predicted_tokens: list,
+    title: str,
+    method: str = "tokens",
+    display: bool = True,
 ):
     """
     Plots a classification report for the token level entity extraction.
@@ -73,6 +77,11 @@ def plot_token_classification_report(
         A list of labels per token in the raw text.
     title : str
         The title of the plot.
+    method : str, optional
+        The method to use to calculate the scores, by default "entities"
+        which calculates the scores based on complete entities extracted from BIO
+        tags. "tokens" calculates the scores based on the token labels being
+        exactly the same.
     display : bool, optional
         Whether to display the plot or return the figure, by default True
 
@@ -81,6 +90,12 @@ def plot_token_classification_report(
     fig : matplotlib.pyplot.figure
         The figure containing the classification report.
     """
+
+    if method == "tokens":
+        # in each list replace all I- labels with B- labels so each token is
+        # considered a separate entity
+        labelled_tokens = [label.replace("I-", "B-") for label in labelled_tokens]
+        predicted_tokens = [label.replace("I-", "B-") for label in predicted_tokens]
 
     clf_report = classification_report(
         [labelled_tokens], [predicted_tokens], output_dict=True, zero_division=0
@@ -107,7 +122,7 @@ def plot_token_classification_report(
 
 
 def calculate_entity_classification_metrics(
-    labelled_tokens: list, predicted_tokens: list
+    labelled_tokens: list, predicted_tokens: list, method: str = "tokens"
 ):
     """Calculates the accuracy, f1, and recall scores for the entity extraction.
 
@@ -117,6 +132,11 @@ def calculate_entity_classification_metrics(
         The labelled tokens.
     predicted_tokens : list
         The predicted tokens.
+    method : str, optional
+        The method to use to calculate the scores, by default "entities"
+        which calculates the scores based on complete entities extracted from BIO
+        tags. "tokens" calculates the scores based on the token labels being
+        exactly the same.
 
     Returns
     -------
@@ -128,12 +148,21 @@ def calculate_entity_classification_metrics(
         The recall score.
     """
 
+    if method == "tokens":
+        # in each list replace all I- labels with B- labels so each token is
+        # considered a separate entity
+        labelled_tokens = [label.replace("I-", "B-") for label in labelled_tokens]
+        predicted_tokens = [label.replace("I-", "B-") for label in predicted_tokens]
+
     accuracy = accuracy_score([labelled_tokens], [predicted_tokens])
 
     f1 = f1_score([labelled_tokens], [predicted_tokens])
 
     recall = recall_score([labelled_tokens], [predicted_tokens])
 
+    precision = precision_score([labelled_tokens], [predicted_tokens])
+
+    return accuracy, f1, recall, precision
 
 def visualize_mislabelled_entities(actual_labels: list, predicted_labels:list, text_tokens:list):
     """Shows the text with the mislabelled entities highlighted with false negatives in red, 

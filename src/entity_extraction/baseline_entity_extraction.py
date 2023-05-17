@@ -107,7 +107,7 @@ def extract_geographic_coordinates(text: str) -> list:
     return labels
 
 
-def extract_site_names(text: str, nlp: spacy.Language) -> list:
+def extract_site_names(text: str, spacy_model: str = "en_core_web_lg") -> list:
     """
     Extracts the site names from the text.
 
@@ -115,14 +115,16 @@ def extract_site_names(text: str, nlp: spacy.Language) -> list:
     ----------
     text : str
         The text to extract the site names from.
-    nlp: spacy.lang.en.English
-        Pretrained language model for named entity recognition
+    spacy_model: str
+        Which spacy pretrained language model for named entity recognition.
+        Default is 'en_core_web_lg'.
     Returns
     -------
     list
         The list of site names as dictionaries with the keys
         'start', 'end', and a list containing the label 'SITE'.
     """
+    nlp = spacy.load(spacy_model)
 
     doc = nlp(text)
     labels = []

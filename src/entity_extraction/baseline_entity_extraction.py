@@ -142,16 +142,12 @@ def extract_site_names(text: str, spacy_model: str = "en_core_web_lg") -> list:
     return labels
 
 
-def extract_taxa(text: str, taxa: pd.DataFrame, all_taxa_words: list) -> list:
+def extract_taxa(text: str) -> list:  # taxa: pd.DataFrame, all_taxa_words: list
     """
     Extracts the taxa from the text.
 
     Parameters
     ----------
-    taxa: dataframe
-        Consists of the full taxa name and other metadata
-    all_taxa_words: list
-        Unique first words (common fossil names) of taxa names
     text : str
         The text to extract the taxa from.
 
@@ -173,6 +169,8 @@ def extract_taxa(text: str, taxa: pd.DataFrame, all_taxa_words: list) -> list:
 
     labels = []
     cur_len = 0
+
+    taxa, all_taxa_words = load_taxa_data()
 
     # Split them into sentences to capture multiple instances of the same taxa
     for sentence in text.split(". "):

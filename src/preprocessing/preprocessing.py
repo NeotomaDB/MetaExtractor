@@ -29,7 +29,7 @@ def get_journal_articles(sentences_path):
 
     Parameters
     ----------
-    path : string
+    sentences_path : string
         Path where the individual sentences are stored.
 
     Returns
@@ -50,25 +50,25 @@ def get_journal_articles(sentences_path):
                                         'word_modified'], 
                                 usecols = ['gddid', 'sentid', 'words'])
 
-    journal_articles = journal_articles.replace('"', '', regex = True)\
-                                .replace(',--,', '-', regex = True)\
-                                .replace('.,/,', '. / ', regex = True)\
-                                .replace('\{', '', regex = True)\
-                                .replace('}', '', regex = True)\
-                                .replace(r'\W{4,}', '', regex=True)\
-                                .replace(',,,', 'comma_sym', regex=True)\
-                                .replace(',', ' ', regex=True)\
-                                .replace('comma_sym', ', ', regex=True)\
-                                .replace('-LRB-', '(', regex=True)\
-                                .replace('-LSB-', '[', regex=True)\
-                                .replace('LRB', '(', regex=True)\
-                                .replace('LSB', '[', regex=True)\
-                                .replace('-RRB-', ')', regex=True)\
-                                .replace('-RSB-', ']', regex=True)\
-                                .replace('RRB', ')', regex=True)\
-                                .replace('RSB', ']', regex=True)\
-                                .replace('-RRB', ')', regex=True)\
-                                .replace('-RSB', ']', regex=True)
+    journal_articles = (journal_articles.replace('"', '', regex = True)
+                                .replace(',--,', '-', regex = True)
+                                .replace('.,/,', '. / ', regex = True)
+                                .replace('\{', '', regex = True)
+                                .replace('}', '', regex = True)
+                                .replace(r'\W{4,}', '', regex=True)
+                                .replace(',,,', 'comma_sym', regex=True)
+                                .replace(',', ' ', regex=True)
+                                .replace('comma_sym', ', ', regex=True)
+                                .replace('-LRB-', '(', regex=True)
+                                .replace('-LSB-', '[', regex=True)
+                                .replace('LRB', '(', regex=True)
+                                .replace('LSB', '[', regex=True)
+                                .replace('-RRB-', ')', regex=True)
+                                .replace('-RSB-', ']', regex=True)
+                                .replace('RRB', ')', regex=True)
+                                .replace('RSB', ']', regex=True)
+                                .replace('-RRB', ')', regex=True)
+                                .replace('-RSB', ']', regex=True))
     
     return journal_articles
 
@@ -105,7 +105,17 @@ def preprocessed_bibliography(path):
                          "gddid": gdd})
 
 def get_hash(text):
-    """ Generates a hash code given a string of any length """
+    """ Generates a hexadecimal code of a hash value given a string of any length
+
+    Uses the Secure Hash Algorithm and Key Expansion techinque for hashing.
+
+    Args:
+        text: str
+            String of text
+
+    Returns:
+        str: The first 8 characters of the hexadecimal hash string
+    """
     return hashlib.shake_128(text.encode('utf-8')).hexdigest(8)
 
 def return_json(chunk,
@@ -116,7 +126,7 @@ def return_json(chunk,
                 doi,
                 article_hash_code):
     """
-    Creates a JSON file for an article to upload to HuggingFace for labelling.
+    Creates a JSON file for an article to upload to LabelStudio for labelling.
 
     Parameters
     ----------
@@ -210,7 +220,7 @@ def chunk_text(article):
                 
     sentences = article.split('. ')
     
-    for si, sent in enumerate(sentences):
+    for sent in sentences:
         
         if subsection == None:
             subsection = sent.split(" ")[0]
@@ -271,9 +281,9 @@ def chunk_text(article):
         
 if __name__ == "__main__":
     
-    bib_df = preprocessed_bibliography("../../data/bibjson")
+    bib_df = preprocessed_bibliography(os.path.join(os.pardir, os.pardir, "data", "bibjson"))
     
-    journal_articles = get_journal_articles('../../data/sentences_nlp352')
+    journal_articles = get_journal_articles(os.path.join(os.pardir, os.pardir, "data", "sentences_nlp352"))
     
     # Minor preprocessing
     journal_articles['words']= journal_articles['words'].str.split(" ")
@@ -281,9 +291,9 @@ if __name__ == "__main__":
     journal_articles['sentence'] = journal_articles['words'].apply(lambda x: ' '.join(map(str, x)))
     
     # Join sentences into full text articles
-    full_text = journal_articles \
-        .groupby("gddid")['sentence'] \
-        .agg(lambda x: ' '.join(x)).reset_index()
+    full_text = (journal_articles 
+                .groupby("gddid")['sentence'] 
+                .agg(lambda x: ' '.join(x)).reset_index())
     
     doi_gdd = full_text.merge(bib_df, on ='gddid')
     
@@ -298,7 +308,7 @@ if __name__ == "__main__":
         
         for i, chunk in enumerate(chunks):
             filename = get_hash(chunk)
-            with open(f"../../data/processed/{gdd}_{i}.json",'w') as fout:
+            with open(f"{os.path.join(os.pardir, os.pardir, "data", "processed")}/{gdd}_{i}.json",'w') as fout:
                 json_chunk = return_json(chunk, 
                                         chunk_local[i],
                                         i,

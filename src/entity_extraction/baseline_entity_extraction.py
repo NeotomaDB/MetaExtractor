@@ -143,7 +143,7 @@ def extract_region_names(text: str, spacy_model: str = "en_core_web_lg") -> list
     return labels
 
 
-def extract_taxa(text: str) -> list:
+def extract_taxa(text: str, filepath = os.path.join(os.pardir, "data", "raw", "taxa.csv")) -> list:
     """
     Extracts the taxa from the text.
 
@@ -171,7 +171,7 @@ def extract_taxa(text: str) -> list:
     labels = []
     cur_len = 0
 
-    taxa, all_taxa_words = load_taxa_data()
+    taxa, all_taxa_words = load_taxa_data(filepath)
 
     # Split them into sentences to capture multiple instances of the same taxa
     for sentence in text.split(". "):

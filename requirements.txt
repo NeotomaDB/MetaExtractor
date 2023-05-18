@@ -5,7 +5,9 @@ seaborn~=0.12
 plotly~=5.14
 nltk==3.8.1
 spacy==3.5.3
-en-core-web-lg==3.5.0
 nbformat~=5.8
 scikit-learn~=1.2
 pytest-cov~=4.0
+flake8~=6.0
+# to use the spacy model for baseline NER
+https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.5.0/en_core_web_lg-3.5.0-py3-none-any.whl

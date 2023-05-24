@@ -69,6 +69,8 @@ def get_token_labels(labelled_entities, raw_text):
 
     Returns
     -------
+    tokens : list
+        A list of tokens in the raw text.
     token_labels : list
         A list of labels per token in the raw text.
     """
@@ -96,7 +98,7 @@ def get_token_labels(labelled_entities, raw_text):
         else:
             token_labels[token_start] = f"B-{label}"
 
-    return token_labels
+    return split_text, token_labels
 
 
 def plot_token_classification_report(

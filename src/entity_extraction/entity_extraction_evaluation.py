@@ -12,7 +12,47 @@ from spacy import displacy
 from spacy.tokens import Doc
 import spacy
 
+def load_json_label_files(labelled_file_path:str):
+    """
+    Load the json files containing the labelled data and combines the text
+    into a complete text string.
+ 
+    Parameters
+    ----------
+    label_files : list
+        List of json files containing the labelled data.
 
+    Returns
+    -------
+    combined_text : str
+        The combined text from all the files.
+    all_labelled_entities : list
+        List of all the labelled entities re-indexed to account for the combined text.
+    """
+
+    combined_text = ""
+    all_labelled_entities = []
+    for file in os.listdir(labelled_file_path):
+        
+        with open(os.path.join(labelled_file_path, file), "r") as f:
+            task = json.load(f)
+
+        raw_text = task['task']['data']['text']
+
+        annotation_result = task['result']
+        labelled_entities = [annotation['value'] for annotation in annotation_result]
+
+        # add the current text length to the start and end indices of labels plus one for the space
+        for entity in labelled_entities:
+            entity['start'] += len(combined_text)
+            entity['end'] += len(combined_text)
+
+        all_labelled_entities += labelled_entities
+
+        # add the current text to the combined text with space in between
+        combined_text += raw_text + " "
+
+    return combined_text, all_labelled_entities
 
 def get_token_labels(labelled_entities, raw_text):
     """

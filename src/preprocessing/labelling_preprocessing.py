@@ -135,7 +135,8 @@ def return_json(chunk,
                 chunk_subsection,
                 gdd,
                 doi,
-                article_hash_code):
+                article_hash_code,
+                model_version):
     """
     Creates a JSON file for an article to upload to LabelStudio for labelling.
 
@@ -155,6 +156,8 @@ def return_json(chunk,
         Digital Object Identifier of the article
     article_hash_code: str
         Hash code generated using the full text article
+    model_version: str
+        Version of the model used to generate the labels
         
     Returns
     -------
@@ -175,7 +178,7 @@ def return_json(chunk,
             "article_hash": article_hash_code
         },
         "predictions": [{
-            "model_version": "baseline",
+            "model_version": model_version,
             "result": []
         }]
     }
@@ -293,6 +296,8 @@ def chunk_text(article):
         
 if __name__ == "__main__":
     
+    model_version = "transformers-ner-0.0.1"
+    
     bib_df = preprocessed_bibliography(os.path.join(os.pardir, os.pardir, "data", "bibjson"))
     
     journal_articles = get_journal_articles(os.path.join(os.pardir, os.pardir, "data", "sentences_nlp352"))
@@ -309,7 +314,7 @@ if __name__ == "__main__":
     
     doi_gdd = full_text.merge(bib_df, on ='gddid')
     
-    # Pass each raw text file to the chunking pipeline
+    # # Pass each raw text file to the chunking pipeline
     for row in full_text.iterrows():
         chunks, chunk_local, chunk_subsection = chunk_text(row[1]['sentence'])
         gdd = row[1]['gddid']
@@ -320,12 +325,13 @@ if __name__ == "__main__":
         
         for i, chunk in enumerate(chunks):
             filename = get_hash(chunk)
-            with open(f"{os.path.join(os.pardir, os.pardir, "data", "processed")}/{gdd}_{i}.json",'w') as fout:
+            with open(f'{os.path.join(os.pardir, os.pardir, "data", f"{model_version}_processed")}/{gdd}_{i}.json','w') as fout:
                 json_chunk = return_json(chunk, 
                                         chunk_local[i],
                                         i,
                                         chunk_subsection[i],
                                         gdd,
                                         doi,
-                                        article_hash)
+                                        article_hash,
+                                        model_version)
                 json.dump(json_chunk, fout)            

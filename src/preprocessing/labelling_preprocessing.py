@@ -11,6 +11,9 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from src.entity_extraction.baseline_entity_extraction import baseline_extract_all
+from src.entity_extraction.spacy_entity_extraction import spacy_extract_all
+
+nlp = spacy.load(os.path.join("..", "..", "models", "v1", "transformer"))
 
 def clean_words(words:list):
     """Perform basic preprocessing on individual words 
@@ -79,7 +82,9 @@ def get_journal_articles(sentences_path):
                                 .replace('RRB', ')', regex=True)
                                 .replace('RSB', ']', regex=True)
                                 .replace('-RRB', ')', regex=True)
-                                .replace('-RSB', ']', regex=True))
+                                .replace('-RSB', ']', regex=True)
+                                .replace('-RCB-', '-', regex=True)
+                                .replace('-LCB-', '-', regex=True))
     
     return journal_articles
 
@@ -183,7 +188,8 @@ def return_json(chunk,
         }]
     }
     
-    labels = baseline_extract_all(chunk)
+    # labels = baseline_extract_all(chunk)
+    labels = spacy_extract_all(chunk, nlp)
     entities = []
     for label in labels:
         entities.append({
@@ -298,9 +304,9 @@ if __name__ == "__main__":
     
     model_version = "transformers-ner-0.0.1"
     
-    bib_df = preprocessed_bibliography(os.path.join(os.pardir, os.pardir, "data", "bibjson"))
+    bib_df = preprocessed_bibliography(os.path.join(os.pardir, os.pardir, "data", "original_files", "bibjson"))
     
-    journal_articles = get_journal_articles(os.path.join(os.pardir, os.pardir, "data", "sentences_nlp352"))
+    journal_articles = get_journal_articles(os.path.join(os.pardir, os.pardir, "data", "original_files", "sentences_nlp352"))
     
     # Minor preprocessing
     journal_articles['words']= journal_articles['words'].str.split(" ")
@@ -325,7 +331,7 @@ if __name__ == "__main__":
         
         for i, chunk in enumerate(chunks):
             filename = get_hash(chunk)
-            with open(f'{os.path.join(os.pardir, os.pardir, "data", f"{model_version}_processed")}/{gdd}_{i}.json','w') as fout:
+            with open(f'{os.path.join(os.pardir, os.pardir, "data", "labelled", f"{model_version}_labeling")}/{gdd}_{i}.json','w') as fout:
                 json_chunk = return_json(chunk, 
                                         chunk_local[i],
                                         i,

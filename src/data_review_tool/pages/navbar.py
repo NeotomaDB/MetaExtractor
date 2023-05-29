@@ -32,9 +32,9 @@ def create_navbar():
                     dbc.Nav(
                         [                
                         dbc.NavItem(
-                            dbc.NavLink("Article Review", href="/histograms")),
+                            dbc.NavLink("Article Review", href="/article-review")),
                         dbc.NavItem(
-                            dbc.NavLink("About", href="/bar-charts")),
+                            dbc.NavLink("About", href="/about")),
                         ],
                         className="ml-auto",
                         navbar=True,

@@ -44,7 +44,7 @@ python src/entity_extraction/training/hf_token_classification/labelstudio_prepro
     --test_split $TEST_SPLIT \
     --max_token_length 256
 
-python src/entity_extraction/training/hf_token_classification/run_ner.py \
+python src/entity_extraction/training/hf_token_classification/ner_training.py \
     --run_name specter2-finetuned-v2 \
     --model_name_or_path allenai/specter2 \
     --output_dir "$(pwd)/models/ner/specter2-finetuned-v2/" \

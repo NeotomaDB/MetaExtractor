@@ -116,9 +116,9 @@ def plot_token_classification_report(
 
     Parameters
     ----------
-    labelled_tokens : list
+    labelled_tokens : list[lists]
         A list of labels per token in the raw text.
-    predicted_tokens : list
+    predicted_tokens : list[lists]
         A list of labels per token in the raw text.
     title : str
         The title of the plot.
@@ -180,10 +180,10 @@ def calculate_entity_classification_metrics(
 
     Parameters
     ----------
-    labelled_tokens : list
-        The labelled tokens.
-    predicted_tokens : list
-        The predicted tokens.
+    labelled_tokens : list[lists]
+        The labelled tokens per document.
+    predicted_tokens : list[lists]
+        The predicted tokens per document.
     method : str, optional
         The method to use to calculate the scores, by default "entities"
         which calculates the scores based on complete entities extracted from BIO

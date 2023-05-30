@@ -101,7 +101,7 @@ def get_token_labels(labelled_entities, raw_text):
         else:
             token_labels[token_start] = f"B-{label}"
 
-    return token_labels
+    return split_text, token_labels
 
 
 def plot_token_classification_report(
@@ -150,7 +150,7 @@ def plot_token_classification_report(
             predicted_tokens[i] = document
 
     clf_report = classification_report(
-        [labelled_tokens], [predicted_tokens], output_dict=True, zero_division=0
+        labelled_tokens, predicted_tokens, output_dict=True, zero_division=0
     )
 
     fig, ax = plt.subplots(figsize=(8, 6))
@@ -213,13 +213,13 @@ def calculate_entity_classification_metrics(
             document = [label.replace("I-", "B-") for label in document]
             predicted_tokens[i] = document
 
-    accuracy = accuracy_score([labelled_tokens], [predicted_tokens])
+    accuracy = accuracy_score(labelled_tokens, predicted_tokens)
 
-    f1 = f1_score([labelled_tokens], [predicted_tokens])
+    f1 = f1_score(labelled_tokens, predicted_tokens)
 
-    recall = recall_score([labelled_tokens], [predicted_tokens])
+    recall = recall_score(labelled_tokens, predicted_tokens)
 
-    precision = precision_score([labelled_tokens], [predicted_tokens])
+    precision = precision_score(labelled_tokens, predicted_tokens)
 
     return accuracy, f1, recall, precision
 

@@ -11,7 +11,8 @@ import pandas as pd
 from spacy import displacy
 from spacy.tokens import Doc
 import spacy
-
+import json
+import copy
 
 def load_json_label_files(labelled_file_path:str):
     """
@@ -136,10 +137,17 @@ def plot_token_classification_report(
     """
 
     if method == "tokens":
+        # copy the lists so they aren't modified outside this function
+        labelled_tokens = copy.deepcopy(labelled_tokens)
+        predicted_tokens = copy.deepcopy(predicted_tokens)
         # in each list replace all I- labels with B- labels so each token is
-        # considered a separate entity
-        labelled_tokens = [label.replace("I-", "B-") for label in labelled_tokens]
-        predicted_tokens = [label.replace("I-", "B-") for label in predicted_tokens]
+        # considered a separate entity and update the token label objects
+        for i, document in enumerate(labelled_tokens):
+            document = [label.replace("I-", "B-") for label in document]
+            labelled_tokens[i] = document
+        for i, document in enumerate(predicted_tokens):
+            document = [label.replace("I-", "B-") for label in document]
+            predicted_tokens[i] = document
 
     clf_report = classification_report(
         [labelled_tokens], [predicted_tokens], output_dict=True, zero_division=0
@@ -193,10 +201,17 @@ def calculate_entity_classification_metrics(
     """
 
     if method == "tokens":
+        # copy the lists so they aren't modified outside this function
+        labelled_tokens = copy.deepcopy(labelled_tokens)
+        predicted_tokens = copy.deepcopy(predicted_tokens)
         # in each list replace all I- labels with B- labels so each token is
-        # considered a separate entity
-        labelled_tokens = [label.replace("I-", "B-") for label in labelled_tokens]
-        predicted_tokens = [label.replace("I-", "B-") for label in predicted_tokens]
+        # considered a separate entity and update the token label objects
+        for i, document in enumerate(labelled_tokens):
+            document = [label.replace("I-", "B-") for label in document]
+            labelled_tokens[i] = document
+        for i, document in enumerate(predicted_tokens):
+            document = [label.replace("I-", "B-") for label in document]
+            predicted_tokens[i] = document
 
     accuracy = accuracy_score([labelled_tokens], [predicted_tokens])
 

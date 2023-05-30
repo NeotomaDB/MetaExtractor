@@ -640,6 +640,62 @@ def main():
                         final_results[f"{key}_{n}"] = v
                 else:
                     final_results[key] = value
+
+            # calculate token based and entity based metrics
+            (
+                accuracy_token,
+                f1_token,
+                recall_token,
+                precision_token,
+            ) = calculate_entity_classification_metrics(
+                true_labels, true_predictions, method="tokens"
+            )
+
+            (
+                accuracy_entity,
+                f1_entity,
+                recall_entity,
+                precision_entity,
+            ) = calculate_entity_classification_metrics(
+                true_labels, true_predictions, method="tokens"
+            )
+
+            final_results["accuracy_token"] = accuracy_token
+            final_results["f1_token"] = f1_token
+            final_results["recall_token"] = recall_token
+            final_results["precision_token"] = precision_token
+            final_results["accuracy_entity"] = accuracy_entity
+            final_results["f1_entity"] = f1_entity
+            final_results["recall_entity"] = recall_entity
+            final_results["precision_entity"] = precision_entity
+
+            token_classification_report = plot_token_classification_report(
+                labelled_tokens=true_labels,
+                predicted_tokens=true_predictions,
+                title="Token Classification Report - Token Level",
+                display=False,
+                method="tokens",
+            )
+
+            entity_classification_report = plot_token_classification_report(
+                labelled_tokens=true_labels,
+                predicted_tokens=true_predictions,
+                title="Token Classification Report - Entity Level",
+                display=False,
+                method="tokens",
+            )
+
+            # log the plots to mlflow
+            mlflow.log_figure(
+                # name plot with current time and seconds
+                token_classification_report,
+                f"token_classification_report_{time.strftime('%Y%m%d-%H%M%S')}.png",
+            )
+            mlflow.log_figure(
+                entity_classification_report,
+                f"entity_classification_report_{time.strftime('%Y%m%d-%H%M%S')}.png",
+            )
+
             return final_results
         else:
             return {

@@ -49,6 +49,15 @@ from transformers.utils.versions import require_version
 
 from dotenv import load_dotenv, find_dotenv
 
+sys.path.append(
+    os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, os.pardir)
+)
+
+from src.entity_extraction.entity_extraction_evaluation import (
+    calculate_entity_classification_metrics,
+    plot_token_classification_report,
+)
+
 load_dotenv(find_dotenv())
 
 
@@ -57,44 +66,6 @@ mlflow_experiment = os.environ.get("MLFLOW_EXPERIMENT_NAME")
 # load mlflow if it is defined in the bash script
 if mlflow_experiment is not None:
     import mlflow
-
-
-# for ffossils
-id2label = {
-    0: "O",
-    1: "B-GEOG",
-    2: "I-GEOG",
-    3: "B-SITE",
-    4: "I-SITE",
-    5: "B-EMAIL",
-    6: "I-EMAIL",
-    7: "B-ALTI",
-    8: "I-ALTI",
-    9: "B-TAXA",
-    10: "I-TAXA",
-    11: "B-REGION",
-    12: "I-REGION",
-    13: "B-AGE",
-    14: "I-AGE",
-}
-
-label2id = {
-    "O": 0,
-    "B-GEOG": 1,
-    "I-GEOG": 2,
-    "B-SITE": 3,
-    "I-SITE": 4,
-    "B-EMAIL": 5,
-    "I-EMAIL": 6,
-    "B-ALTI": 7,
-    "I-ALTI": 8,
-    "B-TAXA": 9,
-    "I-TAXA": 10,
-    "B-REGION": 11,
-    "I-REGION": 12,
-    "B-AGE": 13,
-    "I-AGE": 14,
-}
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.28.0")

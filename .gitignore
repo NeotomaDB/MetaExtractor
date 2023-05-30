@@ -6,6 +6,11 @@ data/**/*.json
 data/**/*.csv
 !data/raw/taxa.csv
 
+# ignore files in models folder but keep .gitkeep
+models/ner/*
+results/ner/*
+!.gitkeep
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

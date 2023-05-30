@@ -18,10 +18,13 @@ import pandas as pd
 import numpy as np
 import json
 from docopt import docopt
+import logging
 
 sys.path.append(
     os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, os.pardir)
 )
+
+logger = logging.getLogger(__name__)
 
 from src.entity_extraction.entity_extraction_evaluation import get_token_labels
 
@@ -138,39 +141,44 @@ def convert_labelled_data_to_hf_format(
         with open(os.path.join(labelled_file_path, file), "r") as f:
             task = json.load(f)
 
-        raw_text = task["task"]["data"]["text"]
-        annotation_result = task["result"]
-        gdd_id = task["task"]["data"]["gdd_id"]
+        try:
+            raw_text = task["task"]["data"]["text"]
+            annotation_result = task["result"]
+            gdd_id = task["task"]["data"]["gdd_id"]
 
-        labelled_entities = [annotation["value"] for annotation in annotation_result]
+            labelled_entities = [
+                annotation["value"] for annotation in annotation_result
+            ]
 
-        tokens, token_labels = get_token_labels(labelled_entities, raw_text)
+            tokens, token_labels = get_token_labels(labelled_entities, raw_text)
 
-        token_label_ids = [label2id[label] for label in token_labels]
+            token_label_ids = [label2id[label] for label in token_labels]
 
-        # split the data into chunks of tokens and labels
-        chunked_tokens = [
-            tokens[i : i + max_seq_length]
-            for i in range(0, len(tokens), max_seq_length)
-        ]
-        chunked_token_label_ids = [
-            token_label_ids[i : i + max_seq_length]
-            for i in range(0, len(token_label_ids), max_seq_length)
-        ]
-        chunked_labels = [
-            token_labels[i : i + max_seq_length]
-            for i in range(0, len(token_labels), max_seq_length)
-        ]
+            # split the data into chunks of tokens and labels
+            chunked_tokens = [
+                tokens[i : i + max_seq_length]
+                for i in range(0, len(tokens), max_seq_length)
+            ]
+            chunked_token_label_ids = [
+                token_label_ids[i : i + max_seq_length]
+                for i in range(0, len(token_label_ids), max_seq_length)
+            ]
+            chunked_labels = [
+                token_labels[i : i + max_seq_length]
+                for i in range(0, len(token_labels), max_seq_length)
+            ]
 
-        # make each chunk a dict with keys ner_tags and tokens
-        chunked_data = [
-            {
-                "ner_tags": chunked_labels[i],
-                "text": chunked_tokens[i],
-                # "label_ids": chunked_token_label_ids[i],
-            }
-            for i in range(len(chunked_tokens))
-        ]
+            # make each chunk a dict with keys ner_tags and tokens
+            chunked_data = [
+                {
+                    "ner_tags": chunked_labels[i],
+                    "text": chunked_tokens[i],
+                    # "label_ids": chunked_token_label_ids[i],
+                }
+                for i in range(len(chunked_tokens))
+            ]
+        except Exception as e:
+            logger.warning(f"Issue detected with file, skipping: {file}, {e}")
 
         # put the data into the correct split
         if gdd_id in train_gdd_ids:
@@ -227,7 +235,10 @@ def get_article_gdd_ids(labelled_file_path: str):
         with open(os.path.join(labelled_file_path, file), "r") as f:
             task = json.load(f)
 
-        gdd_id = task["task"]["data"]["gdd_id"]
+        try:
+            gdd_id = task["task"]["data"]["gdd_id"]
+        except Exception as e:
+            logger.warning(f"Issue with file data: {file}, {e}")
 
         if gdd_id not in gdd_ids:
             gdd_ids.append(gdd_id)

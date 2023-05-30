@@ -25,12 +25,13 @@ def create_navbar():
                     dbc.Row(
                         [
                             dbc.Col(html.Img(src="assets/finding-fossils-logo-symbol_highres.png", height="30px")),
-                            dbc.Col("MetaExtractor", className="navbar-brand"),
                         ],
                     ),
                 ),
                     dbc.Nav(
-                        [                
+                        [         
+                        dbc.NavItem(
+                            dbc.NavLink("MetaExtractor", href="/",  className="navbar-brand")),        
                         dbc.NavItem(
                             dbc.NavLink("Article Review", href="/article-review")),
                         dbc.NavItem(

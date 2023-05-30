@@ -22,19 +22,20 @@ echo python.__version__ = $(python -c 'import sys; print(sys.version)')
 echo "Current working directory: $(pwd)"
 
 # set the location of the labelled data, ideally this is run from root of repo
+# leave test_split at non_zero value to ensure test set is created for evaluation
 export LABELLED_FILE_LOCATION="$(pwd)/data/labelled/labelled/"
-export TRAIN_SPLIT=0.7
-export VAL_SPLIT=0.2
-export TEST_SPLIT=0.1
+export TRAIN_SPLIT=0.8
+export VAL_SPLIT=0.18
+export TEST_SPLIT=0.02
 
 # comment the following in/out if MLflow server is available/.env file setup
-# export MLFLOW_EXPERIMENT_NAME="test-hf-token-classification"
-# # whether to export and log model weights
-# # set to 0 if trialling tuning for metrics, set to 1 to log full model wieghts and files
-# export MLFLOW_LOG_ARTIFACTS="0"
-# # general settings, don't change if using mlflow
-# export MLFLOW_FLATTEN_PARAMS="2" # azure mlflow has a limit of 200 params, leveing this nested gets around it
-# export AZUREML_ARTIFACTS_DEFAULT_TIMEOUT="1800" # large file upload times reuqire longer time out
+export MLFLOW_EXPERIMENT_NAME="test-hf-token-classification"
+# whether to export and log model weights
+# set to 0 if trialling tuning for metrics, set to 1 to log full model wieghts and files
+export MLFLOW_LOG_ARTIFACTS="0"
+# general settings, don't change if using mlflow
+export MLFLOW_FLATTEN_PARAMS="2" # azure mlflow has a limit of 200 params, leveing this nested gets around it
+export AZUREML_ARTIFACTS_DEFAULT_TIMEOUT="1800" # large file upload times reuqire longer time out
 
 # process the labelled files to prepare them for training
 python src/entity_extraction/training/hf_token_classification/labelstudio_preprocessing.py \
@@ -51,20 +52,25 @@ python src/entity_extraction/training/hf_token_classification/ner_training.py \
     --train_file "$LABELLED_FILE_LOCATION/hf_processed/train.json" \
     --validation_file "$LABELLED_FILE_LOCATION/hf_processed/val.json" \
     --text_column_name text \
-    --overwrite_output_dir \
     --label_column_name ner_tags \
-    --max_seq_length 512 \
     --label_all_tokens True \
     --return_entity_level_metrics True \
-    --max_train_samples 1 \
-    --max_eval_samples 1 \
     --do_train \
     --do_eval \
+    --overwrite_output_dir \
+    --save_strategy steps \
+    --logging_strategy steps \
     --evaluation_strategy steps \
-    --eval_steps 1 \
-    --num_epochs 2 \
-    --save_strategy epoch \
-    --save_steps 1 \
+    --logging_steps 10 \
+    --save_steps 100 \
+    --eval_steps 25 \
+    --learning_rate 2e-5 \
+    --max_seq_length 512 \
+    --num_train_epochs 2 \
+    --per_device_train_batch_size 16 \
+    --gradient_accumulation_steps 3 \
+    --max_train_samples 1 \
+    --max_eval_samples 1 \
 
 # all options
 # usage: run_ner.py [-h] --model_name_or_path MODEL_NAME_OR_PATH [--config_name CONFIG_NAME] [--tokenizer_name TOKENIZER_NAME] [--cache_dir CACHE_DIR] [--model_revision MODEL_REVISION]

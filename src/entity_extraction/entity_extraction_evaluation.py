@@ -136,21 +136,25 @@ def plot_token_classification_report(
         The figure containing the classification report.
     """
 
+    # prevent over writing of original lists in memory
+    predicted = copy.deepcopy(predicted_tokens)
+    labelled = copy.deepcopy(labelled_tokens)
+
     if method == "tokens":
         # copy the lists so they aren't modified outside this function
-        labelled_tokens = copy.deepcopy(labelled_tokens)
-        predicted_tokens = copy.deepcopy(predicted_tokens)
+        labelled = copy.deepcopy(labelled)
+        predicted = copy.deepcopy(predicted)
         # in each list replace all I- labels with B- labels so each token is
         # considered a separate entity and update the token label objects
-        for i, document in enumerate(labelled_tokens):
+        for i, document in enumerate(labelled):
             document = [label.replace("I-", "B-") for label in document]
-            labelled_tokens[i] = document
-        for i, document in enumerate(predicted_tokens):
+            labelled[i] = document
+        for i, document in enumerate(predicted):
             document = [label.replace("I-", "B-") for label in document]
-            predicted_tokens[i] = document
+            predicted[i] = document
 
     clf_report = classification_report(
-        labelled_tokens, predicted_tokens, output_dict=True, zero_division=0
+        labelled, predicted, output_dict=True, zero_division=0
     )
 
     fig, ax = plt.subplots(figsize=(8, 6))
@@ -200,26 +204,30 @@ def calculate_entity_classification_metrics(
         The recall score.
     """
 
+    # prevent over writing of original lists in memory
+    predicted = copy.deepcopy(predicted_tokens)
+    labelled = copy.deepcopy(labelled_tokens)
+
     if method == "tokens":
         # copy the lists so they aren't modified outside this function
-        labelled_tokens = copy.deepcopy(labelled_tokens)
-        predicted_tokens = copy.deepcopy(predicted_tokens)
+        labelled = copy.deepcopy(labelled)
+        predicted = copy.deepcopy(predicted)
         # in each list replace all I- labels with B- labels so each token is
         # considered a separate entity and update the token label objects
-        for i, document in enumerate(labelled_tokens):
+        for i, document in enumerate(labelled):
             document = [label.replace("I-", "B-") for label in document]
-            labelled_tokens[i] = document
-        for i, document in enumerate(predicted_tokens):
+            labelled[i] = document
+        for i, document in enumerate(predicted):
             document = [label.replace("I-", "B-") for label in document]
-            predicted_tokens[i] = document
+            predicted[i] = document
 
-    accuracy = accuracy_score(labelled_tokens, predicted_tokens)
+    accuracy = accuracy_score(labelled, predicted)
 
-    f1 = f1_score(labelled_tokens, predicted_tokens)
+    f1 = f1_score(labelled, predicted)
 
-    recall = recall_score(labelled_tokens, predicted_tokens)
+    recall = recall_score(labelled, predicted)
 
-    precision = precision_score(labelled_tokens, predicted_tokens)
+    precision = precision_score(labelled, predicted)
 
     return accuracy, f1, recall, precision
 

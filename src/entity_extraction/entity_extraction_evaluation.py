@@ -12,7 +12,7 @@ from spacy import displacy
 from spacy.tokens import Doc
 import spacy
 import json
-
+import copy
 
 def load_json_label_files(labelled_file_path:str):
     """
@@ -35,24 +35,27 @@ def load_json_label_files(labelled_file_path:str):
     combined_text = ""
     all_labelled_entities = []
     for file in os.listdir(labelled_file_path):
+
+        # if file is a txt file load it
+        if  file.endswith(".txt"):
         
-        with open(os.path.join(labelled_file_path, file), "r") as f:
-            task = json.load(f)
+            with open(os.path.join(labelled_file_path, file), "r") as f:
+                task = json.load(f)
 
-        raw_text = task['task']['data']['text']
+            raw_text = task['task']['data']['text']
 
-        annotation_result = task['result']
-        labelled_entities = [annotation['value'] for annotation in annotation_result]
+            annotation_result = task['result']
+            labelled_entities = [annotation['value'] for annotation in annotation_result]
 
-        # add the current text length to the start and end indices of labels plus one for the space
-        for entity in labelled_entities:
-            entity['start'] += len(combined_text)
-            entity['end'] += len(combined_text)
+            # add the current text length to the start and end indices of labels plus one for the space
+            for entity in labelled_entities:
+                entity['start'] += len(combined_text)
+                entity['end'] += len(combined_text)
 
-        all_labelled_entities += labelled_entities
+            all_labelled_entities += labelled_entities
 
-        # add the current text to the combined text with space in between
-        combined_text += raw_text + " "
+            # add the current text to the combined text with space in between
+            combined_text += raw_text + " "
 
     return combined_text, all_labelled_entities
 
@@ -71,8 +74,6 @@ def get_token_labels(labelled_entities, raw_text):
 
     Returns
     -------
-    tokens : list
-        A list of tokens in the raw text.
     token_labels : list
         A list of labels per token in the raw text.
     """
@@ -115,9 +116,9 @@ def plot_token_classification_report(
 
     Parameters
     ----------
-    labelled_tokens : list
+    labelled_tokens : list[lists]
         A list of labels per token in the raw text.
-    predicted_tokens : list
+    predicted_tokens : list[lists]
         A list of labels per token in the raw text.
     title : str
         The title of the plot.
@@ -136,13 +137,20 @@ def plot_token_classification_report(
     """
 
     if method == "tokens":
+        # copy the lists so they aren't modified outside this function
+        labelled_tokens = copy.deepcopy(labelled_tokens)
+        predicted_tokens = copy.deepcopy(predicted_tokens)
         # in each list replace all I- labels with B- labels so each token is
-        # considered a separate entity
-        labelled_tokens = [label.replace("I-", "B-") for label in labelled_tokens]
-        predicted_tokens = [label.replace("I-", "B-") for label in predicted_tokens]
+        # considered a separate entity and update the token label objects
+        for i, document in enumerate(labelled_tokens):
+            document = [label.replace("I-", "B-") for label in document]
+            labelled_tokens[i] = document
+        for i, document in enumerate(predicted_tokens):
+            document = [label.replace("I-", "B-") for label in document]
+            predicted_tokens[i] = document
 
     clf_report = classification_report(
-        [labelled_tokens], [predicted_tokens], output_dict=True, zero_division=0
+        labelled_tokens, predicted_tokens, output_dict=True, zero_division=0
     )
 
     fig, ax = plt.subplots(figsize=(8, 6))
@@ -172,10 +180,10 @@ def calculate_entity_classification_metrics(
 
     Parameters
     ----------
-    labelled_tokens : list
-        The labelled tokens.
-    predicted_tokens : list
-        The predicted tokens.
+    labelled_tokens : list[lists]
+        The labelled tokens per document.
+    predicted_tokens : list[lists]
+        The predicted tokens per document.
     method : str, optional
         The method to use to calculate the scores, by default "entities"
         which calculates the scores based on complete entities extracted from BIO
@@ -193,18 +201,25 @@ def calculate_entity_classification_metrics(
     """
 
     if method == "tokens":
+        # copy the lists so they aren't modified outside this function
+        labelled_tokens = copy.deepcopy(labelled_tokens)
+        predicted_tokens = copy.deepcopy(predicted_tokens)
         # in each list replace all I- labels with B- labels so each token is
-        # considered a separate entity
-        labelled_tokens = [label.replace("I-", "B-") for label in labelled_tokens]
-        predicted_tokens = [label.replace("I-", "B-") for label in predicted_tokens]
+        # considered a separate entity and update the token label objects
+        for i, document in enumerate(labelled_tokens):
+            document = [label.replace("I-", "B-") for label in document]
+            labelled_tokens[i] = document
+        for i, document in enumerate(predicted_tokens):
+            document = [label.replace("I-", "B-") for label in document]
+            predicted_tokens[i] = document
 
-    accuracy = accuracy_score([labelled_tokens], [predicted_tokens])
+    accuracy = accuracy_score(labelled_tokens, predicted_tokens)
 
-    f1 = f1_score([labelled_tokens], [predicted_tokens])
+    f1 = f1_score(labelled_tokens, predicted_tokens)
 
-    recall = recall_score([labelled_tokens], [predicted_tokens])
+    recall = recall_score(labelled_tokens, predicted_tokens)
 
-    precision = precision_score([labelled_tokens], [predicted_tokens])
+    precision = precision_score(labelled_tokens, predicted_tokens)
 
     return accuracy, f1, recall, precision
 

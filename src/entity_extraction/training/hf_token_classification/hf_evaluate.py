@@ -109,8 +109,13 @@ def load_ner_model_pipeline(model_path: str):
 
     # load the model
     model = AutoModelForTokenClassification.from_pretrained(model_path)
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-    ner_pipe = pipeline("ner", model=model, tokenizer=tokenizer, grouped_entities=True)
+    tokenizer = AutoTokenizer.from_pretrained(model_path, model_max_length=512)
+    ner_pipe = pipeline(
+        "ner",
+        model=model,
+        tokenizer=tokenizer,
+        grouped_entities=True,
+    )
 
     return ner_pipe, model, tokenizer
 

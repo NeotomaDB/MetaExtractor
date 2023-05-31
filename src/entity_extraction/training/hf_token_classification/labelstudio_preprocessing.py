@@ -30,49 +30,13 @@ from src.entity_extraction.entity_extraction_evaluation import get_token_labels
 
 opt = docopt(__doc__)
 
-id2label = {
-    0: "O",
-    1: "B-GEOG",
-    2: "I-GEOG",
-    3: "B-SITE",
-    4: "I-SITE",
-    5: "B-EMAIL",
-    6: "I-EMAIL",
-    7: "B-ALTI",
-    8: "I-ALTI",
-    9: "B-TAXA",
-    10: "I-TAXA",
-    11: "B-REGION",
-    12: "I-REGION",
-    13: "B-AGE",
-    14: "I-AGE",
-}
-
-label2id = {
-    "O": 0,
-    "B-GEOG": 1,
-    "I-GEOG": 2,
-    "B-SITE": 3,
-    "I-SITE": 4,
-    "B-EMAIL": 5,
-    "I-EMAIL": 6,
-    "B-ALTI": 7,
-    "I-ALTI": 8,
-    "B-TAXA": 9,
-    "I-TAXA": 10,
-    "B-REGION": 11,
-    "I-REGION": 12,
-    "B-AGE": 13,
-    "I-AGE": 14,
-}
-
 
 # function that takes a folder location in data/labelled and produces a
 # folder called hf_processed in data/labelled with the same files but
 # with the format required for the hf-token-classification model
 def convert_labelled_data_to_hf_format(
     labelled_file_path: str,
-    max_seq_length: int = 128,
+    max_seq_length: int = 256,
     train_split: float = 0.65,
     val_split: float = 0.2,
     test_split: float = 0.15,
@@ -152,16 +116,10 @@ def convert_labelled_data_to_hf_format(
 
             tokens, token_labels = get_token_labels(labelled_entities, raw_text)
 
-            token_label_ids = [label2id[label] for label in token_labels]
-
             # split the data into chunks of tokens and labels
             chunked_tokens = [
                 tokens[i : i + max_seq_length]
                 for i in range(0, len(tokens), max_seq_length)
-            ]
-            chunked_token_label_ids = [
-                token_label_ids[i : i + max_seq_length]
-                for i in range(0, len(token_label_ids), max_seq_length)
             ]
             chunked_labels = [
                 token_labels[i : i + max_seq_length]
@@ -173,7 +131,6 @@ def convert_labelled_data_to_hf_format(
                 {
                     "ner_tags": chunked_labels[i],
                     "text": chunked_tokens[i],
-                    # "label_ids": chunked_token_label_ids[i],
                 }
                 for i in range(len(chunked_tokens))
             ]

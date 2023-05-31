@@ -33,20 +33,21 @@ for f in files:
     
     # merge
     df = pd.concat([df, onefile])
-df = df[["title", "doi", "status", "date_uploaded", "date_modified"]].rename(
+df = df[["title", "doi", "status", "date_uploaded", "date_modified", "gddid"]].rename(
         columns={"title": "Article", "doi": "DOI", "status": "Status", "date_uploaded": "Date Added", "date_modified": "Date Updated"}
     )
 df["Review"] = "Review"
 
 current = df[df["Status"] == "In Progress"]
 completed = df[df["Status"] == "Completed"]
-        
+
+# columns = ["title", "doi", "status", "date_uploaded", "date_modified"]       
 
 layout = html.Div(
     [
         html.H2("Current Articles",
                 style={'textAlign': 'center'}),
-
+        html.Br(),
         dash_table.DataTable(
             id="current_table",
             style_data={
@@ -66,8 +67,11 @@ layout = html.Div(
             style_cell={'textAlign': 'left'},
         ),
         dcc.Location(id='location_current'),
+        html.Br(),
+        html.Br(),
         html.H2("Current Articles",
                 style={'textAlign': 'center'}),
+        html.Br(),
         dash_table.DataTable(
             id="completed_table",
             style_data={
@@ -105,7 +109,7 @@ def cell_clicked(active_cell_current, data):
         row = active_cell_current["row"]
         col = active_cell_current["column_id"]
         if col == "Review":  # or whatever column you want
-            selected = data[row]["DOI"]
+            selected = data[row]["gddid"]
             return f"http://127.0.0.1:8050/article/{selected}"
         else:
             return dash.no_update
@@ -120,7 +124,7 @@ def cell_clicked(active_cell_completed, data):
         row = active_cell_completed["row"]
         col = active_cell_completed["column_id"]
         if col == "Review":  # or whatever column you want
-            selected = data[row]["DOI"]
+            selected = data[row]["gddid"]
             return f"http://127.0.0.1:8050/article/{selected}"
         else:
             return dash.no_update

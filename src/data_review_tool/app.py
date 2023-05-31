@@ -12,7 +12,11 @@ import sys
 from pages.navbar import create_navbar
 
 
-app = dash.Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.BOOTSTRAP], title="MetaExtractor")
+app = dash.Dash(__name__, 
+                use_pages=True, 
+                external_stylesheets=[dbc.themes.BOOTSTRAP], 
+                title="MetaExtractor",
+                suppress_callback_exceptions=True,)
 
 server = app.server
 

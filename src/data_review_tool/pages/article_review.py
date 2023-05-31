@@ -1,6 +1,6 @@
 import dash
 
-dash.register_page(__name__)
+dash.register_page(__name__,  path_template="/article/<doi>")
 
 from dash import Dash, dcc, html, Input, Output, callback
 import plotly.express as px
@@ -30,3 +30,5 @@ def display_color(mean, std):
     data = np.random.normal(mean, std, size=500)
     fig = px.histogram(data, nbins=30, range_x=[-10, 10])
     return fig
+
+

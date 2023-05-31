@@ -39,7 +39,7 @@ export AZUREML_ARTIFACTS_DEFAULT_TIMEOUT="1800" # large file upload times reuqir
 
 # process the labelled files to prepare them for training
 python src/entity_extraction/training/hf_token_classification/labelstudio_preprocessing.py \
-    --label_files $LABELLED_FILE_LOCATION \
+    --label_files "$LABELLED_FILE_LOCATION" \
     --train_split $TRAIN_SPLIT \
     --val_split $VAL_SPLIT \
     --test_split $TEST_SPLIT \

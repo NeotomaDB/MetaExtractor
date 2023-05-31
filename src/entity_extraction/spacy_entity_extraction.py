@@ -14,7 +14,8 @@ def spacy_extract_all(text: str,
                             model_path=os.path.join(
                                 os.pardir,
                                 "models",
-                                "transformer-v1")):
+                                "v1",
+                                "transformer")):
     """
     Extracts entities from text using a spacy model
 

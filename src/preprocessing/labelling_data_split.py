@@ -27,8 +27,6 @@ logger = logging.getLogger(__name__)
 # set logging level to display info and above
 logger.setLevel(logging.INFO)
 
-opt = docopt(__doc__)
-
 
 def separate_labels_to_train_val_test(
     labelled_file_path: str,
@@ -50,6 +48,12 @@ def separate_labels_to_train_val_test(
     -------
     None.
     """
+
+    # ensure the splits add up to 1 to within 2 decimal places
+    if round(train_split + val_split + test_split, 2) != 1:
+        raise ValueError(
+            f"The splits must add up to 1, currently they add up to {round(train_split + val_split + test_split, 2)}"
+        )
 
     # check the folder exists
     if not os.path.exists(labelled_file_path):
@@ -78,28 +82,50 @@ def separate_labels_to_train_val_test(
     np.random.seed(seed)
     # split the gdd_ids into train, val and test and ensure not overlapping
     train_gdd_ids = np.random.choice(
-        gdd_ids, size=int(train_split * len(gdd_ids)), replace=False
+        gdd_ids, size=round(train_split * len(gdd_ids)), replace=False
     )
     remaining_gdd_ids = np.setdiff1d(gdd_ids, train_gdd_ids)
 
     val_gdd_ids = np.random.choice(
-        remaining_gdd_ids, size=int(val_split * len(gdd_ids)), replace=False
+        remaining_gdd_ids, size=round(val_split * len(gdd_ids)), replace=False
     )
     remaining_gdd_ids = np.setdiff1d(remaining_gdd_ids, val_gdd_ids)
 
     test_gdd_ids = np.random.choice(
-        remaining_gdd_ids, size=int(test_split * len(gdd_ids)), replace=False
+        remaining_gdd_ids, size=round(test_split * len(gdd_ids)), replace=False
     )
+    remaining_gdd_ids = np.setdiff1d(remaining_gdd_ids, test_gdd_ids)
+
+    # check no gdd_ids' left over due to split rounding errors and if they are assign to train
+    if len(np.setdiff1d(remaining_gdd_ids, test_gdd_ids)) > 0:
+        train_gdd_ids = np.append(train_gdd_ids, remaining_gdd_ids)
+        logger.info(
+            f"Due to train/val/test split rounding anomaly, {len(remaining_gdd_ids)} gdd_ids were assigned to train."
+        )
 
     # convert all gdd_id arrays to lists for json serialization
     train_gdd_ids = train_gdd_ids.tolist()
     val_gdd_ids = val_gdd_ids.tolist()
     test_gdd_ids = test_gdd_ids.tolist()
 
-    # assert no overlap between train, val and test
+    # ensure no overlap between train, val and test
     assert len(np.intersect1d(train_gdd_ids, val_gdd_ids)) == 0
     assert len(np.intersect1d(train_gdd_ids, test_gdd_ids)) == 0
     assert len(np.intersect1d(val_gdd_ids, test_gdd_ids)) == 0
+
+    # raise warning if any split is length zero when the split is not zero
+    if len(train_gdd_ids) == 0 and train_split != 0:
+        logger.warning(
+            f"Train split is zero, check the train split ratio and the number of files in the folder."
+        )
+    if len(val_gdd_ids) == 0 and val_split != 0:
+        logger.warning(
+            f"Val split is zero, check the val split ratio and the number of files in the folder."
+        )
+    if len(test_gdd_ids) == 0 and test_split != 0:
+        logger.warning(
+            f"Test split is zero, check the test split ratio and the number of files in the folder."
+        )
 
     data_metrics = {
         "split_seed": seed,
@@ -244,6 +270,7 @@ def get_article_gdd_ids(labelled_file_path: str):
 
 
 def main():
+    opt = docopt(__doc__)
     separate_labels_to_train_val_test(
         labelled_file_path=opt["--raw_label_path"],
         output_path=opt["--output_path"],

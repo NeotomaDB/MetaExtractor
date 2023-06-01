@@ -164,17 +164,18 @@ def get_predicted_labels(ner_pipe, df):
         The evaluation data with the predicted labels added.
     """
     # huggingface needs list of lists with strings for batch processing
-    df["joined_text"] = df["tokens"].apply(lambda x: [" ".join(x)])
+    df["joined_text"] = df["tokens"].apply(lambda x: " ".join(x))
 
     # time the excution
     start = time.time()
-    df["predicted_labels"] = pd.Series(ner_pipe(df.joined_text.to_list()))
+    predicted_labels = ner_pipe(df.joined_text.to_list())
+    df["predicted_labels"] = pd.Series(predicted_labels)
     logger.info(
         f"Prediction time for {len(df)} chunks: {time.time() - start:.2f} seconds"
     )
 
     df[["split_text", "predicted_tokens"]] = df.apply(
-        lambda row: get_hf_token_labels(row.predicted_labels, row.joined_text[0]),
+        lambda row: get_hf_token_labels(row.predicted_labels, row.joined_text),
         axis="columns",
         result_type="expand",
     )

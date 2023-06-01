@@ -229,6 +229,7 @@ def test_extract_email(test_sentences, expected_results):
     for test_sentence, expected_result in zip(test_sentences, expected_results):
         assert extract_email(test_sentence) == expected_result
 
+
 @pytest.mark.parametrize(
     "test_sentences, expected_results",
     [
@@ -245,15 +246,15 @@ def test_extract_email(test_sentences, expected_results):
                 "10°50'E",
             ],
             [
-                [{'start': 0, 'end': 13, 'labels': ['GEOG'], 'text': '40:26:46.302N'}],
-                [{'start': 0, 'end': 14, 'labels': ['GEOG'], 'text': '079:58:55.903W'}],
-                [{'start': 0, 'end': 10, 'labels': ['GEOG'], 'text': '40°26′46″N'}],
-                [{'start': 0, 'end': 13, 'labels': ['GEOG'], 'text': '40d 26′ 46″ N'}],
-                [{'start': 0, 'end': 13, 'labels': ['GEOG'], 'text': 'N40:26:46.302'}],
-                [{'start': 0, 'end': 10, 'labels': ['GEOG'], 'text': 'N40°26′46″'}],
-                [{'start': 0, 'end': 12, 'labels': ['GEOG'], 'text': 'N40d 26′ 46″'}],
-                [{'start': 0, 'end': 11, 'labels': ['GEOG'], 'text': '52°05.75′ N'}],
-                [{'start': 0, 'end': 7, 'labels': ['GEOG'], 'text': "10°50'E"}]
+                [{"start": 0, "end": 13, "labels": ["GEOG"], "text": "40:26:46.302N"}],
+                [{"start": 0, "end": 14, "labels": ["GEOG"], "text": "079:58:55.903W"}],
+                [{"start": 0, "end": 10, "labels": ["GEOG"], "text": "40°26′46″N"}],
+                [{"start": 0, "end": 13, "labels": ["GEOG"], "text": "40d 26′ 46″ N"}],
+                [{"start": 0, "end": 13, "labels": ["GEOG"], "text": "N40:26:46.302"}],
+                [{"start": 0, "end": 10, "labels": ["GEOG"], "text": "N40°26′46″"}],
+                [{"start": 0, "end": 12, "labels": ["GEOG"], "text": "N40d 26′ 46″"}],
+                [{"start": 0, "end": 11, "labels": ["GEOG"], "text": "52°05.75′ N"}],
+                [{"start": 0, "end": 7, "labels": ["GEOG"], "text": "10°50'E"}],
             ],
         )
     ],
@@ -266,6 +267,7 @@ def test_extract_geographic_coordinates(test_sentences, expected_results):
     for test_sentence, expected_result in zip(test_sentences, expected_results):
         assert extract_geographic_coordinates(test_sentence) == expected_result
 
+
 @pytest.mark.parametrize(
     "test_sentences, expected_results",
     [
@@ -275,14 +277,43 @@ def test_extract_geographic_coordinates(test_sentences, expected_results):
                 "The scenery around Garibaldi lake is pristine",
                 "This movie was shot in the old towns of Europe",
                 "Philosophical Transactions of and tbe pollen record in the British Isles, In : Birks HH, Birks HJb, Kaland PE, Moe D, eds.",
-                "Holocene fluctuations of cold climate in the Swiss Alps ( H. ZOLLER -)"
+                "Holocene fluctuations of cold climate in the Swiss Alps ( H. ZOLLER -)",
             ],
             [
-                [{'start': 30, 'end': 36, 'labels': ['REGION'], 'text': 'Europe'}, {'start': 131, 'end': 152, 'labels': ['REGION'], 'text': 'the Pacific Northwest'}],
-                [{'start': 19, 'end': 33, 'labels': ['REGION'], 'text': 'Garibaldi lake'}],
-                [{'start': 40, 'end': 46, 'labels': ['REGION'], 'text': 'Europe'}],
-                [{'start': 55, 'end': 72, 'labels': ['REGION'], 'text': 'the British Isles'}],
-                [{'start': 41, 'end': 55, 'labels': ['REGION'], 'text': 'the Swiss Alps'}]
+                [
+                    {"start": 30, "end": 36, "labels": ["REGION"], "text": "Europe"},
+                    {
+                        "start": 131,
+                        "end": 152,
+                        "labels": ["REGION"],
+                        "text": "the Pacific Northwest",
+                    },
+                ],
+                [
+                    {
+                        "start": 19,
+                        "end": 33,
+                        "labels": ["REGION"],
+                        "text": "Garibaldi lake",
+                    }
+                ],
+                [{"start": 40, "end": 46, "labels": ["REGION"], "text": "Europe"}],
+                [
+                    {
+                        "start": 55,
+                        "end": 72,
+                        "labels": ["REGION"],
+                        "text": "the British Isles",
+                    }
+                ],
+                [
+                    {
+                        "start": 41,
+                        "end": 55,
+                        "labels": ["REGION"],
+                        "text": "the Swiss Alps",
+                    }
+                ],
             ],
         )
     ],
@@ -295,33 +326,58 @@ def test_extract_region_names(test_sentences, expected_results):
     for test_sentence, expected_result in zip(test_sentences, expected_results):
         assert extract_region_names(test_sentence) == expected_result
 
+
 @pytest.mark.parametrize(
     "test_sentences, expected_results",
     [
         (
             [
                 "Percentage calculation is based on the terrestrial pollen sum from which Betula was excluded KM/1 KM/2 KM/3 NM/1 NM/2 NM/3 NM/4 NM/5 NM/6 NM/7 NM/8",
-                "The palaeoecology of an Early Neolithic waterlogged site in northwestern England ( F. OLovmLo -)A pollen-analytical study of cores from the Outer Silver Pit", #False positive
+                "The palaeoecology of an Early Neolithic waterlogged site in northwestern England ( F. OLovmLo -)A pollen-analytical study of cores from the Outer Silver Pit",  # False positive
                 "Description Salix 0.57 1.76 0.73 13.3 1.67 8.78 1.50 2.88 Solanum dulcamara 0 0 0.73 0 0 1.58 0 0 Lysimachia vulgaris 0 0 4.90 0 0.84 0.53 0 0 Mentha-type 00 0 1.04 0 0 00 Lemna 00 0 7.44 0 1.58 0 0",
                 "The first major impacts upon the vegetation record become eident from about 3610 BP with sharp reductions in arboreal taxa, the appearance of cerealtype pollen in L.A.BI, and marked increases in Calluna, Foaceae and Cyperaceae.",
                 "The overlying Sphagnum peat is devoid of clastic elements for a short period during which sediment inorganic content declines.",
-                "Abstract ) ( A. T. CROSS, G. G. THOMPSON and J. B. ZAITZEFF ) 3 - 1 1 Gymnospermae, general The gymnospermous affinity of Eucommiidites ERDTMAN, 1948"
+                "Abstract ) ( A. T. CROSS, G. G. THOMPSON and J. B. ZAITZEFF ) 3 - 1 1 Gymnospermae, general The gymnospermous affinity of Eucommiidites ERDTMAN, 1948",
             ],
             [
-                [{'start': 73, 'end': 79, 'labels': ['TAXA'], 'text': 'Betula'}],
-                [{'start': 146, 'end': 152, 'labels': ['TAXA'], 'text': 'Silver'}], # False positive
+                [{"start": 73, "end": 79, "labels": ["TAXA"], "text": "Betula"}],
                 [
-                    {'start': 12, 'end': 17, 'labels': ['TAXA'], 'text': 'Salix'}, 
-                    {'start': 58, 'end': 75, 'labels': ['TAXA'], 'text': 'Solanum dulcamara'},
-                    {'start': 98, 'end': 117, 'labels': ['TAXA'], 'text': 'Lysimachia vulgaris'}, 
-                    {'start': 143, 'end': 154, 'labels': ['TAXA'], 'text': 'Mentha-type'},
-                    {'start': 143, 'end': 149, 'labels': ['TAXA'], 'text': 'Mentha'}, 
-                    {'start': 172, 'end': 177, 'labels': ['TAXA'], 'text': 'Lemna'}],
+                    {"start": 146, "end": 152, "labels": ["TAXA"], "text": "Silver"}
+                ],  # False positive
                 [
-                    {'start': 195, 'end': 202, 'labels': ['TAXA'], 'text': 'Calluna'}, 
-                    {'start': 216, 'end': 226, 'labels': ['TAXA'], 'text': 'Cyperaceae'}],
-                [{'start': 14, 'end': 22, 'labels': ['TAXA'], 'text': 'Sphagnum'}],
-                [{'start': 70, 'end': 81, 'labels': ['TAXA'], 'text': 'Gymnosperma'}]
+                    {"start": 12, "end": 17, "labels": ["TAXA"], "text": "Salix"},
+                    {
+                        "start": 58,
+                        "end": 75,
+                        "labels": ["TAXA"],
+                        "text": "Solanum dulcamara",
+                    },
+                    {
+                        "start": 98,
+                        "end": 117,
+                        "labels": ["TAXA"],
+                        "text": "Lysimachia vulgaris",
+                    },
+                    {
+                        "start": 143,
+                        "end": 154,
+                        "labels": ["TAXA"],
+                        "text": "Mentha-type",
+                    },
+                    {"start": 143, "end": 149, "labels": ["TAXA"], "text": "Mentha"},
+                    {"start": 172, "end": 177, "labels": ["TAXA"], "text": "Lemna"},
+                ],
+                [
+                    {"start": 195, "end": 202, "labels": ["TAXA"], "text": "Calluna"},
+                    {
+                        "start": 216,
+                        "end": 226,
+                        "labels": ["TAXA"],
+                        "text": "Cyperaceae",
+                    },
+                ],
+                [{"start": 14, "end": 22, "labels": ["TAXA"], "text": "Sphagnum"}],
+                [{"start": 70, "end": 81, "labels": ["TAXA"], "text": "Gymnosperma"}],
             ],
         )
     ],
@@ -332,4 +388,10 @@ def test_extract_taxa(test_sentences, expected_results):
     """
 
     for test_sentence, expected_result in zip(test_sentences, expected_results):
-        assert extract_taxa(test_sentence, os.path.join("data", "raw", "taxa.csv")) == expected_result
+        assert (
+            extract_taxa(
+                test_sentence,
+                os.path.join("data", "entity-extraction", "raw", "taxa.csv"),
+            )
+            == expected_result
+        )

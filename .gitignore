@@ -4,7 +4,7 @@ data/**/*.txt
 data/**/*.json
 # exclude .csv except for specific small data
 data/**/*.csv
-!data/raw/taxa.csv
+!data/entity-extraction/raw/taxa.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

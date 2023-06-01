@@ -14,7 +14,7 @@ import spacy
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
-def load_taxa_data(file_path=os.path.join(os.pardir, "data", "raw", "taxa.csv")):
+def load_taxa_data(file_path=os.path.join(os.pardir, "data", "entity-extraction", "raw", "taxa.csv")):
     """
     Loads the taxa names from a CSV file
 
@@ -143,7 +143,7 @@ def extract_region_names(text: str, spacy_model: str = "en_core_web_lg") -> list
     return labels
 
 
-def extract_taxa(text: str, filepath = os.path.join(os.pardir, "data", "raw", "taxa.csv")) -> list:
+def extract_taxa(text: str, filepath = os.path.join(os.pardir, "data", "original_files", "taxa.csv")) -> list:
     """
     Extracts the taxa from the text.
 

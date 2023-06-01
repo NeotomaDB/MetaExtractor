@@ -28,20 +28,22 @@ export MODEL_NAME_OR_PATH="allenai/specter2"
 # set the location of the labelled data, ideally this is run from root of repo
 # leave test_split at non_zero value to ensure test set is created for evaluation
 export LABELLED_FILE_LOCATION="$(pwd)/data/entity-extraction/processed/2023-05-31_label-export_39-articles/"
-
+export OUTPUT_DIR="/models/ner/test-finetuning/"
+export LOG_DIR="/models/ner/test-finetuning/logs/"
 # comment the following in/out if MLflow server is available/.env file setup
 export MLFLOW_EXPERIMENT_NAME="test-hf-token-classification"
 # whether to export and log model weights
 # set to 0 if trialling tuning for metrics, set to 1 to log full model wieghts and files
-export MLFLOW_LOG_ARTIFACTS="1"
+export HF_MLFLOW_LOG_ARTIFACTS="1"
 # general settings, don't change if using mlflow
 export MLFLOW_FLATTEN_PARAMS="2" # azure mlflow has a limit of 200 params, leveing this nested gets around it
-export AZUREML_ARTIFACTS_DEFAULT_TIMEOUT="1800" # large file upload times reuqire longer time out
+export AZUREML_ARTIFACTS_DEFAULT_TIMEOUT="3600" # large file upload times reuqire longer time out
 
 python src/entity_extraction/training/hf_token_classification/ner_training.py \
     --run_name test-finetuning \
     --model_name_or_path "$MODEL_NAME_OR_PATH" \
-    --output_dir "$(pwd)/models/ner/test-finetuning/" \
+    --output_dir "$(pwd)$OUTPUT_DIR" \
+    --logging_dir "$(pwd)$LOG_DIR" \
     --train_file "$LABELLED_FILE_LOCATION/train.json" \
     --validation_file "$LABELLED_FILE_LOCATION/val.json" \
     --text_column_name tokens \
@@ -64,6 +66,8 @@ python src/entity_extraction/training/hf_token_classification/ner_training.py \
     --gradient_accumulation_steps 3 \
     --max_train_samples 1 \
     --max_eval_samples 1 \
+
+
 
 # all options
 # usage: run_ner.py [-h] --model_name_or_path MODEL_NAME_OR_PATH [--config_name CONFIG_NAME] [--tokenizer_name TOKENIZER_NAME] [--cache_dir CACHE_DIR] [--model_revision MODEL_REVISION]

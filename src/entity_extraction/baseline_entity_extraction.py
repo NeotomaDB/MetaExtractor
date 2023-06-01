@@ -19,7 +19,9 @@ from nltk.corpus import stopwords
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
-def load_taxa_data(file_path=os.path.join(os.pardir, "data", "raw", "taxa.csv")):
+def load_taxa_data(
+    file_path=os.path.join(os.pardir, "data", "entity-extraction", "raw", "taxa.csv")
+):
     """
     Loads the taxa names from a CSV file
 

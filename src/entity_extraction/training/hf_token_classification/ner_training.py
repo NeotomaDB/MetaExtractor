@@ -43,11 +43,13 @@ from transformers import (
     Trainer,
     TrainingArguments,
     set_seed,
+    pipeline,
 )
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version, send_example_telemetry
 from transformers.utils.versions import require_version
 from dotenv import load_dotenv, find_dotenv
+from huggingface_hub import ModelCard, ModelCardData
 
 sys.path.append(
     os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, os.pardir)
@@ -60,12 +62,16 @@ from src.entity_extraction.entity_extraction_evaluation import (
 
 load_dotenv(find_dotenv())
 
-
+FINAL_MODEL_NAME = os.environ.get("FINAL_MODEL_NAME")
 mlflow_experiment = os.environ.get("MLFLOW_EXPERIMENT_NAME")
 
 # load mlflow if it is defined in the bash script
 if mlflow_experiment is not None:
     import mlflow
+
+    USE_MLFLOW = True
+else:
+    USE_MLFLOW = False
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.28.0")
@@ -737,6 +743,50 @@ def main():
         trainer.log_metrics("train", metrics)
         trainer.save_metrics("train", metrics)
         trainer.save_state()
+
+        # log the model pipeline to mlflow using mlflow.tr
+        if USE_MLFLOW is True:
+            model = AutoModelForTokenClassification.from_pretrained(
+                training_args.output_dir
+            )
+            tokenizer = AutoTokenizer.from_pretrained(
+                training_args.output_dir, model_max_length=512
+            )
+            ner_pipe = pipeline(
+                "ner",
+                model=model,
+                tokenizer=tokenizer,
+                grouped_entities=True,
+            )
+
+            card_data = ModelCardData(
+                language="en",
+                license="mit",
+                library_name="pt",
+                library_version=transformers.__version__,
+                name=FINAL_MODEL_NAME,
+            )
+            # see here for all fields: https://github.com/huggingface/huggingface_hub/blob/b347dfd200bf9a56d1e4edd050783178bddec186/src/huggingface_hub/templates/modelcard_template.md
+            card = ModelCard.from_template(
+                card_data,
+                model_id=FINAL_MODEL_NAME,
+                model_description="This model extracts metadata from Paleoecology research article text.",
+                developers="Ty Andrews, Jenit Jain, Shaun Hutchinson, Kelly Wu, and Simon Goring",
+                repo="https://github.com/NeotomaDB/MetaExtractor",
+                language="English",
+                license="MIT",
+                finetuned_from=model_args.model_name_or_path,
+                tasks="token-classification",
+                # take the train_file location and split by / and take just last folder name
+                training_data=data_args.train_file.split("/")[-2],
+            )
+
+            mlflow.transformers.log_model(
+                # get the best model from the training results object
+                transformers_model=ner_pipe,
+                artifact_path=FINAL_MODEL_NAME,
+                model_card=card,
+            )
 
     # Evaluation
     if training_args.do_eval:

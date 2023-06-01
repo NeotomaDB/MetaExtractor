@@ -21,37 +21,30 @@ echo python.__version__ = $(python -c 'import sys; print(sys.version)')
 # ensure we're in the MetaExtractor root directory
 echo "Current working directory: $(pwd)"
 
+# what base model should be used from the huggingface library
+# see https://huggingface.co/models for options
+export MODEL_NAME_OR_PATH="allenai/specter2"
+
 # set the location of the labelled data, ideally this is run from root of repo
 # leave test_split at non_zero value to ensure test set is created for evaluation
-export LABELLED_FILE_LOCATION="$(pwd)/data/labelled/labelled/"
-export TRAIN_SPLIT=0.8
-export VAL_SPLIT=0.18
-export TEST_SPLIT=0.02
+export LABELLED_FILE_LOCATION="$(pwd)/data/entity-extraction/processed/2023-05-31_label-export_39-articles/"
 
 # comment the following in/out if MLflow server is available/.env file setup
 export MLFLOW_EXPERIMENT_NAME="test-hf-token-classification"
 # whether to export and log model weights
 # set to 0 if trialling tuning for metrics, set to 1 to log full model wieghts and files
-export MLFLOW_LOG_ARTIFACTS="0"
+export MLFLOW_LOG_ARTIFACTS="1"
 # general settings, don't change if using mlflow
 export MLFLOW_FLATTEN_PARAMS="2" # azure mlflow has a limit of 200 params, leveing this nested gets around it
 export AZUREML_ARTIFACTS_DEFAULT_TIMEOUT="1800" # large file upload times reuqire longer time out
 
-# process the labelled files to prepare them for training
-python src/entity_extraction/training/hf_token_classification/labelstudio_preprocessing.py \
-    --label_files "$LABELLED_FILE_LOCATION" \
-    --train_split $TRAIN_SPLIT \
-    --val_split $VAL_SPLIT \
-    --test_split $TEST_SPLIT \
-    --max_token_length 256
-
 python src/entity_extraction/training/hf_token_classification/ner_training.py \
-    --run_name specter2-finetuned-v2 \
-    --model_name_or_path allenai/specter2 \
-    --output_dir "$(pwd)/models/ner/specter2-finetuned-v2/" \
-    --train_file "$LABELLED_FILE_LOCATION/hf_processed/train.json" \
-    --validation_file "$LABELLED_FILE_LOCATION/hf_processed/val.json" \
-    --text_column_name text \
+    --run_name test-finetuning \
+    --model_name_or_path "$MODEL_NAME_OR_PATH" \
+    --output_dir "$(pwd)/models/ner/test-finetuning/" \
+    --train_file "$LABELLED_FILE_LOCATION/train.json" \
+    --validation_file "$LABELLED_FILE_LOCATION/val.json" \
+    --text_column_name tokens \
     --label_column_name ner_tags \
     --label_all_tokens True \
     --return_entity_level_metrics True \

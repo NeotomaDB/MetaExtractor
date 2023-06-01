@@ -1,15 +1,15 @@
+# ignore files in models folder but keep .gitkeep
+models/ner/*
+results/ner/*
+!.gitkeep
+
 # exclude all txt files in data
 data/**/*.txt
 # include all json files in data
 data/**/*.json
 # exclude .csv except for specific small data
 data/**/*.csv
-!data/raw/taxa.csv
-
-# ignore files in models folder but keep .gitkeep
-models/ner/*
-results/ner/*
-!.gitkeep
+!data/entity-extraction/raw/taxa.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

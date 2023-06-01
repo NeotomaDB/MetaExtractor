@@ -19,6 +19,7 @@ python src/entity_extraction/training/hf_token_classification/hf_evaluate.py \
     --model_path "$MODEL_PATH" \
     --output_path "$OUTPUT_DIR" \
     --model_name "$MODEL_NAME" \
+    --max_samples 1
 
 # use this for local cpu testing
     # --max_samples 1

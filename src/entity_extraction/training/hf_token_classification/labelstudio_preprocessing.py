@@ -2,14 +2,11 @@
 # Date: 2023-05-24
 """This script procsses the labelstudio output data into a format used by huggingface.
 
-Usage: labelstudio_preprocessing.py --label_files=<label_files> [--max_token_length=<max_token_length>] [--train_split=<train_split>] [--val_split=<val_split>] [--test_split=<test_split>]
+Usage: labelstudio_preprocessing.py --label_files=<label_files> [--max_seq_length=<max_token_length>]
 
 Options:
     --label_files=<label_files>             The path to where the label files are. [default: all]
-    --max_token_length=<max_token_length>   How many tokens the text is split into per training example. [default: 512]
-    --train_split=<train_split>             What percentage of examples to dedicate to train set [default: 0.7]
-    --val_split=<val_split>                 What percentage of examples to dedicate to validation set [default: 0.15]
-    --test_split=<test_split>               What percentage of examples to dedicate to test set [default: 0.15]
+    --max_seq_length=<max_token_length>   How many tokens the text is split into per training example. [default: 256]
 """
 
 import os, sys
@@ -37,16 +34,16 @@ opt = docopt(__doc__)
 def convert_labelled_data_to_hf_format(
     labelled_file_path: str,
     max_seq_length: int = 256,
-    train_split: float = 0.65,
-    val_split: float = 0.2,
-    test_split: float = 0.15,
-    seed: int = 42,
 ):
     """
+    Processes train/val/test data from labelstudio into a format used by huggingface.
+
     Parameters
     ----------
     labelled_file_path : str
         The path to the folder containing the labelled data.
+    max_seq_length : int, optional
+        The maximum number of words per training example, by default 256.
 
     Returns
     -------
@@ -57,150 +54,72 @@ def convert_labelled_data_to_hf_format(
     if not os.path.exists(labelled_file_path):
         raise FileNotFoundError(f"The folder {labelled_file_path} does not exist.")
 
-    # check the folder contains files
-    if len(os.listdir(labelled_file_path)) == 0:
+    # check the folder contains folders train/test/val
+    if not os.path.exists(os.path.join(labelled_file_path, "train")):
         raise FileNotFoundError(
-            f"The folder {labelled_file_path} does not contain any files."
+            f"The folder {labelled_file_path} does not contain a train folder."
+        )
+    if not os.path.exists(os.path.join(labelled_file_path, "test")):
+        raise FileNotFoundError(
+            f"The folder {labelled_file_path} does not contain a test folder."
+        )
+    if not os.path.exists(os.path.join(labelled_file_path, "val")):
+        raise FileNotFoundError(
+            f"The folder {labelled_file_path} does not contain a val folder."
         )
 
-    # create output folder if it does not exist
-    hf_processed_folder = os.path.join(labelled_file_path, "hf_processed")
-    if not os.path.exists(hf_processed_folder):
-        os.mkdir(hf_processed_folder)
+    for folder in ["train", "test", "val"]:
+        data_folder = os.path.join(labelled_file_path, folder)
 
-    gdd_ids = get_article_gdd_ids(labelled_file_path)
+        labelled_chunks = []
 
-    # set seed for reproducibility
-    np.random.seed(seed)
-    # split the gdd_ids into train, val and test and ensure not overlapping
-    train_gdd_ids = np.random.choice(
-        gdd_ids, size=int(train_split * len(gdd_ids)), replace=False
-    )
-    remaining_gdd_ids = np.setdiff1d(gdd_ids, train_gdd_ids)
+        for file in os.listdir(data_folder):
+            # if file doesn't end with txt skip it
+            if not file.endswith(".txt"):
+                continue
 
-    val_gdd_ids = np.random.choice(
-        remaining_gdd_ids, size=int(val_split * len(gdd_ids)), replace=False
-    )
-    remaining_gdd_ids = np.setdiff1d(remaining_gdd_ids, val_gdd_ids)
+            with open(os.path.join(data_folder, file), "r") as f:
+                task = json.load(f)
 
-    test_gdd_ids = np.random.choice(
-        remaining_gdd_ids, size=int(test_split * len(gdd_ids)), replace=False
-    )
+            try:
+                raw_text = task["task"]["data"]["text"]
+                annotation_result = task["result"]
+                gdd_id = task["task"]["data"]["gdd_id"]
 
-    # assert no overlap between train, val and test
-    assert len(np.intersect1d(train_gdd_ids, val_gdd_ids)) == 0
-    assert len(np.intersect1d(train_gdd_ids, test_gdd_ids)) == 0
-    assert len(np.intersect1d(val_gdd_ids, test_gdd_ids)) == 0
+                labelled_entities = [
+                    annotation["value"] for annotation in annotation_result
+                ]
 
-    train_data = []
-    val_data = []
-    test_data = []
+                tokens, token_labels = get_token_labels(labelled_entities, raw_text)
 
-    # iterate through the files in the folder and convert them to the hf format
-    for file in os.listdir(labelled_file_path):
-        # if file doesn't end with txt skip it
-        if not file.endswith(".txt"):
-            continue
+                # split the data into chunks of tokens and labels
+                chunked_tokens = [
+                    tokens[i : i + max_seq_length]
+                    for i in range(0, len(tokens), max_seq_length)
+                ]
+                chunked_labels = [
+                    token_labels[i : i + max_seq_length]
+                    for i in range(0, len(token_labels), max_seq_length)
+                ]
 
-        with open(os.path.join(labelled_file_path, file), "r") as f:
-            task = json.load(f)
+                # make each chunk a dict with keys ner_tags and tokens
+                chunked_data = [
+                    {
+                        "ner_tags": chunked_labels[i],
+                        "tokens": chunked_tokens[i],
+                    }
+                    for i in range(len(chunked_tokens))
+                ]
 
-        try:
-            raw_text = task["task"]["data"]["text"]
-            annotation_result = task["result"]
-            gdd_id = task["task"]["data"]["gdd_id"]
+                labelled_chunks.extend(chunked_data)
 
-            labelled_entities = [
-                annotation["value"] for annotation in annotation_result
-            ]
+            except Exception as e:
+                logger.warning(f"Issue detected with file, skipping: {file}, {e}")
 
-            tokens, token_labels = get_token_labels(labelled_entities, raw_text)
-
-            # split the data into chunks of tokens and labels
-            chunked_tokens = [
-                tokens[i : i + max_seq_length]
-                for i in range(0, len(tokens), max_seq_length)
-            ]
-            chunked_labels = [
-                token_labels[i : i + max_seq_length]
-                for i in range(0, len(token_labels), max_seq_length)
-            ]
-
-            # make each chunk a dict with keys ner_tags and tokens
-            chunked_data = [
-                {
-                    "ner_tags": chunked_labels[i],
-                    "text": chunked_tokens[i],
-                }
-                for i in range(len(chunked_tokens))
-            ]
-        except Exception as e:
-            logger.warning(f"Issue detected with file, skipping: {file}, {e}")
-
-        # put the data into the correct split
-        if gdd_id in train_gdd_ids:
-            train_data.extend(chunked_data)
-        elif gdd_id in val_gdd_ids:
-            val_data.extend(chunked_data)
-        elif gdd_id in test_gdd_ids:
-            test_data.extend(chunked_data)
-
-    # save the data to the hf_processed folder with each list item in a new line delimited json
-    with open(os.path.join(hf_processed_folder, "train.json"), "w") as f:
-        for item in train_data:
-            f.write(json.dumps(item) + "\n")
-
-    with open(os.path.join(hf_processed_folder, "val.json"), "w") as f:
-        for item in val_data:
-            f.write(json.dumps(item) + "\n")
-
-    with open(os.path.join(hf_processed_folder, "test.json"), "w") as f:
-        for item in test_data:
-            f.write(json.dumps(item) + "\n")
-
-
-def get_article_gdd_ids(labelled_file_path: str):
-    """
-    Parameters
-    ----------
-    labelled_file_path : str
-        The path to the folder containing the labelled data.
-
-    Returns
-    -------
-    list
-        A list of the gdd_ids of the articles in the labelled data.
-    """
-
-    # check the folder exists
-    if not os.path.exists(labelled_file_path):
-        raise FileNotFoundError(f"The folder {labelled_file_path} does not exist.")
-
-    # check the folder contains files
-    if len(os.listdir(labelled_file_path)) == 0:
-        raise FileNotFoundError(
-            f"The folder {labelled_file_path} does not contain any files."
-        )
-
-    # iterate through the files and get the unique gdd_ids
-    gdd_ids = []
-    for file in os.listdir(labelled_file_path):
-        # if file doesn't end with txt skip it
-        if not file.endswith(".txt"):
-            continue
-
-        with open(os.path.join(labelled_file_path, file), "r") as f:
-            task = json.load(f)
-
-        try:
-            gdd_id = task["task"]["data"]["gdd_id"]
-        except Exception as e:
-            logger.warning(f"Issue with file data: {file}, {e}")
-
-        if gdd_id not in gdd_ids:
-            gdd_ids.append(gdd_id)
-
-    return gdd_ids
+            # save the data to the hf_processed folder with each list item in a new line delimited json
+            with open(os.path.join(labelled_file_path, f"{folder}.json"), "w") as f:
+                for item in labelled_chunks:
+                    f.write(json.dumps(item) + "\n")
 
 
 # needed as tokenizing adds CLS and SEP tokens, doesn't match labels

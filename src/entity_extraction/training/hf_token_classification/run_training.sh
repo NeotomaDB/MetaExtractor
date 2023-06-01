@@ -24,6 +24,8 @@ echo "Current working directory: $(pwd)"
 # what base model should be used from the huggingface library
 # see https://huggingface.co/models for options
 export MODEL_NAME_OR_PATH="allenai/specter2"
+# what the end model should be called, this is used for logging and saving
+export FINAL_MODEL_NAME="MetaExtractor"
 
 # set the location of the labelled data, ideally this is run from root of repo
 # leave test_split at non_zero value to ensure test set is created for evaluation

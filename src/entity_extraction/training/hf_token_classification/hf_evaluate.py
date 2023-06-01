@@ -16,6 +16,7 @@ import os, sys
 
 import pandas as pd
 import numpy as np
+import time
 import json
 import logging
 from docopt import docopt
@@ -32,8 +33,6 @@ from src.entity_extraction.entity_extraction_evaluation import (
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-opt = docopt(__doc__)
 
 
 def get_hf_token_labels(labelled_entities, raw_text):
@@ -164,12 +163,18 @@ def get_predicted_labels(ner_pipe, df):
     df : pandas.DataFrame
         The evaluation data with the predicted labels added.
     """
+    # huggingface needs list of lists with strings for batch processing
+    df["joined_text"] = df["tokens"].apply(lambda x: [" ".join(x)])
 
-    # get the predicted labels
-    df["predicted_labels"] = df["text"].apply(lambda x: ner_pipe(" ".join(x)))
+    # time the excution
+    start = time.time()
+    df["predicted_labels"] = pd.Series(ner_pipe(df.joined_text.to_list()))
+    logger.info(
+        f"Prediction time for {len(df)} chunks: {time.time() - start:.2f} seconds"
+    )
 
     df[["split_text", "predicted_tokens"]] = df.apply(
-        lambda row: get_hf_token_labels(row.predicted_labels, " ".join(row.text)),
+        lambda row: get_hf_token_labels(row.predicted_labels, row.joined_text[0]),
         axis="columns",
         result_type="expand",
     )
@@ -313,10 +318,14 @@ def export_classification_results(
 
 
 def main():
+    opt = docopt(__doc__)
+
     # run evaluation for each json file in the data directory
     for file in os.listdir(opt["--data_path"]):
-        # skip non json files
-        if not file.endswith(".json"):
+        # skip non json files and only ones that contain the words train/val/test
+        if not file.endswith(".json") or (
+            "train" not in file and "val" not in file and "test" not in file
+        ):
             continue
         logger.info(f"Evaluating {file}")
         file_name = file.split(".")[0]
@@ -328,7 +337,8 @@ def main():
             logger.info(
                 f"Using just a subsample of the data of size {opt['--max_samples']}"
             )
-            df = df.sample(int(opt["--max_samples"]))
+            # reset index and drop it
+            df = df.sample(int(opt["--max_samples"])).reset_index(drop=True)
 
         # load the model
         ner_pipe, model, tokenizer = load_ner_model_pipeline(opt["--model_path"])

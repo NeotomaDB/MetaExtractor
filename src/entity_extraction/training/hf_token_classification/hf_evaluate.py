@@ -53,6 +53,13 @@ def get_hf_token_labels(labelled_entities, raw_text):
     token_labels : list
         A list of labels per token in the raw text.
     """
+    # ensure raw_text is a string and labelled_entities is a list
+    if not isinstance(raw_text, str):
+        raise TypeError(f"raw_text must be a string. Got {type(raw_text)}")
+    elif not isinstance(labelled_entities, list):
+        raise TypeError(
+            f"labelled_entities must be a list. Got {type(labelled_entities)}"
+        )
 
     # split the text by whitespace
     split_text = raw_text.split()
@@ -163,6 +170,10 @@ def get_predicted_labels(ner_pipe, df):
     df : pandas.DataFrame
         The evaluation data with the predicted labels added.
     """
+
+    if len(df) == 0:
+        raise ValueError("The provided dataframe is empty.")
+
     # huggingface needs list of lists with strings for batch processing
     df["joined_text"] = df["tokens"].apply(lambda x: " ".join(x))
 
@@ -199,6 +210,14 @@ def generate_classification_results(true_tokens, predicted_tokens):
     classification_results : dict
         The classification results.
     """
+
+    if len(true_tokens) != len(predicted_tokens):
+        raise ValueError(
+            "The true tokens and predicted tokens must be the same length."
+        )
+    
+    if len(true_tokens) == 0 or len(predicted_tokens) == 0:
+        raise ValueError("The true tokens and predicted tokens must not be empty.")
 
     (
         token_accuracy,

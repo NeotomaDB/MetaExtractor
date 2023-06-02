@@ -262,7 +262,7 @@ def relevance_prediction(df_with_embedding, model_object, processed_path, log_pa
 if __name__ == "__main__":
 
     # download crossref metadata and save to json files
-    crossref_extract('../data/article-relevance/raw/doi_list.csv', 'doi', 'data')
+    crossref_extract('../data/article-relevance/raw/doi_list.csv', 'doi', '../data/article-relevance/raw')
 
     # use metadata to create overall metadata dataframe 
     metadata_df = crossref_data_cleaning('../data/article-relevance/raw/crossref')

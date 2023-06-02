@@ -29,6 +29,7 @@ sys.path.append(
 from src.entity_extraction.entity_extraction_evaluation import (
     calculate_entity_classification_metrics,
     plot_token_classification_report,
+    generate_confusion_matrix,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -358,6 +359,13 @@ def main():
         all_tagged_labels.append(tagged_labels)
         
     logger.info("Generated predictions, calculating classification results")
+    
+    # get the confusion matrix
+    generate_confusion_matrix(
+        labelled_tokens=all_tagged_labels, predicted_tokens=all_predicted_labels,
+        output_path=opt["--output_path"], model_name=opt["--model_name"]
+    )        
+    
     # get the classification results
     classification_results = generate_classification_results(
         true_tokens=all_tagged_labels, predicted_tokens=all_predicted_labels
@@ -375,7 +383,7 @@ def main():
         true_tokens=all_tagged_labels,
         predicted_tokens=all_predicted_labels,
         output_path=opt["--output_path"],
-        model_name=opt["--model_name"] + "_" + file_name,
+        model_name=opt["--model_name"],
     )
 
 

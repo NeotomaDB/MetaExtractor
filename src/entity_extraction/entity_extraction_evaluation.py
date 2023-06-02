@@ -13,6 +13,7 @@ from spacy.tokens import Doc
 import spacy
 import json
 import copy
+import numpy as np
 
 def load_json_label_files(labelled_file_path:str):
     """
@@ -102,6 +103,115 @@ def get_token_labels(labelled_entities, raw_text):
             token_labels[token_start] = f"B-{label}"
 
     return split_text, token_labels
+
+def generate_confusion_matrix(
+    labelled_tokens: list,
+    predicted_tokens: list,
+    output_path: str,
+    model_name: str
+):
+    """
+    Generates confusion matrix 
+    
+    Parameters
+    ----------
+    labelled_tokens : list[list[str]]
+        The true labels per token.
+    predicted_tokens : list[list[str]]
+        The predicted labels per token.
+    output_path: str
+        Path to output the confusion matrix diagram
+    model_name: str
+        Name of the model to include in the diagram title
+    """
+    
+    def get_label_to_index(labels):
+        """
+        Generates dictionary of labels to index
+    
+        Parameters
+        ----------
+        labels : list[list[str]]
+            The predicted labels per token.
+        """
+        # Create empty dictionary
+        label_to_index = {}
+        
+        # Loop through each document
+        for i in range(len(labels)):
+            # Loop through each token
+            for j in range(len(labels[i])):
+                # Get the label
+                label = labels[i][j]
+                label = label.replace("B-", "").replace("I-", "")
+                # If the label is not in the dictionary, add it
+                if label not in label_to_index.keys():
+                    label_to_index[label] = len(label_to_index)
+                    
+        return label_to_index
+    
+    label_to_index = get_label_to_index(labelled_tokens)
+    
+    num_tags = len(label_to_index)
+    # Create empty confusion matrix
+    confusion_matrix = np.zeros((num_tags, num_tags))
+    
+    labels = ["O"] * num_tags
+    for key, value in label_to_index.items():
+        labels[value] = key
+        
+    # Loop through each document
+    for i in range(len(predicted_tokens)):
+        # Loop through each token
+        for j in range(len(predicted_tokens[i])):
+            
+            # Get the predicted and tagged labels
+            predicted_label = predicted_tokens[i][j].replace("B-", "").replace("I-", "")
+            tagged_label = labelled_tokens[i][j].replace("B-", "").replace("I-", "")
+            
+            # Get the index of the predicted and tagged labels
+            predicted_index = label_to_index[predicted_label]
+            tagged_index = label_to_index[tagged_label]
+            
+            # Add 1 to the confusion matrix
+            confusion_matrix[tagged_index][predicted_index] += 1
+    
+    # normalize the matrix
+    confusion_matrix = (
+        confusion_matrix.astype('float') / confusion_matrix.sum(axis=1)[:, np.newaxis]
+    )
+    
+    # Create a heatmap
+    fig, ax = plt.subplots()
+    heatmap = ax.imshow(confusion_matrix, cmap='viridis')
+    
+    # Add colorbar
+    cbar = plt.colorbar(heatmap)
+
+    # Add labels
+    ax.set_xticks(np.arange(confusion_matrix.shape[1]))
+    ax.set_yticks(np.arange(confusion_matrix.shape[0]))
+    ax.set_xticklabels(labels)
+    ax.set_yticklabels(labels)
+    
+    # set labels
+    ax.set_title("Confusion Matrix")
+    ax.set_ylabel('True')
+    ax.set_xlabel('Predicted')
+    ax.grid(False)
+    
+    #set labels for each grid box
+    for i in range(confusion_matrix.shape[0]):
+        for j in range(confusion_matrix.shape[1]):
+            _ = ax.text(j, i, round(confusion_matrix[i, j], 2),
+                           ha="center", va="center", color="w")
+    
+    plt.setp(ax.get_xticklabels(), rotation=30, ha="right", rotation_mode="anchor")
+    
+    output_path = os.path.join(output_path, f"{model_name}_confusion_matrix.png")
+    
+    # Save the figure
+    plt.savefig(output_path, dpi=300)
 
 
 def plot_token_classification_report(

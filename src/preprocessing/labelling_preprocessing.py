@@ -13,7 +13,11 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 from src.entity_extraction.baseline_entity_extraction import baseline_extract_all
 from src.entity_extraction.spacy_entity_extraction import spacy_extract_all
 
-nlp = spacy.load(os.path.join("..", "..", "models", "v1", "transformer"))
+nlp = spacy.load(os.path.join(os.pardir,
+                              os.pardir,
+                              "models", 
+                              "ner",
+                              "transformer-v3"))
 
 
 def clean_words(words: list):
@@ -314,13 +318,15 @@ def chunk_text(article):
 
 if __name__ == "__main__":
     
-    model_version = "transformers-ner-0.0.1"
+    model_version = "transformers-ner-0.0.3"
     
     bib_df = preprocessed_bibliography(
                 os.path.join(
                     os.pardir,
                     os.pardir,
                     "data",
+                    "entity-extraction",
+                    "raw",
                     "original_files", 
                     "bibjson"
 ))
@@ -330,6 +336,8 @@ if __name__ == "__main__":
                                 os.pardir,
                                 os.pardir,
                                 "data",
+                                "entity-extraction",
+                                "raw",
                                 "original_files",
                                 "sentences_nlp352"))
     
@@ -363,8 +371,10 @@ if __name__ == "__main__":
                         os.pardir,
                         os.pardir,
                         "data",
+                        "entity-extraction",
+                        "raw",
                         "pre-labeling",
-                        model_version,
+                        f"{model_version}_labeling",
                         f"{gdd}_{i}.json"),
                       "w") as fout:
                 

@@ -9,9 +9,9 @@ echo "Current working directory: $(pwd)"
 
 # set the location of the labelled data, ideally this is run from root of repo
 export DATA_DIR="$(pwd)/data/entity-extraction/processed/2023-05-31_label-export_39-articles/val"
-export MODEL_PATH="$(pwd)/models/ner/transformer-v2"
+export MODEL_PATH="$(pwd)/models/ner/transformer-v3"
 export OUTPUT_DIR="$(pwd)/results/ner/test-results/"
-export MODEL_NAME="spacy-transformer-v2"
+export MODEL_NAME="spacy-transformer-v3"
 export GPU=False
 
 # process the labelled files to prepare them for training

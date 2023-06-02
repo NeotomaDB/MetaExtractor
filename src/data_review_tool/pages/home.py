@@ -27,19 +27,18 @@ df = pd.DataFrame()
 
 # Populate the cross ref df
 for f in files:
-    file_path = f"data/labelled/{f}"
-    onefile = pd.read_json(file_path)
-    onefile = pd.DataFrame(onefile.loc[0, "data"], index=onefile.index).reset_index(drop=True)
+    file = open(f"data/labelled/{f}", "r")
+    onefile = pd.json_normalize(json.loads(file.read()))
     
     # merge
     df = pd.concat([df, onefile])
-df = df[["title", "doi", "status", "date_uploaded", "date_modified", "gddid"]].rename(
-        columns={"title": "Article", "doi": "DOI", "status": "Status", "date_uploaded": "Date Added", "date_modified": "Date Updated"}
+df = df[["title", "doi", "status", "date_processed", "last_updated", "gddid"]].rename(
+        columns={"title": "Article", "doi": "DOI", "status": "Status", "date_uploaded": "Date Added", "last_updated": "Date Updated"}
     )
 df["Review"] = "Review"
 
-current = df[df["Status"] == "In Progress"]
-completed = df[df["Status"] == "Completed"]
+current = df[df["Status"] == "False"]
+completed = df[df["Status"] == "True"]
 
 # columns = ["title", "doi", "status", "date_uploaded", "date_modified"]       
 

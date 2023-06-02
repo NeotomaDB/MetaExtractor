@@ -15,9 +15,10 @@ from src.entity_extraction.spacy_entity_extraction import spacy_extract_all
 
 nlp = spacy.load(os.path.join("..", "..", "models", "v1", "transformer"))
 
-def clean_words(words:list):
-    """Perform basic preprocessing on individual words 
-    
+
+def clean_words(words: list):
+    """Perform basic preprocessing on individual words
+
     Parameters
     ----------
     words : list
@@ -30,12 +31,13 @@ def clean_words(words:list):
     """
     clean_words = []
     for i, w in enumerate(words):
-        if w == '.':
-            if len(clean_words)>0:
-                clean_words[-1] += '.'
+        if w == ".":
+            if len(clean_words) > 0:
+                clean_words[-1] += "."
         else:
             clean_words.append(w.strip())
     return clean_words
+
 
 def get_journal_articles(sentences_path):
     """
@@ -49,20 +51,24 @@ def get_journal_articles(sentences_path):
     Returns
     -------
     journal_articles: pd.DataFrame
-        pd.DataFrame with cleaned individual sentences for all articles 
+        pd.DataFrame with cleaned individual sentences for all articles
     """
-    journal_articles = pd.read_csv(sentences_path, 
-                                sep='\t',
-                                names = ['gddid', 
-                                        'sentid',
-                                        'wordidx',
-                                        'words',
-                                        'part_of_speech',
-                                        'special_class',
-                                        'lemmas',
-                                        'word_type',
-                                        'word_modified'], 
-                                usecols = ['gddid', 'sentid', 'words'])
+    journal_articles = pd.read_csv(
+        sentences_path,
+        sep="\t",
+        names=[
+            "gddid",
+            "sentid",
+            "wordidx",
+            "words",
+            "part_of_speech",
+            "special_class",
+            "lemmas",
+            "word_type",
+            "word_modified",
+        ],
+        usecols=["gddid", "sentid", "words"],
+    )
 
     journal_articles = (journal_articles.replace('"', '', regex = True)
                                 .replace(',--,', '-', regex = True)
@@ -88,6 +94,7 @@ def get_journal_articles(sentences_path):
     
     return journal_articles
 
+
 def preprocessed_bibliography(path):
     """
     Loads and formats bibliography json file and converts to a dataframe
@@ -102,26 +109,26 @@ def preprocessed_bibliography(path):
     bibliography: pd.DataFrame
         pd.DataFrame with GDD ID and the Digital Object Identifier.
     """
-    with open(path, 'r') as f:
+    with open(path, "r") as f:
         bib_dict = json.load(f)
-    
+
     gdd = []
     doi = []
-    
+
     for article in bib_dict:
-        gdd.append(article['_gddid'])
+        gdd.append(article["_gddid"])
         if "identifier" not in article:
             doi.append("")
         else:
-            for iden in article['identifier']:
-                if iden['type'] == "doi":
-                    doi.append(iden['id'])
-    
-    return pd.DataFrame({"doi": doi,
-                         "gddid": gdd})
+            for iden in article["identifier"]:
+                if iden["type"] == "doi":
+                    doi.append(iden["id"])
+
+    return pd.DataFrame({"doi": doi, "gddid": gdd})
+
 
 def get_hash(text):
-    """ Generates a hexadecimal code of a hash value given a string of any length
+    """Generates a hexadecimal code of a hash value given a string of any length
 
     Uses the Secure Hash Algorithm and Key Expansion techinque for hashing.
 
@@ -132,7 +139,7 @@ def get_hash(text):
     Returns:
         str: The first 8 characters of the hexadecimal hash string
     """
-    return hashlib.shake_128(text.encode('utf-8')).hexdigest(8)
+    return hashlib.shake_128(text.encode("utf-8")).hexdigest(8)
 
 def return_json(chunk,
                 chunk_local,
@@ -169,7 +176,7 @@ def return_json(chunk,
     training_json: dict
         A dictionary containing the chunk of text and other metadata associated with the article
     """
-    
+
     training_json = {
         "data": {
             "text": chunk,
@@ -180,7 +187,7 @@ def return_json(chunk,
             "doi": doi,
             "timestamp": str(datetime.today()),
             "chunk_hash": get_hash(chunk),
-            "article_hash": article_hash_code
+            "article_hash": article_hash_code,
         },
         "predictions": [{
             "model_version": model_version,
@@ -192,21 +199,24 @@ def return_json(chunk,
     labels = spacy_extract_all(chunk, nlp)
     entities = []
     for label in labels:
-        entities.append({
-            "from_name": "label",
-            "to_name": "text",
-            "type": "labels", 
-            "value": {
-                "start": label['start'],
-                "end": label['end'],
-                "text": label['text'],
-                "score": 0.5,
-                "labels": label['labels']
-            }}
+        entities.append(
+            {
+                "from_name": "label",
+                "to_name": "text",
+                "type": "labels",
+                "value": {
+                    "start": label["start"],
+                    "end": label["end"],
+                    "text": label["text"],
+                    "score": 0.5,
+                    "labels": label["labels"],
+                },
+            }
         )
-    training_json['predictions'][0]['result'] = entities
+    training_json["predictions"][0]["result"] = entities
 
     return training_json
+
 
 def chunk_text(article):
     # If a section is very long, each chunk will be approximately char_len in length
@@ -214,38 +224,39 @@ def chunk_text(article):
     # If a section is very small (smaller than min_len), then it will be combined with the next section
     min_len = 1500
     # text chunk from full text articles
-    chunks = [] 
+    chunks = []
     # Name of the subsection
     chunk_subsection = []
     # Local index of the chunk in the particular subsection
     chunk_local = []
-    # Local index tracker 
-    local_index = 0 
+    # Local index tracker
+    local_index = 0
     # Current subsection name
     subsection = None
     # Current chunk of text
     cur_para = ""
-    # Possible Subsection names 
-    patterns = ["Introduction",
-                "Abstract",
-                "Material And Method",
-                "Site Description", 
-                "Interpretation", 
-                "Results",
-                "Background",
-                "Discussion",
-                "Objectives",
-                "Conclusion"]
-    # Possible Ending condition keywords names 
+    # Possible Subsection names
+    patterns = [
+        "Introduction",
+        "Abstract",
+        "Material And Method",
+        "Site Description",
+        "Interpretation",
+        "Results",
+        "Background",
+        "Discussion",
+        "Objectives",
+        "Conclusion",
+    ]
+    # Possible Ending condition keywords names
     endwords = ["Acknowledgement", "Reference"]
-                
-    sentences = article.split('. ')
-    
+
+    sentences = article.split(". ")
+
     for sent in sentences:
-        
         if subsection == None:
             subsection = sent.split(" ")[0]
-            
+
         # If the paragraph is long enough, add it as a chunk
         # If the next sentence is very long, add the current paragraph as a chunk and reset cur_para
         if len(cur_para) > char_len or len(sent) > char_len:
@@ -254,8 +265,8 @@ def chunk_text(article):
             chunk_local.append(local_index)
             cur_para = ""
             local_index += 1
-        
-        check=True
+
+        check = True
         for pat in patterns:
             # If there is a pattern present:
             # then everything before the pattern goes in the current para
@@ -267,29 +278,29 @@ def chunk_text(article):
                     index = sent.index(pat.upper())
 
                 cur_para += sent[:index]
-                
+
                 if len(cur_para) > min_len:
                     chunks.append(cur_para.strip())
                     chunk_subsection.append(subsection)
                     chunk_local.append(local_index)
                     subsection = pat
                     local_index = 0
-                    cur_para = sent[index: ] + '. '
+                    cur_para = sent[index:] + ". "
                 else:
-                    cur_para += sent[index: ] + '. '
-                    
+                    cur_para += sent[index:] + ". "
+
                 check = False
                 break
-                
-        end=False
+
+        end = False
         # Check if there is an endwords
         for pat in endwords:
             if pat in sent or pat.upper() in sent:
-                end=True
+                end = True
                 break
         if end:
             break
-        
+
         # If no pattern or ending condition is present in the current sentence, then add it to the current para
         if check:
             cur_para += sent + ". "
@@ -299,39 +310,64 @@ def chunk_text(article):
         chunk_local.append(local_index)
 
     return chunks, chunk_local, chunk_subsection
-        
+
+
 if __name__ == "__main__":
     
     model_version = "transformers-ner-0.0.1"
     
-    bib_df = preprocessed_bibliography(os.path.join(os.pardir, os.pardir, "data", "original_files", "bibjson"))
+    bib_df = preprocessed_bibliography(
+                os.path.join(
+                    os.pardir,
+                    os.pardir,
+                    "data",
+                    "original_files", 
+                    "bibjson"
+))
     
-    journal_articles = get_journal_articles(os.path.join(os.pardir, os.pardir, "data", "original_files", "sentences_nlp352"))
+    journal_articles = get_journal_articles(
+                            os.path.join(
+                                os.pardir,
+                                os.pardir,
+                                "data",
+                                "original_files",
+                                "sentences_nlp352"))
+    
     
     # Minor preprocessing
-    journal_articles['words']= journal_articles['words'].str.split(" ")
-    journal_articles['words'] = journal_articles['words'].apply(clean_words)
-    journal_articles['sentence'] = journal_articles['words'].apply(lambda x: ' '.join(map(str, x)))
-    
+    journal_articles["words"] = journal_articles["words"].str.split(" ")
+    journal_articles["words"] = journal_articles["words"].apply(clean_words)
+    journal_articles["sentence"] = journal_articles["words"].apply(
+        lambda x: " ".join(map(str, x))
+    )
+
     # Join sentences into full text articles
     full_text = (journal_articles 
-                .groupby("gddid")['sentence'] 
+                .groupby("gddid")["sentence"] 
                 .agg(lambda x: ' '.join(x)).reset_index())
     
-    doi_gdd = full_text.merge(bib_df, on ='gddid')
+    doi_gdd = full_text.merge(bib_df, on ="gddid")
     
-    # # Pass each raw text file to the chunking pipeline
+    # Pass each raw text file to the chunking pipeline
     for row in full_text.iterrows():
-        chunks, chunk_local, chunk_subsection = chunk_text(row[1]['sentence'])
-        gdd = row[1]['gddid']
-        doi = doi_gdd[doi_gdd['gddid'] == gdd].iloc[0]['doi']
-        
+        chunks, chunk_local, chunk_subsection = chunk_text(row[1]["sentence"])
+        gdd = row[1]["gddid"]
+        doi = doi_gdd[doi_gdd["gddid"] == gdd].iloc[0]["doi"]
+
         """ Generate a hash code using the full text article"""
-        article_hash = get_hash(row[1]['sentence'])
-        
+        article_hash = get_hash(row[1]["sentence"])
+
         for i, chunk in enumerate(chunks):
             filename = get_hash(chunk)
-            with open(f'{os.path.join(os.pardir, os.pardir, "data", "labelled", f"{model_version}_labeling")}/{gdd}_{i}.json','w') as fout:
+            with open(os.path.join(
+                        os.pardir,
+                        os.pardir,
+                        "data",
+                        "pre-labeling",
+                        model_version,
+                        f"{gdd}_{i}.json"),
+                      "w") as fout:
+                
                 json_chunk = return_json(chunk, 
                                         chunk_local[i],
                                         i,

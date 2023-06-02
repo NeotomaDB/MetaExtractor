@@ -42,3 +42,36 @@ TBD
 ### Data Requirements
 
 TBD
+
+### Directory Structure and Description
+
+```
+├── .github/                            <- Directory for GitHub files
+│   ├── workflows/                      <- Directory for workflows
+├── data/                               <- Directory for data
+│   ├── entity-extraction/              <- Directory for named entity extraction data
+│   │   ├── raw/                        <- Raw unprocessed data
+│   │   ├── processed/                  <- Processed data
+│   │   └── interim/                    <- Temporary data location
+│   ├── article-relevance/              <- Directory for data related to article relevance prediction
+│   │   ├── raw/                        <- Raw unprocessed data
+│   │   ├── processed/                  <- Processed data
+│   │   └── interim/                    <- Temporary data location
+│   ├── data-review-tool/               <- Directory for data related to data review tool
+│   │   ├── raw/                        <- Raw unprocessed data
+│   │   ├── processed/                  <- Processed data
+│   │   └── interim/                    <- Temporary data location
+├── results/                            <- Directory for results
+│   ├── article-relevance/              <- Directory for results related to article relevance prediction
+│   ├── ner/                            <- Directory for results related to named entity recognition
+│   └── data-review-tool/               <- Directory for results related to data review tool
+├── notebooks/                          <- Directory for notebooks
+├── src/                                <- Directory for source code
+│   ├── entity_extraction/              <- Directory for named entity recognition code
+│   ├── article_relevance/              <- Directory for article relevance prediction code
+│   └── data_review_tool/               <- Directory for data review tool code             
+├── reports/                            <- Directory for reports
+├── tests/                              <- Directory for tests
+├── Makefile                            <- Makefile with commands to perform analysis
+└── README.md                           <- The top-level README for developers using this project.
+```

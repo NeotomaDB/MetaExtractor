@@ -7,14 +7,21 @@ import sys
 import re
 import json
 import pandas as pd
-from nltk.corpus import stopwords
+import nltk
 import spacy
+
+# ensure stopwords are downloaded
+nltk.download("stopwords")
+
+from nltk.corpus import stopwords
 
 # ensure that the parent directory is on the path for relative imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
-def load_taxa_data(file_path=os.path.join(os.pardir, "data", "entity-extraction", "raw", "taxa.csv")):
+def load_taxa_data(
+    file_path=os.path.join(os.pardir, "data", "entity-extraction", "raw", "taxa.csv")
+):
     """
     Loads the taxa names from a CSV file
 
@@ -99,7 +106,7 @@ def extract_geographic_coordinates(text: str) -> list:
                         "start": match.start(),
                         "end": match.end(),
                         "labels": ["GEOG"],
-                        "text": text[match.start() : match.end()], 
+                        "text": text[match.start() : match.end()],
                     }
                 )
 
@@ -134,7 +141,7 @@ def extract_region_names(text: str, spacy_model: str = "en_core_web_lg") -> list
                     "start": ent.start_char,
                     "end": ent.end_char,
                     "labels": ["REGION"],
-                    "text": ent.text, 
+                    "text": ent.text,
                 }
             )
 
@@ -143,7 +150,9 @@ def extract_region_names(text: str, spacy_model: str = "en_core_web_lg") -> list
     return labels
 
 
-def extract_taxa(text: str, filepath = os.path.join(os.pardir, "data", "original_files", "taxa.csv")) -> list:
+def extract_taxa(
+    text: str, filepath=os.path.join(os.pardir, "data", "raw", "taxa.csv")
+) -> list:
     """
     Extracts the taxa from the text.
 
@@ -308,7 +317,7 @@ def extract_altitude(text: str) -> list:
                 "start": match.start(),
                 "end": match.end(),
                 "labels": ["ALTI"],
-                "text": match.group(), 
+                "text": match.group(),
             }
         )
 
@@ -344,7 +353,7 @@ def extract_email(text: str) -> list:
                 "start": match.start(),
                 "end": match.end(),
                 "labels": ["EMAIL"],
-                "text": match.group(),  
+                "text": match.group(),
             }
         )
 

@@ -25,12 +25,7 @@ logger = logging.getLogger(__name__)
 
 from src.entity_extraction.entity_extraction_evaluation import get_token_labels
 
-opt = docopt(__doc__)
 
-
-# function that takes a folder location in data/labelled and produces a
-# folder called hf_processed in data/labelled with the same files but
-# with the format required for the hf-token-classification model
 def convert_labelled_data_to_hf_format(
     labelled_file_path: str,
     max_seq_length: int = 256,
@@ -122,42 +117,9 @@ def convert_labelled_data_to_hf_format(
                     f.write(json.dumps(item) + "\n")
 
 
-# needed as tokenizing adds CLS and SEP tokens, doesn't match labels
-# see here for more detail: https://huggingface.co/docs/transformers/tasks/token_classification
-# It does:
-# 1. Mapping all tokens to their corresponding word with the word_ids method.
-# 2. Assigning the label -100 to the special tokens [CLS] and [SEP] so they’re ignored by the PyTorch loss function.
-# 3. Only labeling the first token of a given word. Assign -100 to other subtokens from the same word.
-def tokenize_and_align_labels(examples, tokenizer):
-    tokenized_inputs = tokenizer(
-        examples["tokens"], truncation=True, is_split_into_words=True
-    )
-
-    labels = []
-    for i, label in enumerate(examples[f"ner_tags"]):
-        word_ids = tokenized_inputs.word_ids(
-            batch_index=i
-        )  # Map tokens to their respective word.
-        previous_word_idx = None
-        label_ids = []
-        for word_idx in word_ids:  # Set the special tokens to -100.
-            if word_idx is None:
-                label_ids.append(-100)
-            elif (
-                word_idx != previous_word_idx
-            ):  # Only label the first token of a given word.
-                label_ids.append(label[word_idx])
-            else:
-                label_ids.append(-100)
-            previous_word_idx = word_idx
-        labels.append(label_ids)
-
-    tokenized_inputs["labels"] = labels
-    return tokenized_inputs
-
-
 # main function to process files using docopt
 if __name__ == "__main__":
+    opt = docopt(__doc__)
     convert_labelled_data_to_hf_format(
         labelled_file_path=opt["--label_files"],
         max_seq_length=int(opt["--max_token_length"]),

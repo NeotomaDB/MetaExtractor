@@ -38,14 +38,13 @@ for f in files:
     # merge
     df = pd.concat([df, onefile])
 df = df[["title", "doi", "status", "date_processed", "last_updated", "gddid"]].rename(
-        columns={"title": "Article", "doi": "DOI", "status": "Status", "date_uploaded": "Date Added", "last_updated": "Date Updated"}
+        columns={"title": "Article", "doi": "DOI", "status": "Status", "date_processed": "Date Added", "last_updated": "Date Updated"}
     )
 df["Review"] = "Review"
 
 current = df.query("Status == 'False' | Status =='In Progress'")
 completed = df[df["Status"] == "Completed"]
-
-# columns = ["title", "doi", "status", "date_uploaded", "date_modified"]       
+  
 
 layout = html.Div(
     [
@@ -57,18 +56,19 @@ layout = html.Div(
             style_data={
                 'whiteSpace': 'normal',
                 'height': 'auto',
-                'lineHeight': '15px'
+                'lineHeight': '15px',
+                'font-family': 'sans-serif'
             },
-            # fixed_rows={'headers': True},
+
             columns=[{"name": i, "id": i} for i in current.columns],
             data=current.to_dict("records"),
-            # is_focused=True,
             style_data_conditional=[
                 {'if': {'column_id': 'Review'}, 'backgroundColor': 'blue', 'text_align':'center','color': 'white'},
                 {'if': {'column_id': 'Status'},'fontWeight': 'bold'},
                                    ],
             style_table={'overflowX': 'auto'},
-            style_cell={'textAlign': 'left'},
+            style_cell={'textAlign': 'left',
+                        'font-family': 'sans-serif'},
         ),
         dcc.Location(id='location_current'),
         html.Br(),
@@ -81,18 +81,18 @@ layout = html.Div(
             style_data={
                 'whiteSpace': 'normal',
                 'height': 'auto',
-                'lineHeight': '15px'
+                'lineHeight': '15px',
+                'font-family': 'sans-serif'
             },
-            # fixed_rows={'headers': True},
             columns=[{"name": i, "id": i} for i in completed.columns],
             data=completed.to_dict("records"),
-            # is_focused=True,
             style_data_conditional=[
                 {'if': {'column_id': 'Review'}, 'backgroundColor': 'blue', 'text_align':'center','color': 'white'},
                 {'if': {'column_id': 'Status'},'fontWeight': 'bold'},
                                    ],
             style_table={'overflowX': 'auto'},
-            style_cell={'textAlign': 'left'},
+            style_cell={'textAlign': 'left',
+                        'font-family': 'sans-serif'},
         ),
         html.Div(id='dummy-div', style={'display': 'none'}),
         dcc.Location(id='location_completed'),

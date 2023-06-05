@@ -19,16 +19,18 @@ directory_path = "data/labelled/"
 files_and_directories = os.listdir(directory_path)
 # Filter out the directories to get only the files
 files = [file for file in files_and_directories if os.path.isfile(os.path.join(directory_path, file))]
+# if a subfolder exists in files
+if "/completed/" in files:
+    # remove it
+    files.remove("/completed/")
 if '.gitkeep' in files:
     files.remove('.gitkeep')
 if '.DS_Store' in files:
     files.remove('.DS_Store')
-    
-
 # initialize empty dataframe
 df = pd.DataFrame()
 
-# Populate the cross ref df
+# Populate the df
 for f in files:
     file = open(f"data/labelled/{f}", "r")
     onefile = pd.json_normalize(json.loads(file.read()))
@@ -40,8 +42,8 @@ df = df[["title", "doi", "status", "date_processed", "last_updated", "gddid"]].r
     )
 df["Review"] = "Review"
 
-current = df[df["Status"] == "False"]
-completed = df[df["Status"] == "True"]
+current = df.query("Status == 'False' | Status =='In Progress'")
+completed = df[df["Status"] == "Completed"]
 
 # columns = ["title", "doi", "status", "date_uploaded", "date_modified"]       
 
@@ -71,7 +73,7 @@ layout = html.Div(
         dcc.Location(id='location_current'),
         html.Br(),
         html.Br(),
-        html.H2("Current Articles",
+        html.H2("Completed Articles",
                 style={'textAlign': 'center'}),
         html.Br(),
         dash_table.DataTable(

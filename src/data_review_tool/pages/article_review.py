@@ -2,6 +2,7 @@ import dash
 import dash_mantine_components as dmc
 import dash_bootstrap_components as dbc
 import json
+from datetime import datetime
 
 dash.register_page(__name__,  path_template="/article/<gddid>")
 
@@ -9,13 +10,12 @@ from dash import Dash, dcc, html, Input, Output, callback
 import plotly.express as px
 import numpy as np
 import pandas as pd
-from pages.navbar import segment_control
+from pages.navbar import df_denormalize
 
 np.random.seed(2020)
 
 def layout(gddid = None):
-    # metadata = pd.read_json(f"data/labelled/{gddid}.json")
-    # metadata = pd.DataFrame(metadata.loc[0, "data"], index=metadata.index).reset_index(drop=True)
+
     file = open(f"data/labelled/{gddid}.json", "r")
     metadata = pd.json_normalize(json.loads(file.read()))
 
@@ -225,10 +225,16 @@ def layout(gddid = None):
             html.Br(),
             dmc.Group(
                 [
-                    dmc.Button("Submit", color="green"),
-                    dmc.Button("Save Progress", color="green", variant="outline")
+                    dmc.Button("Submit",
+                               id="submit-button",
+                               color="green"),
+                    dmc.Button("Save Progress", 
+                               id = "save-button",
+                               color="green", 
+                               variant="outline")
                 ],
-            )    
+            ),
+            dmc.Text(id="clicked-output", mt=10),    
         ],
         style=SIDEBAR_STYLE,
     )
@@ -296,7 +302,7 @@ def layout(gddid = None):
                 ],
             ),
             html.Br(),
-            dcc.Store(id="metadata", data=[metadata.reset_index().to_json(orient="split")]),
+            dcc.Store(id="metadata", data=[metadata.to_json(orient="split")]),
             dbc.Row(
                 [
                     
@@ -363,5 +369,43 @@ def display_color(mean, std):
     data = np.random.normal(mean, std, size=500)
     fig = px.histogram(data, nbins=30, range_x=[-10, 10])
     return fig
+
+@callback(
+    Output("clicked-output", "children"),
+    Input("submit-button", "n_clicks"),
+    Input("save-button", "n_clicks"),
+    Input('metadata', 'data'),
+    prevent_initial_call=True,
+)
+def save_submit(submit, save, data):
+    if submit:
+        metadata = pd.read_json(data[0], orient="split")
+        metadata["status"] = "Completed"
+        metadata["last_updated"] = datetime.now().strftime("%Y-%m-%d")
+        print(metadata["last_updated"])
+        gddid = metadata["gddid"][0]
+        metadata = df_denormalize(metadata)
+        metadata= metadata.to_dict(orient='records')
+        metadata = json.dumps(metadata)
+        with open(f"data/labelled/{gddid}.json", "w") as f:
+            f.write(metadata)
+        with open(f"data/labelled/completed/{gddid}.json", "w") as f:
+            f.write(metadata)
+        return "Submitted"
+    
+    elif save:
+        metadata = pd.read_json(data[0], orient="split")
+        metadata["status"] = "In Progress"
+        gddid = metadata["gddid"][0]
+        metadata = df_denormalize(metadata)
+        metadata= metadata.to_dict(orient='records')
+        metadata = json.dumps(metadata)
+        with open(f"data/labelled/{gddid}.json", "w") as f:
+            f.write(metadata)
+        with open(f"data/labelled/completed/{gddid}.json", "w") as f:
+            f.write(metadata)
+        return "Saved"
+    else:
+        return None
 
 

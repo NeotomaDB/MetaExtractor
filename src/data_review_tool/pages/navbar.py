@@ -53,10 +53,10 @@ def create_navbar():
     )
     return navbar
 
-def segment_control(data, selected_entity):
+def segment_control(data, selected_entity, selected_entity_type):
     tab_data = {}
     tab_data_list = []
-    for entity in data["entities.AGE"][0]:
+    for entity in data[f"entities.{selected_entity_type}"][0]:
         if entity["name"] == selected_entity:
             section_name = entity["sentence"][0]["section_name"]
             text_value = entity["sentence"][0]["text"]

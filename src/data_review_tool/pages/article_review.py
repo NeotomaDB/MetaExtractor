@@ -18,6 +18,7 @@ def layout(gddid = None):
     # metadata = pd.DataFrame(metadata.loc[0, "data"], index=metadata.index).reset_index(drop=True)
     file = open(f"data/labelled/{gddid}.json", "r")
     metadata = pd.json_normalize(json.loads(file.read()))
+
     # styling the sidebar
     SIDEBAR_STYLE = {
         # "position": "fixed",
@@ -38,6 +39,7 @@ def layout(gddid = None):
     sidebar = html.Div(
         [
             dmc.Accordion(
+                id = "accordion",
                 children=[
                     dmc.AccordionItem(
                         [
@@ -50,16 +52,18 @@ def layout(gddid = None):
                                                 x["name"],
                                                 value = x["name"],
                                                 variant="outline",
+                                                
                                             )
                                             for x in metadata["entities.SITE"][0]
                                         ],
                                         id="chips_site",  
-                                    ),
-                                    
+                                        value = [None],
+                                        multiple = True,
+                                    ),                              
                                 ],                                                       
                             ),
                         ],
-                        value="site_name",
+                        value="SITE",
                     ),
                     dmc.AccordionItem(
                         [
@@ -72,16 +76,19 @@ def layout(gddid = None):
                                                 x["name"],
                                                 value = x["name"],
                                                 variant="outline",
+                                                
                                             )
                                             for x in metadata["entities.REGION"][0]
                                         ],
                                         id="chips_region",  
+                                        value = [None],
+                                        multiple = True,
                                     ),
                                     
                                 ],                                                       
                             ),
                         ],
-                        value="region_name",
+                        value="REGION",
                     ),
                     dmc.AccordionItem(
                         [
@@ -93,17 +100,19 @@ def layout(gddid = None):
                                             dmc.Chip(
                                                 x["name"],
                                                 value = x["name"],
-                                                variant="outline",
+                                                variant="outline",                                                                                                
                                             )
                                             for x in metadata["entities.TAXA"][0]
                                         ],
                                         id="chips_taxa",  
+                                        value = [None],
+                                        multiple = True,
                                     ),
                                     
                                 ],                                                       
                             ),
                         ],
-                        value="taxa",
+                        value="TAXA",
                     ),
                     dmc.AccordionItem(
                         [
@@ -116,16 +125,19 @@ def layout(gddid = None):
                                                 x["name"],
                                                 value = x["name"],
                                                 variant="outline",
+                                                
                                             )
                                             for x in metadata["entities.GEOG"][0]
                                         ],
                                         id="chips_geog",  
+                                        value = [None],
+                                        multiple = True,
                                     ),
                                     
                                 ],                                                       
                             ),
                         ],
-                        value="geog",
+                        value="GEOG",
                     ),
                     dmc.AccordionItem(
                         [
@@ -138,16 +150,19 @@ def layout(gddid = None):
                                                 x["name"],
                                                 value = x["name"],
                                                 variant="outline",
+                                                
                                             )
                                             for x in metadata["entities.ALTI"][0]
                                         ],
                                         id="chips_alti",  
+                                        value = [None],
+                                        multiple = True,
                                     ),
                                     
                                 ],                                                       
                             ),
                         ],
-                        value="alti",
+                        value="ALTI",
                     ),
                     dmc.AccordionItem(
                         [
@@ -160,16 +175,19 @@ def layout(gddid = None):
                                                 x["name"],
                                                 value = x["name"],
                                                 variant="outline",
+                                                
                                             )
                                             for x in metadata["entities.AGE"][0]
                                         ],
-                                        id="chips_age",  
+                                        id="chips_age",
+                                        value = [None],  
+                                        multiple = True,
                                     ),
                                     
                                 ],                                                       
                             ),
                         ],
-                        value="age",
+                        value="AGE",
                     ),
                     dmc.AccordionItem(
                         [
@@ -182,16 +200,19 @@ def layout(gddid = None):
                                                 x["name"],
                                                 value = x["name"],
                                                 variant="outline",
+                                                
                                             )
                                             for x in metadata["entities.EMAIL"][0]
                                         ],
                                         id="chips_email",  
+                                        value = [None],
+                                        multiple = True,
                                     ),
                                     
                                 ],                                                       
                             ),
                         ],
-                        value="email",
+                        value="EMAIL",
                     ),
                 ],
             ),
@@ -219,18 +240,27 @@ def layout(gddid = None):
                     dmc.Group(
                         [
                             html.P("Entity text:"),
-                            dmc.Button("Homo sampiens", color = "black", variant = "outline"),
-                            dmc.TextInput(label="Corrected Entity:", style={"width": 200}, error=True)
+                            dmc.Text(id="entity-text", style={"width": 200}),
+                            dmc.TextInput(label="Corrected Entity:", style={"width": 200})
                         ],
                     ),
                 ],
             ),
             dmc.SegmentedControl(
                 id="segmented",
-                data=segment_control(metadata, "ca. 12 001 BP"),
+                value = [None],
+                # data=segment_control(metadata, "ca. 12 001 BP"),
+                data = [{"label":None, "value":None}],
                 fullWidth=True,
                 
                 
+            ),
+            dmc.Paper(
+                children = 
+                    [
+                        dmc.Text(id="segmented-value"),
+                    ],
+                            
             ),
             dcc.Graph(id="histograms-graph"),
             html.P("Mean:"),
@@ -266,6 +296,7 @@ def layout(gddid = None):
                 ],
             ),
             html.Br(),
+            dcc.Store(id="metadata", data=[metadata.reset_index().to_json(orient="split")]),
             dbc.Row(
                 [
                     
@@ -276,6 +307,52 @@ def layout(gddid = None):
         ],
     )
     return layout
+
+@callback(Output("segmented-value", "children"), Input("segmented", "value"))
+def select_value(value):
+    return value
+
+@callback(
+    Output("entity-text", "children"),
+    Input("chips_site", "value"),
+    Input("chips_region", "value"),
+    Input("chips_taxa", "value"),
+    Input("chips_geog", "value"),
+    Input("chips_alti", "value"),
+    Input("chips_age", "value"),
+    Input("chips_email", "value"),
+    
+)
+def chips_values(site, region, taxa, geog, alti, age, email):
+    for x in [site, region, taxa, geog, alti, age, email]:
+        if x != [None]:
+            return x
+    return "No entity selected"
+
+@callback(
+    Output("segmented", "data"),
+    Input("metadata", "data"),
+    Input("entity-text", "children"),
+    Input("accordion", "value"),
+)
+def segment_control(data, selected_entity, selected_entity_type):
+    data = pd.read_json(data[0], orient="split")
+    tab_data = {}
+    if selected_entity[1] == "No entity selected":
+        return [{"label":None, "value":None}]
+    elif selected_entity_type == None:
+        return [{"label":None, "value":None}]
+    else:
+        for entity in data[f"entities.{selected_entity_type}"][0]:
+            if entity["name"] == selected_entity[1]:
+                section_name = entity["sentence"][0]["section_name"]
+                text_value = entity["sentence"][0]["text"]
+
+                if section_name in tab_data:
+                    tab_data[section_name].append(text_value)
+                else:
+                    tab_data[section_name] = [text_value]
+        return [{"label": label, "value": values} for label, values in tab_data.items()]
 
 @callback(
     Output("histograms-graph", "figure"),

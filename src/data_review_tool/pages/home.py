@@ -21,6 +21,9 @@ files_and_directories = os.listdir(directory_path)
 files = [file for file in files_and_directories if os.path.isfile(os.path.join(directory_path, file))]
 if '.gitkeep' in files:
     files.remove('.gitkeep')
+if '.DS_Store' in files:
+    files.remove('.DS_Store')
+    
 
 # initialize empty dataframe
 df = pd.DataFrame()

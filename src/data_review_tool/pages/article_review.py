@@ -15,9 +15,21 @@ from pages.navbar import df_denormalize
 np.random.seed(2020)
 
 def layout(gddid = None):
-
-    file = open(f"data/labelled/{gddid}.json", "r")
-    metadata = pd.json_normalize(json.loads(file.read()))
+    try:
+        # get the metadata of the article
+        file = open(f"data/labelled/{gddid}.json", "r")
+        metadata = pd.json_normalize(json.loads(file.read()))
+    except FileNotFoundError:
+        return html.Div(
+    [
+        html.H1("Error - gddid Not Found"),
+        html.P("The requested gddid does not exist in the files."),
+        html.P("Please check the article's gddid and try again."),
+        dcc.Link("Go back to Home", href="/"),
+    ]
+)
+            
+        
 
     # styling the sidebar
     SIDEBAR_STYLE = {
@@ -247,7 +259,7 @@ def layout(gddid = None):
                         [
                             html.P("Entity text:"),
                             dmc.Text(id="entity-text", style={"width": 200}),
-                            dmc.TextInput(label="Corrected Entity:", style={"width": 200})
+                            dmc.TextInput(label="Corrected Entity:", style={"width": 200}, id="corrected-entity"),
                         ],
                     ),
                 ],
@@ -293,8 +305,9 @@ def layout(gddid = None):
                             html.P("Is this article relevant to NeotomaDB?"),
                             dmc.Group(
                                 [
-                                    dmc.Button("Yes", color="green", variant="outline"),
-                                    dmc.Button("No", color="red", variant="outline"),
+                                    dmc.Button("Yes", color="green", variant="outline", id="yes-button"),
+                                    dmc.Button("No", color="red", variant="outline", id="no-button"),
+                                    dmc.Text(id="relevant-output", mt=10),
                                 ],
                             ),
                         ],
@@ -408,4 +421,18 @@ def save_submit(submit, save, data):
     else:
         return None
 
+@callback(
+    Output("relevant-output", "children"),
+    Input("yes-button", "n_clicks"),
+    Input("no-button", "n_clicks"),
+)
 
+def relevant(yes, no):
+    if yes:
+        return "Relevant"
+    elif no:
+        return "Non-Relevant, hit Submit to remove from the queue"
+    else:
+        return None
+    
+    

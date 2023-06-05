@@ -1,13 +1,8 @@
 
 import dash
+from dash import dcc, html
 import dash_bootstrap_components as dbc
 import os
-import time
-import sys
-
-# src_path = os.path.abspath(os.path.join(".."))
-# if src_path not in sys.path:
-#     sys.path.append(src_path)
 
 from pages.navbar import create_navbar
 
@@ -22,10 +17,14 @@ server = app.server
 
 navbar = create_navbar()
 
-app.layout = dbc.Container(
-    [navbar, dash.page_container],
-    fluid=True,
-)
+app.layout = html.Div(
+    children=
+    [
+        navbar,
+        dash.page_container
+        ],
+    )
+
 
 if __name__ == "__main__":
     app.run_server(debug=True)

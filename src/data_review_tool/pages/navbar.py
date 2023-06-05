@@ -26,7 +26,7 @@ def create_navbar():
                 html.A(
                     dbc.Row(
                         [
-                            dbc.Col(html.Img(src="assets/finding-fossils-logo-symbol_highres.png", height="30px")), ## Need to fix
+                            dbc.Col(html.Img(src="/assets/finding-fossils-logo-symbol_highres.png", height="30px")),
                              dbc.Col("MetaExtractor", className="navbar-brand"),
                         ],
                     ),

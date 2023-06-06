@@ -1,12 +1,22 @@
+from pages.navbar import segment_control
+import pandas as pd
+import numpy as np
+import plotly.express as px
+from dash import Dash, dcc, html, Input, Output, callback, State
 import dash
 import dash_mantine_components as dmc
 import dash_bootstrap_components as dbc
+<<<<<<< HEAD
 import os
+=======
+from collections import defaultdict
+>>>>>>> data-review-tool-jenit
 import json
 from datetime import datetime
 
 dash.register_page(__name__,  path_template="/article/<gddid>")
 
+<<<<<<< HEAD
 from dash import Dash, dcc, html, Input, Output, callback
 import plotly.express as px
 import numpy as np
@@ -31,6 +41,20 @@ def layout(gddid = None):
             
         
 
+=======
+
+np.random.seed(2023)
+
+results = None
+
+
+def layout(gddid=None):
+    global results
+    results = pd.read_json(f"data/data-review-tool/raw/{gddid}.json")
+    # metadata = pd.DataFrame(metadata.loc[0, "data"], index=metadata.index).reset_index(drop=True)
+    # file = open(f"data/data-review-tool/raw/{gddid}.json", "r")
+    # results = pd.json_normalize(json.loads(file.read()))
+>>>>>>> data-review-tool-jenit
     # styling the sidebar
     SIDEBAR_STYLE = {
         # "position": "fixed",
@@ -51,7 +75,7 @@ def layout(gddid = None):
     sidebar = html.Div(
         [
             dmc.Accordion(
-                id = "accordion",
+                id="accordion",
                 children=[
                     dmc.AccordionItem(
                         [
@@ -61,18 +85,17 @@ def layout(gddid = None):
                                     dmc.ChipGroup(
                                         [
                                             dmc.Chip(
-                                                x["name"],
-                                                value = x["name"],
+                                                site['name'],
+                                                value=site['name'],
                                                 variant="outline",
-                                                
                                             )
-                                            for x in metadata["entities.SITE"][0]
+                                            for site in results["entities"]["SITE"]
                                         ],
-                                        id="chips_site",  
-                                        value = [None],
-                                        multiple = True,
-                                    ),                              
-                                ],                                                       
+                                        id="chips_site",
+                                        value=None,
+                                        multiple=False,
+                                    ),
+                                ],
                             ),
                         ],
                         value="SITE",
@@ -85,19 +108,18 @@ def layout(gddid = None):
                                     dmc.ChipGroup(
                                         [
                                             dmc.Chip(
-                                                x["name"],
-                                                value = x["name"],
+                                                region['name'],
+                                                value=region['name'],
                                                 variant="outline",
-                                                
                                             )
-                                            for x in metadata["entities.REGION"][0]
+                                            for region in results["entities"]["REGION"]
                                         ],
-                                        id="chips_region",  
-                                        value = [None],
-                                        multiple = True,
+                                        id="chips_region",
+                                        value=None,
+                                        multiple=False,
                                     ),
-                                    
-                                ],                                                       
+
+                                ],
                             ),
                         ],
                         value="REGION",
@@ -110,18 +132,18 @@ def layout(gddid = None):
                                     dmc.ChipGroup(
                                         [
                                             dmc.Chip(
-                                                x["name"],
-                                                value = x["name"],
-                                                variant="outline",                                                                                                
+                                                taxa['name'],
+                                                value=taxa['name'],
+                                                variant="outline",
                                             )
-                                            for x in metadata["entities.TAXA"][0]
+                                            for taxa in results["entities"]["TAXA"]
                                         ],
-                                        id="chips_taxa",  
-                                        value = [None],
-                                        multiple = True,
+                                        id="chips_taxa",
+                                        value=None,
+                                        multiple=False,
                                     ),
-                                    
-                                ],                                                       
+
+                                ],
                             ),
                         ],
                         value="TAXA",
@@ -134,19 +156,18 @@ def layout(gddid = None):
                                     dmc.ChipGroup(
                                         [
                                             dmc.Chip(
-                                                x["name"],
-                                                value = x["name"],
+                                                geog['name'],
+                                                value=geog['name'],
                                                 variant="outline",
-                                                
                                             )
-                                            for x in metadata["entities.GEOG"][0]
+                                            for geog in results["entities"]["GEOG"]
                                         ],
-                                        id="chips_geog",  
-                                        value = [None],
-                                        multiple = True,
+                                        id="chips_geog",
+                                        value=None,
+                                        multiple=False,
                                     ),
-                                    
-                                ],                                                       
+
+                                ],
                             ),
                         ],
                         value="GEOG",
@@ -159,19 +180,18 @@ def layout(gddid = None):
                                     dmc.ChipGroup(
                                         [
                                             dmc.Chip(
-                                                x["name"],
-                                                value = x["name"],
+                                                alti['name'],
+                                                value=alti['name'],
                                                 variant="outline",
-                                                
                                             )
-                                            for x in metadata["entities.ALTI"][0]
+                                            for alti in results["entities"]["ALTI"]
                                         ],
-                                        id="chips_alti",  
-                                        value = [None],
-                                        multiple = True,
+                                        id="chips_alti",
+                                        value=None,
+                                        multiple=False,
                                     ),
-                                    
-                                ],                                                       
+
+                                ],
                             ),
                         ],
                         value="ALTI",
@@ -184,19 +204,18 @@ def layout(gddid = None):
                                     dmc.ChipGroup(
                                         [
                                             dmc.Chip(
-                                                x["name"],
-                                                value = x["name"],
+                                                age['name'],
+                                                value=age['name'],
                                                 variant="outline",
-                                                
                                             )
-                                            for x in metadata["entities.AGE"][0]
+                                            for age in results["entities"]["AGE"]
                                         ],
                                         id="chips_age",
-                                        value = [None],  
-                                        multiple = True,
+                                        value=None,
+                                        multiple=False,
                                     ),
-                                    
-                                ],                                                       
+
+                                ],
                             ),
                         ],
                         value="AGE",
@@ -209,19 +228,18 @@ def layout(gddid = None):
                                     dmc.ChipGroup(
                                         [
                                             dmc.Chip(
-                                                x["name"],
-                                                value = x["name"],
+                                                email['name'],
+                                                value=email['name'],
                                                 variant="outline",
-                                                
                                             )
-                                            for x in metadata["entities.EMAIL"][0]
+                                            for email in results["entities"]["EMAIL"]
                                         ],
-                                        id="chips_email",  
-                                        value = [None],
-                                        multiple = True,
+                                        id="chips_email",
+                                        value=None,
+                                        multiple=False,
                                     ),
-                                    
-                                ],                                                       
+
+                                ],
                             ),
                         ],
                         value="EMAIL",
@@ -231,12 +249,13 @@ def layout(gddid = None):
             html.Br(),
             dmc.Textarea(
                 label="Reviewer's Comments",
-                placeholder="Reviewer's Comments",
+                placeholder="Add Comments",
                 autosize=True,
             ),
             html.Br(),
             dmc.Group(
                 [
+<<<<<<< HEAD
                     dmc.Button("Submit",
                                id="submit-button",
                                color="green"),
@@ -247,57 +266,60 @@ def layout(gddid = None):
                 ],
             ),
             dmc.Text(id="clicked-output", mt=10),    
+=======
+                    dmc.Button("Submit", color="green"),
+                    dmc.Button("Save Progress", color="green",
+                               variant="outline")
+                ],
+            )
+>>>>>>> data-review-tool-jenit
         ],
         style=SIDEBAR_STYLE,
     )
-    
+
     content = html.Div(
         [
             dbc.Row(
                 [
                     dmc.Group(
                         [
+<<<<<<< HEAD
                             html.P("Entity text:"),
                             dmc.Text(id="entity-text", style={"width": 200}),
                             dmc.TextInput(label="Corrected Entity:", style={"width": 200}, id="corrected-entity"),
+=======
+                            dmc.TextInput(
+                                id="entity-text",
+                                label="Entity text:",
+                                style={"width": 200},)
+>>>>>>> data-review-tool-jenit
                         ],
                     ),
                 ],
             ),
-            dmc.SegmentedControl(
-                id="segmented",
-                value = [None],
-                # data=segment_control(metadata, "ca. 12 001 BP"),
-                data = [{"label":None, "value":None}],
-                fullWidth=True,
-                
-                
-            ),
-            dmc.Paper(
-                children = 
-                    [
-                        dmc.Text(id="segmented-value"),
-                    ],
-                            
-            ),
-            dcc.Graph(id="histograms-graph"),
-            html.P("Mean:"),
-            dcc.Slider(
-                id="histograms-mean", min=-3, max=3, value=0, marks={-3: "-3", 3: "3"}
-            ),
-            html.P("Standard Deviation:"),
-            dcc.Slider(id="histograms-std", min=1, max=3, value=1, marks={1: "1", 3: "3"}),
-            ], style=CONTENT_STYLE)
-    
+            dmc.Tabs(
+                id="section-tabs",
+                color="red",
+                orientation="horizontal",
+            )
+
+            # dmc.Paper(
+            #     children=[
+            #         dmc.Text(id="segmented-value"),
+            #     ],
+            # )
+        ], style=CONTENT_STYLE)
+
     layout = html.Div(
-        [   
+        [
             dbc.Row(
                 [
                     dbc.Col(
                         [
-                            html.P("Article: " + metadata["title"][0]),
-                            html.A("DOI: doi.org/" + metadata["doi"][0], href="http://doi.org/" + metadata["doi"][0], target="_blank"),
-                            html.P("Journal: " + metadata["journal_name"][0]),
+                            html.P("Article: " + results["title"][0]),
+                            html.A(
+                                "DOI: doi.org/" + results["doi"][0], href="http://doi.org/" + results["doi"][0], target="_blank"),
+                            html.P("Journal: " + results["journal_name"][0]),
                         ],
                     ),
                     dbc.Col(
@@ -305,9 +327,16 @@ def layout(gddid = None):
                             html.P("Is this article relevant to NeotomaDB?"),
                             dmc.Group(
                                 [
+<<<<<<< HEAD
                                     dmc.Button("Yes", color="green", variant="outline", id="yes-button"),
                                     dmc.Button("No", color="red", variant="outline", id="no-button"),
                                     dmc.Text(id="relevant-output", mt=10),
+=======
+                                    dmc.Button("Yes", color="green",
+                                               variant="outline"),
+                                    dmc.Button("No", color="red",
+                                               variant="outline"),
+>>>>>>> data-review-tool-jenit
                                 ],
                             ),
                         ],
@@ -315,10 +344,15 @@ def layout(gddid = None):
                 ],
             ),
             html.Br(),
+<<<<<<< HEAD
             dcc.Store(id="metadata", data=[metadata.to_json(orient="split")]),
+=======
+            dcc.Store(id="results", data=[
+                      results.reset_index().to_json(orient="split")]),
+>>>>>>> data-review-tool-jenit
             dbc.Row(
                 [
-                    
+
                     dbc.Col(sidebar, width=12, lg=3, className="g-0"),
                     dbc.Col(content, width=12, lg=9, className="g-0"),
                 ],
@@ -327,12 +361,27 @@ def layout(gddid = None):
     )
     return layout
 
-@callback(Output("segmented-value", "children"), Input("segmented", "value"))
-def select_value(value):
-    return value
+# Update the chip selection when accordian value changes
+
 
 @callback(
-    Output("entity-text", "children"),
+    Output("chips_site", "value"),
+    Output("chips_region", "value"),
+    Output("chips_taxa", "value"),
+    Output("chips_geog", "value"),
+    Output("chips_alti", "value"),
+    Output("chips_age", "value"),
+    Output("chips_email", "value"),
+    Input("accordion", "value"),
+)
+def unselect_chips(accordian_state):
+    return None, None, None, None, None, None, None
+
+# Update entity value
+
+
+@callback(
+    Output("entity-text", "value"),
     Input("chips_site", "value"),
     Input("chips_region", "value"),
     Input("chips_taxa", "value"),
@@ -340,49 +389,43 @@ def select_value(value):
     Input("chips_alti", "value"),
     Input("chips_age", "value"),
     Input("chips_email", "value"),
-    
+    State("accordion", "value")
 )
-def chips_values(site, region, taxa, geog, alti, age, email):
-    for x in [site, region, taxa, geog, alti, age, email]:
-        if x != [None]:
-            return x
-    return "No entity selected"
-
-@callback(
-    Output("segmented", "data"),
-    Input("metadata", "data"),
-    Input("entity-text", "children"),
-    Input("accordion", "value"),
-)
-def segment_control(data, selected_entity, selected_entity_type):
-    data = pd.read_json(data[0], orient="split")
-    tab_data = {}
-    if selected_entity[1] == "No entity selected":
-        return [{"label":None, "value":None}]
-    elif selected_entity_type == None:
-        return [{"label":None, "value":None}]
+def chips_values(site, region, taxa, geog, alti, age, email, accordian):
+    if accordian == "SITE":
+        return site
+    elif accordian == "REGION":
+        return region
+    elif accordian == "TAXA":
+        return taxa
+    elif accordian == "GEOG":
+        return geog
+    elif accordian == "ALTI":
+        return alti
+    elif accordian == "AGE":
+        return age
+    elif accordian == "EMAIL":
+        return email
     else:
-        for entity in data[f"entities.{selected_entity_type}"][0]:
-            if entity["name"] == selected_entity[1]:
-                section_name = entity["sentence"][0]["section_name"]
-                text_value = entity["sentence"][0]["text"]
+        return "No entity selected"
 
-                if section_name in tab_data:
-                    tab_data[section_name].append(text_value)
-                else:
-                    tab_data[section_name] = [text_value]
-        return [{"label": label, "value": values} for label, values in tab_data.items()]
+# TODO: When the entity text changes, update the output json
+
 
 @callback(
-    Output("histograms-graph", "figure"),
-    Input("histograms-mean", "value"),
-    Input("histograms-std", "value"),
+    Output("section-tabs", "children"),
+    Input("chips_site", "value"),
+    Input("chips_region", "value"),
+    Input("chips_taxa", "value"),
+    Input("chips_geog", "value"),
+    Input("chips_alti", "value"),
+    Input("chips_age", "value"),
+    Input("chips_email", "value"),
+    State("accordion", "value")
 )
-def display_color(mean, std):
-    data = np.random.normal(mean, std, size=500)
-    fig = px.histogram(data, nbins=30, range_x=[-10, 10])
-    return fig
+def tabs_control(site, region, taxa, geog, alti, age, email, accordian_state):
 
+<<<<<<< HEAD
 @callback(
     Output("clicked-output", "children"),
     Input("submit-button", "n_clicks"),
@@ -456,3 +499,60 @@ def relevant(yes, no):
         return None
     
     
+=======
+    if accordian_state == None or (site == None and region == None and taxa == None and geog == None and alti == None and age == None and email == None):
+        return []
+    
+    # Key is the tab name, value is a list of texts
+    tabs = defaultdict(list)
+
+    # Get all the sentences and corresponding section names
+    for entity in results["entities"][accordian_state]:
+        if entity["name"] in [site, region, taxa, geog, alti, age, email]:
+            sentences = entity["sentence"]
+            for sentence in sentences:
+                section_name = sentence["section_name"]
+                text = sentence["text"]
+                tabs[section_name].append(text)
+
+    # Convert all the sentences in tabs to paper dmc components
+    dmc_tabs_content = []
+    for tab_name, tab_content in tabs.items():
+        dmc_tabs_content.append(dmc.TabsPanel(
+            dmc.Paper(
+                children=[
+                    dmc.Text(text)
+                    for text in tab_content
+                ],
+                withBorder=True,
+                shadow="xs"
+            ),
+            value=tab_name
+        ))
+        
+    # Convert to list of tabs
+    dmc_tabs = [dmc.Tab(tab_name, 
+                        value=tab_name,
+                        rightSection=dmc.Badge(
+                            f"{len(tabs[tab_name])}",
+                            size="xs",
+                            p=0,
+                            variant="filled",
+                            sx={"width": 16, "height": 16, "pointerEvents": "none"})) 
+                for tab_name in tabs.keys()]
+    
+    tab_component = dmc.Tabs(
+        children=[
+            dmc.TabsList(
+                dmc_tabs,
+                position="center"
+            ),
+        ],
+        color="red",
+        orientation="horizontal",
+        value=list(tabs.keys())[0]
+    )
+    tab_component.children.extend(dmc_tabs_content)
+    
+    return tab_component
+>>>>>>> data-review-tool-jenit

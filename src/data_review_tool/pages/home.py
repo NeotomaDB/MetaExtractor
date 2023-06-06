@@ -47,6 +47,7 @@ nonrelevant = df[df["Status"] == "Non-Relevant"]
   
 
 layout = html.Div(
+    dbc.Col(
     [
         html.H2("Current Articles",
                 style={'textAlign': 'center'}),
@@ -116,14 +117,16 @@ layout = html.Div(
                 {'if': {'column_id': 'Status'},'fontWeight': 'bold'},
                                    ],
             style_table={'overflowX': 'auto',
-                         "max_width": '80%',
                          },
             style_cell={'textAlign': 'left',
                         'font-family': 'sans-serif'},
         ),
         dcc.Location(id='location_nonrelevant'),
     
-    ]
+    ],
+    width=10,
+    style = {'margin-left': 'auto', 'margin-right': 'auto'}
+    )
 )
 
 @callback(

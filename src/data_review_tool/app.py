@@ -17,6 +17,7 @@ server = app.server
 
 navbar = create_navbar()
 
+
 app.layout = html.Div(
     children=
     [

@@ -1,6 +1,7 @@
 import dash
 import dash_mantine_components as dmc
 import dash_bootstrap_components as dbc
+import os
 import json
 from datetime import datetime
 
@@ -387,25 +388,45 @@ def display_color(mean, std):
     Output("clicked-output", "children"),
     Input("submit-button", "n_clicks"),
     Input("save-button", "n_clicks"),
+    Input("relevant-output", "children"),
     Input('metadata', 'data'),
     prevent_initial_call=True,
 )
-def save_submit(submit, save, data):
+def save_submit(submit, save, relevant, data):
+    if not os.path.exists("data/labelled/completed/"):
+            os.makedirs("data/labelled/completed/")
+    if not os.path.exists("data/labelled/nonrelevant/"):
+            os.makedirs("data/labelled/nonrelevant/")
     if submit:
-        metadata = pd.read_json(data[0], orient="split")
-        metadata["status"] = "Completed"
-        metadata["last_updated"] = datetime.now().strftime("%Y-%m-%d")
-        print(metadata["last_updated"])
-        gddid = metadata["gddid"][0]
-        metadata = df_denormalize(metadata)
-        metadata= metadata.to_dict(orient='records')
-        metadata = json.dumps(metadata)
-        with open(f"data/labelled/{gddid}.json", "w") as f:
-            f.write(metadata)
-        with open(f"data/labelled/completed/{gddid}.json", "w") as f:
-            f.write(metadata)
-        return "Submitted"
-    
+        if relevant == "Relevant":
+            metadata = pd.read_json(data[0], orient="split")
+            metadata["status"] = "Completed"
+            metadata["last_updated"] = datetime.now().strftime("%Y-%m-%d")
+            print(metadata["last_updated"])
+            gddid = metadata["gddid"][0]
+            metadata = df_denormalize(metadata)
+            metadata= metadata.to_dict(orient='records')
+            metadata = json.dumps(metadata)
+            with open(f"data/labelled/{gddid}.json", "w") as f:
+                f.write(metadata)
+            with open(f"data/labelled/completed/{gddid}.json", "w") as f:
+                f.write(metadata)
+            return "Submitted"
+        elif relevant == "Non-Relevant, hit Submit to remove from the queue":
+            metadata = pd.read_json(data[0], orient="split")
+            metadata["status"] = "Non-relevant"
+            metadata["last_updated"] = datetime.now().strftime("%Y-%m-%d")
+            gddid = metadata["gddid"][0]
+            metadata = df_denormalize(metadata)
+            metadata= metadata.to_dict(orient='records')
+            metadata = json.dumps(metadata)
+            with open(f"data/labelled/{gddid}.json", "w") as f:
+                f.write(metadata)
+            with open(f"data/labelled/nonrelevant/{gddid}.json", "w") as f:
+                f.write(metadata)
+            return "Submitted"
+        else:
+            return "Please select relevant or non-relevant"
     elif save:
         metadata = pd.read_json(data[0], orient="split")
         metadata["status"] = "In Progress"

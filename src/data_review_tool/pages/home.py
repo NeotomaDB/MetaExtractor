@@ -22,6 +22,9 @@ files = [file for file in files_and_directories if os.path.isfile(os.path.join(d
 if "/completed/" in files:
     # remove it
     files.remove("/completed/")
+if "/nonrelevant/" in files:
+    # remove it
+    files.remove("/nonrelevant/")
 if '.gitkeep' in files:
     files.remove('.gitkeep')
 if '.DS_Store' in files:
@@ -37,7 +40,11 @@ for f in files:
     # merge
     df = pd.concat([df, onefile])
 df = df[["title", "doi", "gddid", "status", "date_processed", "last_updated"]].rename(
-        columns={"title": "Article", "doi": "DOI", "status": "Status", "date_processed": "Date Added", "last_updated": "Date Updated"}
+        columns={"title": "Article", 
+                 "doi": "DOI", 
+                 "status": "Status", 
+                 "date_processed": "Date Added",
+                 "last_updated": "Date Updated"}
     )
 df["Review"] = "Review"
 

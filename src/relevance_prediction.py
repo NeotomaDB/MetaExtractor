@@ -1,7 +1,19 @@
-# This script focuses on data cleaning for the article relevance prediction task
-# All the observations has been joined in the relevance_preprocessing.py script
-# The script below will remove unneccesary columns, format columns and create useful features
-# The cleaned data will be saved as a csv file under  "../data/processed/metadata_processed.csv"
+# Author Kelly Wu
+# 2023-06-03
+
+# Relevance prediction pipeline
+# Input: list of doi
+# output: df containing all metadata, predicted relevance, predict_proba
+
+"""This script takes a list of DOI as input and output a dataframe containing all metadata, predicted relevance, predict_proba of each article.
+
+Usage: relevance_prediction.py --doi_path=<doi_path> --model_path=<model_path> --output_path=<output_path>
+
+Options:
+    --doi_path=<doi_path>                   The path to where the list of DOI is.
+    --model_path=<model_path>               The path to where the model object is stored.
+    --output_path=<output_path>             The path to where the output files will be saved.
+"""
 
 import pandas as pd
 import numpy as np
@@ -13,6 +25,7 @@ from langdetect import detect
 from sentence_transformers import SentenceTransformer
 import joblib
 import logging
+from docopt import docopt
 
 
 def crossref_extract(doi_path, doi_colname):
@@ -206,6 +219,7 @@ def relevance_prediction(input_df, model_path, predict_thld = 0.5):
 
     # Use the loaded model for prediction on a new dataset
     valid_df['predict_proba'] = model_object.predict_proba(valid_df)[:, 1]
+    print
     valid_df['prediction'] = valid_df.loc[:,'predict_proba'].apply(lambda x: 1 if x >= predict_thld else 0)
 
     # Filter results, store key information that could possibly be useful downstream
@@ -226,7 +240,7 @@ def relevance_prediction(input_df, model_path, predict_thld = 0.5):
     return result
 
 
-def prediction_export_log(input_df, output_path):
+def prediction_export(input_df, output_path):
     """
     Make prediction on article relevancy. 
     Add prediction and predict_proba to the resulting dataframe.
@@ -245,7 +259,19 @@ def prediction_export_log(input_df, output_path):
     df_directory = os.path.join(output_path)
     if not os.path.exists(df_directory):
         os.makedirs(df_directory)
-    input_df.to_csv(output_path + '/relevance_prediction_fullinfo.csv')
+    df_json = input_df.to_json()
+
+    # ==== Add other info in the json file ===
+    result_dict = {}
+    result_dict['total_article'] = input_df.shape[0]
+    result_dict['valid_article'] = input_df.query('valid_for_prediction == 1').shape[0]
+    result_dict['num_relevant_article'] = input_df.query('prediction == 1').shape[0]
+    result_dict['pct_relevant_article'] = round(input_df.query('prediction == 1').shape[0]/input_df.shape[0] * 100, 3)
+    result_dict['results'] = df_json
+
+    # Write the JSON object to a file
+    with open(output_path + '/relevance_prediction_output.json', "w") as file:
+        json.dump(result_dict, file)
 
     # ===== log important information ======
     # Set up logging configuration
@@ -260,14 +286,19 @@ def prediction_export_log(input_df, output_path):
     logger.info(f"Number of invalid articles: {input_df.query('valid_for_prediction != 1').shape[0]}")
 
 
-if __name__ == "__main__":
+def main():
+    opt = docopt(__doc__)
 
-    doi_list_file_path = '../data/article-relevance/raw/doi_list_test.csv'
-    model_path = '../model/article-relevance/logistic_regression_model.joblib'
-    output_path = '../results/article_relevance/output'
+    doi_list_file_path = opt["--doi_path"]
+    model_path = opt['--model_path']
+    output_path = opt['--output_path']
 
     metadata_df = crossref_extract(doi_list_file_path, 'doi')
     preprocessed = data_preprocessing(metadata_df)
     embedded = add_embeddings(preprocessed, 'text_with_abstract', model = 'allenai/specter2')
-    predicted = relevance_prediction(embedded, model_path, output_path)
-    prediction_export_log(predicted, output_path)
+    predicted = relevance_prediction(embedded, model_path, predict_thld = 0.5)
+    prediction_export(predicted, output_path)
+
+
+if __name__ == "__main__":
+    main()

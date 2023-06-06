@@ -12,39 +12,40 @@ import dash_bootstrap_components as dbc
 
 suppress_callback_exceptions = True
 
-# Set the directory path
-directory_path = "data/data-review-tool/raw/"
-# Get a list of all files and directories in the directory
-files_and_directories = os.listdir(directory_path)
-# Filter out the directories to get only the files
-files = [file for file in files_and_directories if os.path.isfile(os.path.join(directory_path, file))]
-# if a subfolder exists in files
-if '.gitkeep' in files:
-    files.remove('.gitkeep')
-if '.DS_Store' in files:
-    files.remove('.DS_Store')
-# initialize empty dataframe
-df = pd.DataFrame()
+directories = ["data/data-review-tool/completed/", "data/data-review-tool/nonrelevant/", "data/data-review-tool/raw/"]
 
-# Populate the df
-for f in files:
-    file = open(os.path.join(directory_path, f), "r")
-    onefile = pd.json_normalize(json.loads(file.read()))
-    
-    # merge
-    df = pd.concat([df, onefile])
-df = df[["title", "doi", "gddid", "status", "date_processed", "last_updated"]].rename(
+# Initialize an empty dictionary to store the dataframes
+dfs = {}
+
+# Iterate through the directories
+for directory in directories:
+    # List all files in the directory
+    files = os.listdir(directory)
+    # Filter JSON files
+    json_files = [file for file in files if file.endswith('.json')]
+    # Read each JSON file into a dataframe and store it in the dictionary
+    for file in json_files:
+        file_path = os.path.join(directory, file)
+        article = open(file_path, "r")
+        df = pd.json_normalize(json.loads(article.read()))
+        # Only keep the dataframe if the file is not already in the dictionary
+        if file not in dfs:
+            dfs[file] = df
+# Combine all dataframes into a single dataframe
+combined_df = pd.concat(list(dfs.values()), ignore_index=True)
+
+combined_df = combined_df[["title", "doi", "gddid", "status", "date_processed", "last_updated"]].rename(
         columns={"title": "Article", 
                  "doi": "DOI", 
                  "status": "Status", 
                  "date_processed": "Date Added",
                  "last_updated": "Date Updated"}
     )
-df["Review"] = "Review"
+combined_df["Review"] = "Review"
 
-current = df.query("Status == 'False' | Status =='In Progress'")
-completed = df[df["Status"] == "Completed"]
-nonrelevant = df[df["Status"] == "Non-relevant"]
+current = combined_df.query("Status == 'False' | Status =='In Progress'")
+completed = combined_df[combined_df["Status"] == "Completed"]
+nonrelevant = combined_df[combined_df["Status"] == "Non-relevant"]
   
 
 layout = html.Div(

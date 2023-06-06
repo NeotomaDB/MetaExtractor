@@ -15,7 +15,8 @@ import sys
 import pandas as pd
 from docopt import docopt
 
-def load_relevant_articles(relevance_results_path:str)-> pd.DataFrame:
+
+def load_relevant_articles(relevance_results_path: str) -> pd.DataFrame:
     """
     Loads the relevant articles from the article relevance results file.
 
@@ -32,7 +33,8 @@ def load_relevant_articles(relevance_results_path:str)-> pd.DataFrame:
 
     return pd.DataFrame()
 
-def load_article_text_data(article_text_path:str)-> pd.DataFrame:
+
+def load_article_text_data(article_text_path: str) -> pd.DataFrame:
     """
     Loads the article text data from the article text data file.
 
@@ -49,7 +51,8 @@ def load_article_text_data(article_text_path:str)-> pd.DataFrame:
 
     return pd.DataFrame()
 
-def preprocess_article_text_data(article_text_data:pd.DataFrame)-> pd.DataFrame:
+
+def preprocess_article_text_data(article_text_data: pd.DataFrame) -> pd.DataFrame:
     """
     Preprocesses the article text data.
 
@@ -66,7 +69,8 @@ def preprocess_article_text_data(article_text_data:pd.DataFrame)-> pd.DataFrame:
 
     return pd.DataFrame()
 
-def extract_entities(article_text_data:pd.DataFrame)-> pd.DataFrame:
+
+def extract_entities(article_text_data: pd.DataFrame) -> pd.DataFrame:
     """
     Extracts the entities from the article text data.
 
@@ -83,7 +87,8 @@ def extract_entities(article_text_data:pd.DataFrame)-> pd.DataFrame:
 
     return pd.DataFrame()
 
-def post_process_extracted_entities(extracted_entities:pd.DataFrame)-> dict:
+
+def post_process_extracted_entities(extracted_entities: pd.DataFrame) -> dict:
     """
     Post-processes the extracted entities into the format to be exported to json.
 
@@ -100,7 +105,8 @@ def post_process_extracted_entities(extracted_entities:pd.DataFrame)-> dict:
 
     return dict()
 
-def export_extracted_entities(extracted_entities:dict, output_path:str)-> None:
+
+def export_extracted_entities(extracted_entities: dict, output_path: str) -> None:
     """
     Exports the extracted entities to json.
 
@@ -114,7 +120,29 @@ def export_extracted_entities(extracted_entities:dict, output_path:str)-> None:
 
     return None
 
-def main():
 
+def main():
     opt = docopt(__doc__)
-    
+
+    relevant_articles = load_relevant_articles(opt["--relevance_results_path"])
+
+    article_text_data = load_article_text_data(opt["--article_text_path"])
+
+    for article_gdd in relevant_articles["gddid"].unique():
+        article_text = article_text_data[article_text_data["gddid"] == article_gdd]
+
+        preprocessed_article_text_data = preprocess_article_text_data(article_text)
+
+        extracted_entities = extract_entities(preprocessed_article_text_data)
+
+        post_processed_extracted_entities = post_process_extracted_entities(
+            extracted_entities
+        )
+
+        export_extracted_entities(
+            post_processed_extracted_entities, opt["--output_path"]
+        )
+
+
+if __name__ == "__main__":
+    main()

@@ -13,18 +13,12 @@ import dash_bootstrap_components as dbc
 suppress_callback_exceptions = True
 
 # Set the directory path
-directory_path = "data/labelled/"
+directory_path = "data/data-review-tool/raw/"
 # Get a list of all files and directories in the directory
 files_and_directories = os.listdir(directory_path)
 # Filter out the directories to get only the files
 files = [file for file in files_and_directories if os.path.isfile(os.path.join(directory_path, file))]
 # if a subfolder exists in files
-if "/completed/" in files:
-    # remove it
-    files.remove("/completed/")
-if "/nonrelevant/" in files:
-    # remove it
-    files.remove("/nonrelevant/")
 if '.gitkeep' in files:
     files.remove('.gitkeep')
 if '.DS_Store' in files:
@@ -34,7 +28,7 @@ df = pd.DataFrame()
 
 # Populate the df
 for f in files:
-    file = open(f"data/labelled/{f}", "r")
+    file = open(os.path.join(directory_path, f), "r")
     onefile = pd.json_normalize(json.loads(file.read()))
     
     # merge
@@ -50,7 +44,7 @@ df["Review"] = "Review"
 
 current = df.query("Status == 'False' | Status =='In Progress'")
 completed = df[df["Status"] == "Completed"]
-nonrelevant = df[df["Status"] == "Non-Relevant"]
+nonrelevant = df[df["Status"] == "Non-relevant"]
   
 
 layout = html.Div(

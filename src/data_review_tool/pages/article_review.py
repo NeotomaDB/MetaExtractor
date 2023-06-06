@@ -13,12 +13,11 @@ import numpy as np
 import pandas as pd
 from pages.navbar import df_denormalize
 
-np.random.seed(2020)
 
 def layout(gddid = None):
     try:
         # get the metadata of the article
-        file = open(f"data/labelled/{gddid}.json", "r")
+        file = open(f"data/data-review-tool/raw/{gddid}.json", "r")
         metadata = pd.json_normalize(json.loads(file.read()))
     except FileNotFoundError:
         return html.Div(
@@ -393,10 +392,10 @@ def display_color(mean, std):
     prevent_initial_call=True,
 )
 def save_submit(submit, save, relevant, data):
-    if not os.path.exists("data/labelled/completed/"):
-            os.makedirs("data/labelled/completed/")
-    if not os.path.exists("data/labelled/nonrelevant/"):
-            os.makedirs("data/labelled/nonrelevant/")
+    if not os.path.exists("data/data-review-tool/completed/"):
+            os.makedirs("data/data-review-tool/completed/")
+    if not os.path.exists("data/data-review-tool/nonrelevant/"):
+            os.makedirs("data/data-review-tool/nonrelevant/")
     if submit:
         if relevant == "Relevant":
             metadata = pd.read_json(data[0], orient="split")
@@ -407,9 +406,9 @@ def save_submit(submit, save, relevant, data):
             metadata = df_denormalize(metadata)
             metadata= metadata.to_dict(orient='records')
             metadata = json.dumps(metadata)
-            with open(f"data/labelled/{gddid}.json", "w") as f:
+            with open(f"data/data-review-tool/raw/{gddid}.json", "w") as f:
                 f.write(metadata)
-            with open(f"data/labelled/completed/{gddid}.json", "w") as f:
+            with open(f"data/data-review-tool/completed/{gddid}.json", "w") as f:
                 f.write(metadata)
             return "Submitted"
         elif relevant == "Non-Relevant, hit Submit to remove from the queue":
@@ -420,9 +419,9 @@ def save_submit(submit, save, relevant, data):
             metadata = df_denormalize(metadata)
             metadata= metadata.to_dict(orient='records')
             metadata = json.dumps(metadata)
-            with open(f"data/labelled/{gddid}.json", "w") as f:
+            with open(f"data/data-review-tool/raw/{gddid}.json", "w") as f:
                 f.write(metadata)
-            with open(f"data/labelled/nonrelevant/{gddid}.json", "w") as f:
+            with open(f"data/data-review-tool/nonrelevant/{gddid}.json", "w") as f:
                 f.write(metadata)
             return "Submitted"
         else:
@@ -434,9 +433,9 @@ def save_submit(submit, save, relevant, data):
         metadata = df_denormalize(metadata)
         metadata= metadata.to_dict(orient='records')
         metadata = json.dumps(metadata)
-        with open(f"data/labelled/{gddid}.json", "w") as f:
+        with open(f"data/data-review-tool/raw/{gddid}.json", "w") as f:
             f.write(metadata)
-        with open(f"data/labelled/completed/{gddid}.json", "w") as f:
+        with open(f"data/data-review-tool/completed/{gddid}.json", "w") as f:
             f.write(metadata)
         return "Saved"
     else:

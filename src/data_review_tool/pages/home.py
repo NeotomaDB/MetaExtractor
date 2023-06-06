@@ -14,7 +14,7 @@ import dash_bootstrap_components as dbc
 suppress_callback_exceptions = True
 
 # Set the directory path
-directory_path = "data/labelled/"
+directory_path = "data/data-review-tool/raw/"
 # Get a list of all files and directories in the directory
 files_and_directories = os.listdir(directory_path)
 # Filter out the directories to get only the files
@@ -30,13 +30,18 @@ df = pd.DataFrame()
 
 # Populate the cross ref df
 for f in files:
-    file = open(f"data/labelled/{f}", "r")
+    file = open(os.path.join(directory_path, f), "r")
     onefile = pd.json_normalize(json.loads(file.read()))
     
     # merge
     df = pd.concat([df, onefile])
+    
 df = df[["title", "doi", "status", "date_processed", "last_updated", "gddid"]].rename(
-        columns={"title": "Article", "doi": "DOI", "status": "Status", "date_uploaded": "Date Added", "last_updated": "Date Updated"}
+        columns={"title": "Article",
+                 "doi": "DOI",
+                 "status": "Status",
+                 "date_uploaded": "Date Added",
+                 "last_updated": "Date Updated"}
     )
 df["Review"] = "Review"
 

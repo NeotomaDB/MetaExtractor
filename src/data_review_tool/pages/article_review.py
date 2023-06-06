@@ -1,4 +1,3 @@
-from pages.navbar import segment_control
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -6,29 +5,32 @@ from dash import Dash, dcc, html, Input, Output, callback, State
 import dash
 import dash_mantine_components as dmc
 import dash_bootstrap_components as dbc
-<<<<<<< HEAD
-import os
-=======
 from collections import defaultdict
->>>>>>> data-review-tool-jenit
+import os
 import json
 from datetime import datetime
 
 dash.register_page(__name__,  path_template="/article/<gddid>")
 
-<<<<<<< HEAD
 from dash import Dash, dcc, html, Input, Output, callback
 import plotly.express as px
 import numpy as np
 import pandas as pd
 from pages.navbar import df_denormalize
 
+original = None
+results = None
 
 def layout(gddid = None):
     try:
+        global original
+        global results
         # get the metadata of the article
-        file = open(f"data/data-review-tool/raw/{gddid}.json", "r")
-        metadata = pd.json_normalize(json.loads(file.read()))
+        article = open(f"data/data-review-tool/raw/{gddid}.json", "r")
+        original = pd.json_normalize(json.loads(article.read()))
+        article = open(f"data/data-review-tool/raw/{gddid}.json", "r")
+        results = pd.json_normalize(json.loads(article.read()))
+
     except FileNotFoundError:
         return html.Div(
     [
@@ -41,20 +43,6 @@ def layout(gddid = None):
             
         
 
-=======
-
-np.random.seed(2023)
-
-results = None
-
-
-def layout(gddid=None):
-    global results
-    results = pd.read_json(f"data/data-review-tool/raw/{gddid}.json")
-    # metadata = pd.DataFrame(metadata.loc[0, "data"], index=metadata.index).reset_index(drop=True)
-    # file = open(f"data/data-review-tool/raw/{gddid}.json", "r")
-    # results = pd.json_normalize(json.loads(file.read()))
->>>>>>> data-review-tool-jenit
     # styling the sidebar
     SIDEBAR_STYLE = {
         # "position": "fixed",
@@ -89,7 +77,7 @@ def layout(gddid=None):
                                                 value=site['name'],
                                                 variant="outline",
                                             )
-                                            for site in results["entities"]["SITE"]
+                                            for site in original["entities.SITE"][0]
                                         ],
                                         id="chips_site",
                                         value=None,
@@ -112,7 +100,7 @@ def layout(gddid=None):
                                                 value=region['name'],
                                                 variant="outline",
                                             )
-                                            for region in results["entities"]["REGION"]
+                                            for region in original["entities.REGION"][0]
                                         ],
                                         id="chips_region",
                                         value=None,
@@ -136,7 +124,7 @@ def layout(gddid=None):
                                                 value=taxa['name'],
                                                 variant="outline",
                                             )
-                                            for taxa in results["entities"]["TAXA"]
+                                            for taxa in original["entities.TAXA"][0]
                                         ],
                                         id="chips_taxa",
                                         value=None,
@@ -160,7 +148,7 @@ def layout(gddid=None):
                                                 value=geog['name'],
                                                 variant="outline",
                                             )
-                                            for geog in results["entities"]["GEOG"]
+                                            for geog in original["entities.GEOG"][0]
                                         ],
                                         id="chips_geog",
                                         value=None,
@@ -184,7 +172,7 @@ def layout(gddid=None):
                                                 value=alti['name'],
                                                 variant="outline",
                                             )
-                                            for alti in results["entities"]["ALTI"]
+                                            for alti in original["entities.ALTI"][0]
                                         ],
                                         id="chips_alti",
                                         value=None,
@@ -208,7 +196,7 @@ def layout(gddid=None):
                                                 value=age['name'],
                                                 variant="outline",
                                             )
-                                            for age in results["entities"]["AGE"]
+                                            for age in original["entities.AGE"][0]
                                         ],
                                         id="chips_age",
                                         value=None,
@@ -232,7 +220,7 @@ def layout(gddid=None):
                                                 value=email['name'],
                                                 variant="outline",
                                             )
-                                            for email in results["entities"]["EMAIL"]
+                                            for email in original["entities.EMAIL"][0]
                                         ],
                                         id="chips_email",
                                         value=None,
@@ -255,7 +243,6 @@ def layout(gddid=None):
             html.Br(),
             dmc.Group(
                 [
-<<<<<<< HEAD
                     dmc.Button("Submit",
                                id="submit-button",
                                color="green"),
@@ -266,13 +253,6 @@ def layout(gddid=None):
                 ],
             ),
             dmc.Text(id="clicked-output", mt=10),    
-=======
-                    dmc.Button("Submit", color="green"),
-                    dmc.Button("Save Progress", color="green",
-                               variant="outline")
-                ],
-            )
->>>>>>> data-review-tool-jenit
         ],
         style=SIDEBAR_STYLE,
     )
@@ -283,16 +263,19 @@ def layout(gddid=None):
                 [
                     dmc.Group(
                         [
-<<<<<<< HEAD
-                            html.P("Entity text:"),
-                            dmc.Text(id="entity-text", style={"width": 200}),
-                            dmc.TextInput(label="Corrected Entity:", style={"width": 200}, id="corrected-entity"),
-=======
                             dmc.TextInput(
                                 id="entity-text",
                                 label="Entity text:",
-                                style={"width": 200},)
->>>>>>> data-review-tool-jenit
+                                style={"width": 200},
+                                disabled=True,
+                                ),
+                            dmc.TextInput(
+                                id="corrected-text",
+                                label="Corrected text:",
+                                style={"width": 200},),
+                            dmc.Button("Correct",
+                                       id = "correct-button"),
+                            
                         ],
                     ),
                 ],
@@ -302,12 +285,6 @@ def layout(gddid=None):
                 color="red",
                 orientation="horizontal",
             )
-
-            # dmc.Paper(
-            #     children=[
-            #         dmc.Text(id="segmented-value"),
-            #     ],
-            # )
         ], style=CONTENT_STYLE)
 
     layout = html.Div(
@@ -316,10 +293,10 @@ def layout(gddid=None):
                 [
                     dbc.Col(
                         [
-                            html.P("Article: " + results["title"][0]),
+                            html.P("Article: " + original["title"][0]),
                             html.A(
-                                "DOI: doi.org/" + results["doi"][0], href="http://doi.org/" + results["doi"][0], target="_blank"),
-                            html.P("Journal: " + results["journal_name"][0]),
+                                "DOI: doi.org/" + original["doi"][0], href="http://doi.org/" + original["doi"][0], target="_blank"),
+                            html.P("Journal: " + original["journal_name"][0]),
                         ],
                     ),
                     dbc.Col(
@@ -327,16 +304,11 @@ def layout(gddid=None):
                             html.P("Is this article relevant to NeotomaDB?"),
                             dmc.Group(
                                 [
-<<<<<<< HEAD
-                                    dmc.Button("Yes", color="green", variant="outline", id="yes-button"),
-                                    dmc.Button("No", color="red", variant="outline", id="no-button"),
-                                    dmc.Text(id="relevant-output", mt=10),
-=======
                                     dmc.Button("Yes", color="green",
-                                               variant="outline"),
+                                               variant="outline", id="yes-button"),
                                     dmc.Button("No", color="red",
-                                               variant="outline"),
->>>>>>> data-review-tool-jenit
+                                               variant="outline", id="no-button"),
+                                    dmc.Text(id="relevant-output", mt=10),
                                 ],
                             ),
                         ],
@@ -344,12 +316,8 @@ def layout(gddid=None):
                 ],
             ),
             html.Br(),
-<<<<<<< HEAD
-            dcc.Store(id="metadata", data=[metadata.to_json(orient="split")]),
-=======
             dcc.Store(id="results", data=[
-                      results.reset_index().to_json(orient="split")]),
->>>>>>> data-review-tool-jenit
+                      original.reset_index().to_json(orient="split")]),
             dbc.Row(
                 [
 
@@ -409,29 +377,32 @@ def chips_values(site, region, taxa, geog, alti, age, email, accordian):
     else:
         return "No entity selected"
 
-# TODO: When the entity text changes, update the output json
-
 
 @callback(
-    Output("section-tabs", "children"),
-    Input("chips_site", "value"),
-    Input("chips_region", "value"),
-    Input("chips_taxa", "value"),
-    Input("chips_geog", "value"),
-    Input("chips_alti", "value"),
-    Input("chips_age", "value"),
-    Input("chips_email", "value"),
-    State("accordion", "value")
-)
-def tabs_control(site, region, taxa, geog, alti, age, email, accordian_state):
+    Output('results', 'data'),
+    Input("correct-button", "n_clicks"),
+    State("entity-text", "value"),
+    State("corrected-text", "value"),
+    State("accordion", "value"),
+    prevent_initial_call=True,
 
-<<<<<<< HEAD
+)
+def update_entity(n_clicks, entity, corrected, accordian):
+    if n_clicks:
+        # results = pd.read_json(data[0], orient="split")
+        for i in results[f"entities.{accordian}"][0]:
+            if i["name"] == entity:
+                i["name"] = corrected
+                return [results.reset_index().to_json(orient="split")]
+            
+
+
 @callback(
     Output("clicked-output", "children"),
     Input("submit-button", "n_clicks"),
     Input("save-button", "n_clicks"),
     Input("relevant-output", "children"),
-    Input('metadata', 'data'),
+    Input('results', 'data'),
     prevent_initial_call=True,
 )
 def save_submit(submit, save, relevant, data):
@@ -444,13 +415,10 @@ def save_submit(submit, save, relevant, data):
             metadata = pd.read_json(data[0], orient="split")
             metadata["status"] = "Completed"
             metadata["last_updated"] = datetime.now().strftime("%Y-%m-%d")
-            print(metadata["last_updated"])
             gddid = metadata["gddid"][0]
             metadata = df_denormalize(metadata)
-            metadata= metadata.to_dict(orient='records')
+            metadata= metadata.to_dict(orient='records')[0]
             metadata = json.dumps(metadata)
-            with open(f"data/data-review-tool/raw/{gddid}.json", "w") as f:
-                f.write(metadata)
             with open(f"data/data-review-tool/completed/{gddid}.json", "w") as f:
                 f.write(metadata)
             return "Submitted"
@@ -460,10 +428,8 @@ def save_submit(submit, save, relevant, data):
             metadata["last_updated"] = datetime.now().strftime("%Y-%m-%d")
             gddid = metadata["gddid"][0]
             metadata = df_denormalize(metadata)
-            metadata= metadata.to_dict(orient='records')
+            metadata= metadata.to_dict(orient='records')[0]
             metadata = json.dumps(metadata)
-            with open(f"data/data-review-tool/raw/{gddid}.json", "w") as f:
-                f.write(metadata)
             with open(f"data/data-review-tool/nonrelevant/{gddid}.json", "w") as f:
                 f.write(metadata)
             return "Submitted"
@@ -474,10 +440,8 @@ def save_submit(submit, save, relevant, data):
         metadata["status"] = "In Progress"
         gddid = metadata["gddid"][0]
         metadata = df_denormalize(metadata)
-        metadata= metadata.to_dict(orient='records')
+        metadata= metadata.to_dict(orient='records')[0]
         metadata = json.dumps(metadata)
-        with open(f"data/data-review-tool/raw/{gddid}.json", "w") as f:
-            f.write(metadata)
         with open(f"data/data-review-tool/completed/{gddid}.json", "w") as f:
             f.write(metadata)
         return "Saved"
@@ -489,7 +453,6 @@ def save_submit(submit, save, relevant, data):
     Input("yes-button", "n_clicks"),
     Input("no-button", "n_clicks"),
 )
-
 def relevant(yes, no):
     if yes:
         return "Relevant"
@@ -498,8 +461,20 @@ def relevant(yes, no):
     else:
         return None
     
-    
-=======
+
+@callback(
+    Output("section-tabs", "children"),
+    Input("chips_site", "value"),
+    Input("chips_region", "value"),
+    Input("chips_taxa", "value"),
+    Input("chips_geog", "value"),
+    Input("chips_alti", "value"),
+    Input("chips_age", "value"),
+    Input("chips_email", "value"),
+    State("accordion", "value")
+)    
+def tabs_control(site, region, taxa, geog, alti, age, email, accordian_state):
+
     if accordian_state == None or (site == None and region == None and taxa == None and geog == None and alti == None and age == None and email == None):
         return []
     
@@ -507,9 +482,10 @@ def relevant(yes, no):
     tabs = defaultdict(list)
 
     # Get all the sentences and corresponding section names
-    for entity in results["entities"][accordian_state]:
+    for entity in original[f"entities.{accordian_state}"][0]:
         if entity["name"] in [site, region, taxa, geog, alti, age, email]:
             sentences = entity["sentence"]
+            highlight = entity["name"]
             for sentence in sentences:
                 section_name = sentence["section_name"]
                 text = sentence["text"]
@@ -521,7 +497,7 @@ def relevant(yes, no):
         dmc_tabs_content.append(dmc.TabsPanel(
             dmc.Paper(
                 children=[
-                    dmc.Text(text)
+                    dmc.Text(dmc.Highlight(text, highlight=highlight))
                     for text in tab_content
                 ],
                 withBorder=True,
@@ -555,4 +531,3 @@ def relevant(yes, no):
     tab_component.children.extend(dmc_tabs_content)
     
     return tab_component
->>>>>>> data-review-tool-jenit

@@ -260,14 +260,14 @@ def layout(gddid = None):
                 [
                     dmc.Group(
                         [   
-                            dbc.Col(
+                            "Enitity Text: ",
+                            html.Label(id="entity-text", style={"font-weight": "bold"}),
                             dmc.TextInput(
-                                id="entity-text",
-                                label="Entity text:",
-                                style={"width": 200},
-                            ),
-                            align="left"),
-                            dbc.Col(
+                                id="corrected-text",
+                                placeholder="Add corrected text here",
+                                style={"width": 200},),
+                            dmc.Button("Correct",
+                                       id = "correct-button"),
                             dmc.Button(
                                 "Delete Entity",
                                 id="delete-button",
@@ -275,8 +275,9 @@ def layout(gddid = None):
                                 leftIcon=DashIconify(icon="dashicons-trash", height=16),
                                 disabled=True,
                             ),
-                            align="right"),
+                            
                         ],
+                        style={"anchor": "middle", "justify": "center"}
                     ),
                 ],
             ),
@@ -414,8 +415,9 @@ def unselect_chips(accordian):
 
 # Populate entity text with the selected chip
 @callback(
-    Output("entity-text", "value"),
-    Output("entity-text", "disabled"),
+    Output("entity-text", "children"),
+    Output("corrected-text", "disabled"),
+    # Output("correct-button", "disabled"),
     Output("delete-button", "disabled"),
     Input("chips_site", "value"),
     Input("chips_region", "value"),
@@ -429,47 +431,48 @@ def unselect_chips(accordian):
 def chips_values(site, region, taxa, geog, alti, age, email, accordian):
     if accordian == "SITE":
         if site == None:
-            return site, True, True
+            return site, True, True#, True
         else:
-            return site, False, False
+            return site,  False, False#, False
     elif accordian == "REGION":
         if region == None:
-            return region, True, True
+            return region, True, True#, True
         else:
-            return region, False, False
+            return region, False, False#, False
     elif accordian == "TAXA":
         if taxa == None:
-            return taxa, True, True
+            return taxa, True, True#, True
         else:
-            return taxa, False, False
+            return taxa, False, False#, False
     elif accordian == "GEOG":
         if geog == None:
-            return geog, True, True
+            return geog, True, True#, True
         else:
-            return geog, False, False
+            return geog, False, False#, False
     elif accordian == "ALTI":
         if alti == None:
-            return alti, True, True
+            return alti, True, True#, True
         else:
-            return alti, False, False
+            return alti, False, False#, False
     elif accordian == "AGE":
         if age == None:
-            return age, True, True
+            return age, True, True#, True
         else:
-            return age, False, False
+            return age, False, False#, False
     elif accordian == "EMAIL":
         if email == None:
-            return email, True, True
+            return email, True, True#, True
         else:
-            return email, False, False
+            return email, False, False#, False
     else:
-        return "No entity selected", True, True
+        return "No entity selected", True, True#, True
 
 # Update the results store when entity text is changed or it needs to be deleted
 @callback(
     Output('results', 'data'),
-    Input("entity-text", "value"),
+    Input("correct-button", "n_clicks"),
     Input("delete-button", "n_clicks"),
+    State("corrected-text", "value"),
     State("chips_site", "value"),
     State("chips_region", "value"),
     State("chips_taxa", "value"),
@@ -480,18 +483,19 @@ def chips_values(site, region, taxa, geog, alti, age, email, accordian):
     State("accordion", "value"),
     prevent_initial_call=True,
 )
-def update_entity(entity, n_clicks, site, region, taxa, geog, alti, age, email, accordian):
+def update_entity(correct, delete, entity, site, region, taxa, geog, alti, age, email, accordian):
     original_text, _, _ = chips_values(site, region, taxa, geog, alti, age, email, accordian)
-    callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
-    
-    if callback_context == "entity-text.value":
+    # callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
+    print(original_text)
+    # if callback_context == "entity-text.n_clicks":
+    if correct:
         if accordian != None:
             for ent in results[f"entities.{accordian}"][0]:
                 if ent["name"] == original_text:
                     ent["name"] = entity
                     break
-    elif callback_context == "delete-button.n_clicks":
-        if n_clicks:
+    # elif callback_context == "delete-button.n_clicks":
+    if delete:
             for ent in results[f"entities.{accordian}"][0]:
                 if ent["name"] == original_text:
                     results[f"entities.{accordian}"][0].remove(ent)
@@ -550,7 +554,8 @@ def save_submit(submit, save, relevant, data):
         return "Saved"
     else:
         return None
-
+    
+# Remove article from queue if it is not relevant
 @callback(
     Output("relevant-output", "children"),
     Input("yes-button", "n_clicks"),
@@ -651,7 +656,7 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
     Output("chips_age", "children"),
     Output("chips_email", "children"),
     Input("delete-button", "n_clicks"),
-    State("entity-text", "value"),
+    State("entity-text", "children"),
     State("chips_site", "children"),
     State("chips_region", "children"),
     State("chips_taxa", "children"),
@@ -678,3 +683,13 @@ def delete_entity(n_clicks, entity, site, region, taxa, geog, alti, age, email, 
         chips[accordian] = updated_chips
     
     return chips['SITE'], chips['REGION'], chips['TAXA'], chips['GEOG'], chips['ALTI'], chips['AGE'], chips['EMAIL']
+
+@callback(
+    Output("correct-button", "disabled"),
+    Input("corrected-text", "value"),
+)
+def enable_correct_button(corrected_text):
+    if corrected_text:
+        return False
+    else:
+        return True

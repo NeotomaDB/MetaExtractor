@@ -259,7 +259,7 @@ def prediction_export(input_df, output_path):
     df_directory = os.path.join(output_path)
     if not os.path.exists(df_directory):
         os.makedirs(df_directory)
-    df_json = input_df.to_json()
+    df_json = input_df.to_dict()
 
     # ==== Add other info in the json file ===
     result_dict = {}

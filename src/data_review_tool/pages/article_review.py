@@ -61,10 +61,20 @@ def layout(gddid = None):
         [
             dmc.Accordion(
                 id="accordion",
+                disableChevronRotation=True,
                 children=[
                     dmc.AccordionItem(
                         [
-                            dmc.AccordionControl("Site Name"),
+                            dmc.AccordionControl(
+                                dmc.Group([
+                                    dmc.Text("Site Name"),
+                                    dmc.Badge(
+                                        f"{len(original['entities.SITE'][0])}",
+                                        size="xs",
+                                        p=0,
+                                        variant="filled",
+                                        sx={"width": 16, "height": 16, "pointerEvents": "none"}
+                            )])),
                             dmc.AccordionPanel(
                                 [
                                     dmc.ChipGroup(
@@ -87,7 +97,16 @@ def layout(gddid = None):
                     ),
                     dmc.AccordionItem(
                         [
-                            dmc.AccordionControl("Region Name"),
+                            dmc.AccordionControl(
+                                dmc.Group([
+                                    dmc.Text("Region Name"),
+                                    dmc.Badge(
+                                        f"{len(original['entities.REGION'][0])}",
+                                        size="xs",
+                                        p=0,
+                                        variant="filled",
+                                        sx={"width": 16, "height": 16, "pointerEvents": "none"}
+                            )])),
                             dmc.AccordionPanel(
                                 [
                                     dmc.ChipGroup(
@@ -111,7 +130,16 @@ def layout(gddid = None):
                     ),
                     dmc.AccordionItem(
                         [
-                            dmc.AccordionControl("Taxa"),
+                            dmc.AccordionControl(
+                                dmc.Group([
+                                    dmc.Text("Taxa"),
+                                    dmc.Badge(
+                                        f"{len(original['entities.TAXA'][0])}",
+                                        size="xs",
+                                        p=0,
+                                        variant="filled",
+                                        sx={"width": 16, "height": 16, "pointerEvents": "none"}
+                            )])),
                             dmc.AccordionPanel(
                                 [
                                     dmc.ChipGroup(
@@ -135,7 +163,16 @@ def layout(gddid = None):
                     ),
                     dmc.AccordionItem(
                         [
-                            dmc.AccordionControl("Geographic Coordinates"),
+                            dmc.AccordionControl(
+                                dmc.Group([
+                                    dmc.Text("Geographic Coordinates"),
+                                    dmc.Badge(
+                                        f"{len(original['entities.GEOG'][0])}",
+                                        size="xs",
+                                        p=0,
+                                        variant="filled",
+                                        sx={"width": 16, "height": 16, "pointerEvents": "none"}
+                            )])),
                             dmc.AccordionPanel(
                                 [
                                     dmc.ChipGroup(
@@ -158,8 +195,17 @@ def layout(gddid = None):
                         value="GEOG",
                     ),
                     dmc.AccordionItem(
-                        [
-                            dmc.AccordionControl("Altitude"),
+                        [   
+                            dmc.AccordionControl(
+                                dmc.Group([
+                                    dmc.Text("Altitude"),
+                                    dmc.Badge(
+                                        f"{len(original['entities.ALTI'][0])}",
+                                        size="xs",
+                                        p=0,
+                                        variant="filled",
+                                        sx={"width": 16, "height": 16, "pointerEvents": "none"}
+                            )])),
                             dmc.AccordionPanel(
                                 [
                                     dmc.ChipGroup(
@@ -183,7 +229,16 @@ def layout(gddid = None):
                     ),
                     dmc.AccordionItem(
                         [
-                            dmc.AccordionControl("Age"),
+                            dmc.AccordionControl(
+                                dmc.Group([
+                                    dmc.Text("Age"),
+                                    dmc.Badge(
+                                        f"{len(original['entities.AGE'][0])}",
+                                        size="xs",
+                                        p=0,
+                                        variant="filled",
+                                        sx={"width": 16, "height": 16, "pointerEvents": "none"}
+                            )])),
                             dmc.AccordionPanel(
                                 [
                                     dmc.ChipGroup(
@@ -207,7 +262,16 @@ def layout(gddid = None):
                     ),
                     dmc.AccordionItem(
                         [
-                            dmc.AccordionControl("Email Address"),
+                            dmc.AccordionControl(
+                                dmc.Group([
+                                    dmc.Text("Email Address"),
+                                    dmc.Badge(
+                                        f"{len(original['entities.EMAIL'][0])}",
+                                        size="xs",
+                                        p=0,
+                                        variant="filled",
+                                        sx={"width": 16, "height": 16, "pointerEvents": "none"}
+                            )])),
                             dmc.AccordionPanel(
                                 [
                                     dmc.ChipGroup(
@@ -230,6 +294,16 @@ def layout(gddid = None):
                         value="EMAIL",
                     ),
                 ],
+            ),
+            html.Br(),
+            dmc.Switch(
+                id="toggle-switch",
+                size="lg",
+                radius="md",
+                onLabel=" Extracted entities",
+                offLabel="Deleted entities",
+                checked=True,
+                style={"position": "relative", "left": "35%"},
             ),
             html.Br(),
             dmc.Textarea(

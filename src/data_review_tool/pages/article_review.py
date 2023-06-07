@@ -1,22 +1,19 @@
-import pandas as pd
-import numpy as np
-import plotly.express as px
-from dash import Dash, dcc, html, Input, Output, callback, State
-import dash
-import dash_mantine_components as dmc
-import dash_bootstrap_components as dbc
-from collections import defaultdict
 import os
 import json
+import pandas as pd
+import numpy as np
+from collections import defaultdict
 from datetime import datetime
+import plotly.express as px
+
+import dash
+from dash import Dash, dcc, html, Input, Output, callback, State
+import dash_mantine_components as dmc
+import dash_bootstrap_components as dbc
+from pages.navbar import df_denormalize
+from dash_iconify import DashIconify
 
 dash.register_page(__name__,  path_template="/article/<gddid>")
-
-from dash import Dash, dcc, html, Input, Output, callback
-import plotly.express as px
-import numpy as np
-import pandas as pd
-from pages.navbar import df_denormalize
 
 original = None
 results = None
@@ -265,7 +262,7 @@ def layout(gddid = None):
                         [
                             dmc.TextInput(
                                 id="entity-text",
-                                label="Entityw text:",
+                                label="Entity text:",
                                 style={"width": 200},
                             ),
                         ],
@@ -278,33 +275,89 @@ def layout(gddid = None):
                 orientation="horizontal",
             )
         ], style=CONTENT_STYLE)
-
+    
     layout = html.Div(
-        [
+        [   
+            dbc.Row(              
+                html.H2(original["title"][0],
+                        style={"textAlign": "center",
+                                "font-weight": "bold",
+                                "font-size": "30px",
+                                "font-family": "Arial, Helvetica, sans-serif",
+                                "color": "#000000",
+                                "margin-top": "10px",
+                                "margin-bottom": "10px",
+                                "padding-top": "10px",
+                                "padding-bottom": "10px",
+                                "padding-left": "20px",
+                                "padding-right": "20px",
+                                "text-overflow": "inherit"})),
             dbc.Row(
-                [
-                    dbc.Col(
-                        [
-                            html.P("Article: " + original["title"][0]),
-                            html.A(
-                                "DOI: doi.org/" + original["doi"][0], href="http://doi.org/" + original["doi"][0], target="_blank"),
-                            html.P("Journal: " + original["journal_name"][0]),
-                        ],
-                    ),
-                    dbc.Col(
-                        [
-                            html.P("Is this article relevant to NeotomaDB?"),
-                            dmc.Group(
-                                [
-                                    dmc.Button("Yes", color="green",
-                                               variant="outline", id="yes-button"),
-                                    dmc.Button("No", color="red",
-                                               variant="outline", id="no-button"),
-                                    dmc.Text(id="relevant-output", mt=10),
-                                ],
+                html.H4(original["journal_name"][0],
+                        style={"textAlign": "center",
+                                "font-weight": "semi-bold",
+                                "font-size": "20px",
+                                "font-family": "Arial, Helvetica, sans-serif",
+                                "color": "#000000",
+                                "padding-bottom": "10px",
+                                "border-bottom": "1px solid #000000",
+                                "text-overflow": "inherit"})),
+            dbc.Row(
+                [   
+                    dmc.Group([
+                        dbc.Col(
+                            [   
+                            # home button
+                            dmc.Button(
+                                "Home",
+                                id="home-button",
+                                color="blue",
+                                leftIcon=DashIconify(icon="dashicons-arrow-left-alt", height=16),
                             ),
-                        ],
-                    ),
+                            dcc.Location(id='location_home', refresh=True),],
+                            align="left",
+                            lg=1,
+                            md=1,
+                            sm=1,
+                            style={"margin-left": "10px"},
+                        ),
+                        dbc.Col(
+                            [
+                                dmc.Group(
+                                    [
+                                        html.Label("Is this article relevant to NeotomaDB?",),
+                                        dmc.Button("Yes", color="green",
+                                                variant="outline", id="yes-button"),
+                                        dmc.Button("No", color="red",
+                                                variant="outline", id="no-button"),
+                                        dmc.Text(id="relevant-output", mt=10),
+                                    ],
+                                    position="center",
+                                ),
+                            ],
+                            align="center",
+                            lg=9,
+                            md=9,
+                            sm=9
+                        ),
+                        dbc.Col(
+                            [       
+                            # External link to the article
+                            dmc.NavLink(
+                                label="Go to Article",
+                                rightSection=DashIconify(icon="dashicons-admin-links", height=16),
+                                variant="filled",
+                                active=True,
+                                href="http://doi.org/" + original["doi"][0],
+                                target="_blank",
+                            )],
+                            align="right",
+                            lg=1,
+                            md=1,
+                            sm=1,
+                            style={"margin-right": "10px"},
+                        ),                          
+                    ])
                 ],
             ),
             html.Br(),
@@ -321,9 +374,20 @@ def layout(gddid = None):
     )
     return layout
 
+
+# Add home button callback
+@callback(
+    Output("location_home", "href"),
+    Input("home-button", "n_clicks"),
+    prevent_initial_call=True,
+)
+def cell_clicked(n_clicks):
+    if n_clicks:        
+        return f"http://127.0.0.1:8050/"
+    else:
+        return dash.no_update
+    
 # Update the chip selection when accordian value changes
-
-
 @callback(
     Output("chips_site", "value"),
     Output("chips_region", "value"),
@@ -414,12 +478,13 @@ def update_entity(entity, site, region, taxa, geog, alti, age, email, accordian)
             
     return [results.reset_index().to_json(orient="split")]
 
+# Save the results to the appropriate folder
 @callback(
     Output("clicked-output", "children"),
     Input("submit-button", "n_clicks"),
     Input("save-button", "n_clicks"),
     Input("relevant-output", "children"),
-    Input('results', 'data'),
+    State('results', 'data'),
     prevent_initial_call=True,
 )
 def save_submit(submit, save, relevant, data):
@@ -478,7 +543,7 @@ def relevant(yes, no):
     else:
         return None
     
-
+# Populate tabs with sentences under corresponding sections
 @callback(
     Output("section-tabs", "children"),
     Input("chips_site", "value"),

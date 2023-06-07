@@ -684,6 +684,7 @@ def delete_entity(n_clicks, entity, site, region, taxa, geog, alti, age, email, 
     
     return chips['SITE'], chips['REGION'], chips['TAXA'], chips['GEOG'], chips['ALTI'], chips['AGE'], chips['EMAIL']
 
+# Enable correct button when corrected text is entered
 @callback(
     Output("correct-button", "disabled"),
     Input("corrected-text", "value"),

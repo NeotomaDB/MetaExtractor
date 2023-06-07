@@ -265,17 +265,9 @@ def layout(gddid = None):
                         [
                             dmc.TextInput(
                                 id="entity-text",
-                                label="Entity text:",
+                                label="Entityw text:",
                                 style={"width": 200},
-                                disabled=True,
-                                ),
-                            dmc.TextInput(
-                                id="corrected-text",
-                                label="Corrected text:",
-                                style={"width": 200},),
-                            dmc.Button("Correct",
-                                       id = "correct-button"),
-                            
+                            ),
                         ],
                     ),
                 ],
@@ -345,11 +337,10 @@ def layout(gddid = None):
 def unselect_chips(accordian_state):
     return None, None, None, None, None, None, None
 
-# Update entity value
-
-
+# Populate entity text with the selected chip
 @callback(
     Output("entity-text", "value"),
+    Output("entity-text", "disabled"),
     Input("chips_site", "value"),
     Input("chips_region", "value"),
     Input("chips_taxa", "value"),
@@ -361,41 +352,67 @@ def unselect_chips(accordian_state):
 )
 def chips_values(site, region, taxa, geog, alti, age, email, accordian):
     if accordian == "SITE":
-        return site
+        if site == None:
+            return site, True
+        else:
+            return site, False
     elif accordian == "REGION":
-        return region
+        if region == None:
+            return region, True
+        else:
+            return region, False
     elif accordian == "TAXA":
-        return taxa
+        if taxa == None:
+            return taxa, True
+        else:
+            return taxa, False
     elif accordian == "GEOG":
-        return geog
+        if geog == None:
+            return geog, True
+        else:
+            return geog, False
     elif accordian == "ALTI":
-        return alti
+        if alti == None:
+            return alti, True
+        else:
+            return alti, False
     elif accordian == "AGE":
-        return age
+        if age == None:
+            return age, True
+        else:
+            return age, False
     elif accordian == "EMAIL":
-        return email
+        if email == None:
+            return email, True
+        else:
+            return email, False
     else:
-        return "No entity selected"
+        return "No entity selected", True
 
-
+# Update the results store when entity text is changed
 @callback(
     Output('results', 'data'),
-    Input("correct-button", "n_clicks"),
-    State("entity-text", "value"),
-    State("corrected-text", "value"),
+    Input("entity-text", "value"),
+    State("chips_site", "value"),
+    State("chips_region", "value"),
+    State("chips_taxa", "value"),
+    State("chips_geog", "value"),
+    State("chips_alti", "value"),
+    State("chips_age", "value"),
+    State("chips_email", "value"),
     State("accordion", "value"),
     prevent_initial_call=True,
-
 )
-def update_entity(n_clicks, entity, corrected, accordian):
-    if n_clicks:
-        # results = pd.read_json(data[0], orient="split")
+def update_entity(entity, site, region, taxa, geog, alti, age, email, accordian):
+    original_text, _ = chips_values(site, region, taxa, geog, alti, age, email, accordian)
+    
+    if accordian != None:
         for i in results[f"entities.{accordian}"][0]:
-            if i["name"] == entity:
-                i["name"] = corrected
-                return [results.reset_index().to_json(orient="split")]
+            if i["name"] == original_text:
+                i["name"] = entity
+                break
             
-
+    return [results.reset_index().to_json(orient="split")]
 
 @callback(
     Output("clicked-output", "children"),
@@ -407,9 +424,9 @@ def update_entity(n_clicks, entity, corrected, accordian):
 )
 def save_submit(submit, save, relevant, data):
     if not os.path.exists("data/data-review-tool/completed/"):
-            os.makedirs("data/data-review-tool/completed/")
+        os.makedirs("data/data-review-tool/completed/")
     if not os.path.exists("data/data-review-tool/nonrelevant/"):
-            os.makedirs("data/data-review-tool/nonrelevant/")
+        os.makedirs("data/data-review-tool/nonrelevant/")
     if submit:
         if relevant == "Relevant":
             metadata = pd.read_json(data[0], orient="split")

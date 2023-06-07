@@ -13,7 +13,13 @@ import os
 import sys
 
 import pandas as pd
+import json
 from docopt import docopt
+
+from src.preprocessing.labelling_preprocessing import get_journal_articles
+from src.logs import get_logger
+
+logger = get_logger(__name__)
 
 
 def load_relevant_articles(relevance_results_path: str) -> pd.DataFrame:
@@ -31,7 +37,42 @@ def load_relevant_articles(relevance_results_path: str) -> pd.DataFrame:
         The relevant articles.
     """
 
-    return pd.DataFrame()
+    # load json
+    with open(relevance_results_path) as f:
+        data = json.load(f)
+
+    # convert results field to dataframe
+    relevant_articles = pd.DataFrame(json.loads(data["results"]))
+
+    keep_columns = ["gdd_id", "DOI", "title", "author", "journal", "published"]
+
+    relevant_articles = relevant_articles[keep_columns]
+
+    # if any of the columsn are empty ignore and log a warning
+    if relevant_articles.isnull().values.any():
+        original_length = len(relevant_articles)
+        relevant_articles = relevant_articles.dropna()
+        logger.warning(
+            f"Relevance results file {relevance_results_path} contains empty values. Removed {original_length - len(relevant_articles)} rows."
+        )
+
+    # convert published field to datetime, it originally has format:
+    # {'date-parts': [[2023, 4, 3]]} but can be missing day
+    relevant_articles["published_date"] = pd.to_datetime(
+        relevant_articles["published"].apply(lambda x: str(x["date-parts"][0])),
+        format="[%Y, %m, %d]",
+        errors="coerce",
+    ).fillna(
+        pd.to_datetime(
+            relevant_articles["published"].apply(lambda x: str(x["date-parts"][0])),
+            format="[%Y, %m]",
+            errors="coerce",
+        )
+    )
+    # remove published field
+    relevant_articles = relevant_articles.drop(columns=["published"])
+
+    return relevant_articles
 
 
 def load_article_text_data(article_text_path: str) -> pd.DataFrame:
@@ -49,25 +90,10 @@ def load_article_text_data(article_text_path: str) -> pd.DataFrame:
         The article text data.
     """
 
-    return pd.DataFrame()
+    # read in article text data to dataframe
+    article_text_data = get_journal_articles(article_text_path)
 
-
-def preprocess_article_text_data(article_text_data: pd.DataFrame) -> pd.DataFrame:
-    """
-    Preprocesses the article text data.
-
-    Parameters
-    ----------
-    article_text_data : pd.DataFrame
-        The article text data.
-
-    Returns
-    -------
-    pd.DataFrame
-        The preprocessed article text data.
-    """
-
-    return pd.DataFrame()
+    return article_text_data
 
 
 def extract_entities(article_text_data: pd.DataFrame) -> pd.DataFrame:

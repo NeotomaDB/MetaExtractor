@@ -259,12 +259,23 @@ def layout(gddid = None):
             dbc.Row(
                 [
                     dmc.Group(
-                        [
+                        [   
+                            dbc.Col(
                             dmc.TextInput(
                                 id="entity-text",
                                 label="Entity text:",
                                 style={"width": 200},
                             ),
+                            align="left"),
+                            dbc.Col(
+                            dmc.Button(
+                                "Delete Entity",
+                                id="delete-button",
+                                color="red",
+                                leftIcon=DashIconify(icon="dashicons-trash", height=16),
+                                disabled=True,
+                            ),
+                            align="right"),
                         ],
                     ),
                 ],
@@ -372,6 +383,7 @@ def layout(gddid = None):
             ),
         ],
     )
+    
     return layout
 
 
@@ -397,14 +409,16 @@ def cell_clicked(n_clicks):
     Output("chips_age", "value"),
     Output("chips_email", "value"),
     Input("accordion", "value"),
+    prevent_initial_call=True,
 )
-def unselect_chips(accordian_state):
+def unselect_chips(accordian):
     return None, None, None, None, None, None, None
 
 # Populate entity text with the selected chip
 @callback(
     Output("entity-text", "value"),
     Output("entity-text", "disabled"),
+    Output("delete-button", "disabled"),
     Input("chips_site", "value"),
     Input("chips_region", "value"),
     Input("chips_taxa", "value"),
@@ -417,46 +431,47 @@ def unselect_chips(accordian_state):
 def chips_values(site, region, taxa, geog, alti, age, email, accordian):
     if accordian == "SITE":
         if site == None:
-            return site, True
+            return site, True, True
         else:
-            return site, False
+            return site, False, False
     elif accordian == "REGION":
         if region == None:
-            return region, True
+            return region, True, True
         else:
-            return region, False
+            return region, False, False
     elif accordian == "TAXA":
         if taxa == None:
-            return taxa, True
+            return taxa, True, True
         else:
-            return taxa, False
+            return taxa, False, False
     elif accordian == "GEOG":
         if geog == None:
-            return geog, True
+            return geog, True, True
         else:
-            return geog, False
+            return geog, False, False
     elif accordian == "ALTI":
         if alti == None:
-            return alti, True
+            return alti, True, True
         else:
-            return alti, False
+            return alti, False, False
     elif accordian == "AGE":
         if age == None:
-            return age, True
+            return age, True, True
         else:
-            return age, False
+            return age, False, False
     elif accordian == "EMAIL":
         if email == None:
-            return email, True
+            return email, True, True
         else:
-            return email, False
+            return email, False, False
     else:
-        return "No entity selected", True
+        return "No entity selected", True, True
 
-# Update the results store when entity text is changed
+# Update the results store when entity text is changed or it needs to be deleted
 @callback(
     Output('results', 'data'),
     Input("entity-text", "value"),
+    Input("delete-button", "n_clicks"),
     State("chips_site", "value"),
     State("chips_region", "value"),
     State("chips_taxa", "value"),
@@ -467,14 +482,22 @@ def chips_values(site, region, taxa, geog, alti, age, email, accordian):
     State("accordion", "value"),
     prevent_initial_call=True,
 )
-def update_entity(entity, site, region, taxa, geog, alti, age, email, accordian):
-    original_text, _ = chips_values(site, region, taxa, geog, alti, age, email, accordian)
+def update_entity(entity, n_clicks, site, region, taxa, geog, alti, age, email, accordian):
+    original_text, _, _ = chips_values(site, region, taxa, geog, alti, age, email, accordian)
+    callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
     
-    if accordian != None:
-        for i in results[f"entities.{accordian}"][0]:
-            if i["name"] == original_text:
-                i["name"] = entity
-                break
+    if callback_context == "entity-text.value":
+        if accordian != None:
+            for ent in results[f"entities.{accordian}"][0]:
+                if ent["name"] == original_text:
+                    ent["name"] = entity
+                    break
+    elif callback_context == "delete-button.n_clicks":
+        if n_clicks:
+            for ent in results[f"entities.{accordian}"][0]:
+                if ent["name"] == original_text:
+                    results[f"entities.{accordian}"][0].remove(ent)
+                    break
             
     return [results.reset_index().to_json(orient="split")]
 
@@ -546,6 +569,7 @@ def relevant(yes, no):
 # Populate tabs with sentences under corresponding sections
 @callback(
     Output("section-tabs", "children"),
+    Input("delete-button", "n_clicks"),
     Input("chips_site", "value"),
     Input("chips_region", "value"),
     Input("chips_taxa", "value"),
@@ -553,18 +577,23 @@ def relevant(yes, no):
     Input("chips_alti", "value"),
     Input("chips_age", "value"),
     Input("chips_email", "value"),
-    State("accordion", "value")
+    State("accordion", "value"),
+    prevent_initial_call=True,
 )    
-def tabs_control(site, region, taxa, geog, alti, age, email, accordian_state):
-
-    if accordian_state == None or (site == None and region == None and taxa == None and geog == None and alti == None and age == None and email == None):
+def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian):
+    callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
+    
+    if callback_context == "delete-button.n_clicks" and n_clicks:
+        return []
+    
+    if accordian == None or (site == None and region == None and taxa == None and geog == None and alti == None and age == None and email == None):
         return []
     
     # Key is the tab name, value is a list of texts
     tabs = defaultdict(list)
 
     # Get all the sentences and corresponding section names
-    for entity in original[f"entities.{accordian_state}"][0]:
+    for entity in results[f"entities.{accordian}"][0]:
         if entity["name"] in [site, region, taxa, geog, alti, age, email]:
             sentences = entity["sentence"]
             highlight = entity["name"]
@@ -613,3 +642,41 @@ def tabs_control(site, region, taxa, geog, alti, age, email, accordian_state):
     tab_component.children.extend(dmc_tabs_content)
     
     return tab_component
+
+# Delete the chip when the entity is deleted
+@callback(
+    Output("chips_site", "children"),
+    Output("chips_region", "children"),
+    Output("chips_taxa", "children"),
+    Output("chips_geog", "children"),
+    Output("chips_alti", "children"),
+    Output("chips_age", "children"),
+    Output("chips_email", "children"),
+    Input("delete-button", "n_clicks"),
+    State("entity-text", "value"),
+    State("chips_site", "children"),
+    State("chips_region", "children"),
+    State("chips_taxa", "children"),
+    State("chips_geog", "children"),
+    State("chips_alti", "children"),
+    State("chips_age", "children"),
+    State("chips_email", "children"),
+    State("accordion", "value"),
+    prevent_initial_call=True,
+)    
+def delete_entity(n_clicks, entity, site, region, taxa, geog, alti, age, email, accordian):
+    chips = {"SITE": site, "REGION": region, "TAXA": taxa, "GEOG": geog, "ALTI": alti, "AGE": age, "EMAIL": email}
+    updated_chips = []
+    if n_clicks:
+        for ent in results[f"entities.{accordian}"][0]:
+            if ent['name'] != entity:
+                new_chip = dmc.Chip(
+                    ent['name'],
+                    value=ent['name'],
+                    variant="outline",
+                )
+                updated_chips.append(new_chip)
+        
+        chips[accordian] = updated_chips
+    
+    return chips['SITE'], chips['REGION'], chips['TAXA'], chips['GEOG'], chips['ALTI'], chips['AGE'], chips['EMAIL']

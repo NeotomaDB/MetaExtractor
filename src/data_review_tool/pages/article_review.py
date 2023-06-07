@@ -336,11 +336,9 @@ def layout(gddid = None):
                             [
                                 dmc.Group(
                                     [
-                                        html.Label("Is this article relevant to NeotomaDB?",),
-                                        dmc.Button("Yes", color="green",
+                                        html.Label("If this article is not relevant to NeotomaDB, click here:",),
+                                        dmc.Button("Remove", color="green",
                                                 variant="outline", id="yes-button"),
-                                        dmc.Button("No", color="red",
-                                                variant="outline", id="no-button"),
                                         dmc.Text(id="relevant-output", mt=10),
                                     ],
                                     position="center",
@@ -516,7 +514,7 @@ def save_submit(submit, save, relevant, data):
     if not os.path.exists("data/data-review-tool/nonrelevant/"):
         os.makedirs("data/data-review-tool/nonrelevant/")
     if submit:
-        if relevant == "Relevant":
+        if relevant == None:
             metadata = pd.read_json(data[0], orient="split")
             metadata["status"] = "Completed"
             metadata["last_updated"] = datetime.now().strftime("%Y-%m-%d")
@@ -527,7 +525,7 @@ def save_submit(submit, save, relevant, data):
             with open(f"data/data-review-tool/completed/{gddid}.json", "w") as f:
                 f.write(metadata)
             return "Submitted"
-        elif relevant == "Non-Relevant, hit Submit to remove from the queue":
+        elif relevant:
             metadata = pd.read_json(data[0], orient="split")
             metadata["status"] = "Non-relevant"
             metadata["last_updated"] = datetime.now().strftime("%Y-%m-%d")
@@ -539,7 +537,7 @@ def save_submit(submit, save, relevant, data):
                 f.write(metadata)
             return "Submitted"
         else:
-            return "Please select relevant or non-relevant"
+            return None
     elif save:
         metadata = pd.read_json(data[0], orient="split")
         metadata["status"] = "In Progress"
@@ -556,13 +554,13 @@ def save_submit(submit, save, relevant, data):
 @callback(
     Output("relevant-output", "children"),
     Input("yes-button", "n_clicks"),
-    Input("no-button", "n_clicks"),
 )
-def relevant(yes, no):
+def relevant(yes):
     if yes:
-        return "Relevant"
-    elif no:
-        return "Non-Relevant, hit Submit to remove from the queue"
+        if (yes%2) == 0:
+            return None
+        else:
+            return "Article Removed, please click Submit to remove from the queue"
     else:
         return None
     

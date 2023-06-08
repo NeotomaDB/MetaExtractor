@@ -30,219 +30,19 @@ def layout(gddid = None):
         results = pd.json_normalize(json.loads(article.read()))
 
     except FileNotFoundError:
-        return html.Div(
-    [
-        html.H1("Error - gddid Not Found"),
-        html.P("The requested gddid does not exist in the files."),
-        html.P("Please check the article's gddid and try again."),
-        dcc.Link("Go back to Home", href="/"),
-    ]
-)
+        return  html.Div([
+                    html.H1("Error - gddid Not Found"),
+                    html.P("The requested gddid does not exist in the files."),
+                    html.P("Please check the article's gddid and try again."),
+                    dcc.Link("Go back to Home", href="/"),
+                ])
 
     sidebar = html.Div(
         [
             dmc.Accordion(
                 id="accordion",
                 disableChevronRotation=True,
-                children=[
-                    dmc.AccordionItem(
-                        [
-                            dmc.AccordionControl(
-                                dmc.Group([
-                                    dmc.Text("Site Name"),
-                                    dmc.Badge(
-                                        f"{len(original['entities.SITE'][0])}",
-                                        size="xs",
-                                        p=0,
-                                        variant="filled",
-                                        sx={"width": 16, "height": 16, "pointerEvents": "none"}
-                            )])),
-                            dmc.AccordionPanel([
-                                html.Div(
-                                    [
-                                        dmc.ChipGroup(
-                                            update_chips(True, original)[0],
-                                            id="chips_site",
-                                            value=None,
-                                            multiple=False
-                                        )
-                                    ],
-                                    style=chip_style
-                                )
-                            ]),
-                        ],
-                        value="SITE",
-                    ),
-                    dmc.AccordionItem(
-                        [
-                            dmc.AccordionControl(
-                                dmc.Group([
-                                    dmc.Text("Region Name"),
-                                    dmc.Badge(
-                                        f"{len(original['entities.REGION'][0])}",
-                                        size="xs",
-                                        p=0,
-                                        variant="filled",
-                                        sx={"width": 16, "height": 16, "pointerEvents": "none"}
-                            )])),
-                            dmc.AccordionPanel([
-                                html.Div(
-                                    [
-                                        dmc.ChipGroup(
-                                            update_chips(True, original)[1],
-                                            id="chips_region",
-                                            value=None,
-                                            multiple=False
-                                        )
-                                    ],
-                                    style=chip_style
-                                )
-                            ]),
-                        ],
-                        value="REGION",
-                    ),
-                    dmc.AccordionItem(
-                        [
-                            dmc.AccordionControl(
-                                dmc.Group([
-                                    dmc.Text("Taxa"),
-                                    dmc.Badge(
-                                        f"{len(original['entities.TAXA'][0])}",
-                                        size="xs",
-                                        p=0,
-                                        variant="filled",
-                                        sx={"width": 16, "height": 16, "pointerEvents": "none"}
-                            )])),
-                            dmc.AccordionPanel([
-                                html.Div(
-                                    [
-                                        dmc.ChipGroup(
-                                            update_chips(True, original)[2],
-                                            id="chips_taxa",
-                                            value=None,
-                                            multiple=False
-                                        )
-                                    ],
-                                    style=chip_style
-                                )
-                            ]),
-                        ],
-                        value="TAXA",
-                    ),
-                    dmc.AccordionItem(
-                        [
-                            dmc.AccordionControl(
-                                dmc.Group([
-                                    dmc.Text("Geographic Coordinates"),
-                                    dmc.Badge(
-                                        f"{len(original['entities.GEOG'][0])}",
-                                        size="xs",
-                                        p=0,
-                                        variant="filled",
-                                        sx={"width": 16, "height": 16, "pointerEvents": "none"}
-                            )])),
-                            dmc.AccordionPanel([
-                                html.Div(
-                                    [
-                                        dmc.ChipGroup(
-                                            update_chips(True, original)[3],
-                                            id="chips_geog",
-                                            value=None,
-                                            multiple=False
-                                        )
-                                    ],
-                                    style=chip_style
-                                )
-                            ]),
-                        ],
-                        value="GEOG",
-                    ),
-                    dmc.AccordionItem(
-                        [   
-                            dmc.AccordionControl(
-                                dmc.Group([
-                                    dmc.Text("Altitude"),
-                                    dmc.Badge(
-                                        f"{len(original['entities.ALTI'][0])}",
-                                        size="xs",
-                                        p=0,
-                                        variant="filled",
-                                        sx={"width": 16, "height": 16, "pointerEvents": "none"}
-                            )])),
-                            dmc.AccordionPanel([
-                                html.Div(
-                                    [
-                                        dmc.ChipGroup(
-                                            update_chips(True, original)[4],
-                                            id="chips_alti",
-                                            value=None,
-                                            multiple=False
-                                        )
-                                    ],
-                                    style=chip_style
-                                )
-                            ]),
-                        ],
-                        value="ALTI",
-                    ),
-                    dmc.AccordionItem(
-                        [
-                            dmc.AccordionControl(
-                                dmc.Group([
-                                    dmc.Text("Age"),
-                                    dmc.Badge(
-                                        f"{len(original['entities.AGE'][0])}",
-                                        size="xs",
-                                        p=0,
-                                        variant="filled",
-                                        sx={"width": 16, "height": 16, "pointerEvents": "none"}
-                            )])),
-                            dmc.AccordionPanel([
-                                html.Div(
-                                    [
-                                        dmc.ChipGroup(
-                                            update_chips(True, original)[5],
-                                            id="chips_age",
-                                            value=None,
-                                            multiple=False
-                                        )
-                                    ],
-                                    style=chip_style
-                                )
-                            ]),
-                        ],
-                        value="AGE",
-                    ),
-                    dmc.AccordionItem(
-                        [
-                            dmc.AccordionControl(
-                                dmc.Group([
-                                    dmc.Text("Email Address"),
-                                    dmc.Badge(
-                                        f"{len(original['entities.EMAIL'][0])}",
-                                        size="xs",
-                                        p=0,
-                                        variant="filled",
-                                        sx={"width": 16, "height": 16, "pointerEvents": "none"}
-                                )]
-                            )),
-                            dmc.AccordionPanel([
-                                html.Div(
-                                    [
-                                        dmc.ChipGroup(
-                                            update_chips(True, original)[6],
-                                            id="chips_email",
-                                            value=None,
-                                            multiple=False
-                                        )
-                                    ],
-                                    style=chip_style
-                                )
-                            ]),
-                        ],
-                        value="EMAIL",
-                    ),
-                ],
+                children=get_accordion_items(original),
             ),
             html.Br(),
             dmc.Switch(
@@ -389,6 +189,57 @@ def layout(gddid = None):
     )
     
     return layout
+
+
+# Populate accordian
+def get_accordion_items(data):
+    children = []
+    entities = {"SITE": "Site Name", 
+                "REGION": "Region Name",
+                "TAXA": "Taxa",
+                "GEOG": "Geographic Coordinates",
+                "ALTI": "Altitude",
+                "AGE": "Age", 
+                "EMAIL": "Email Address"}
+    ids = {"SITE": "chips_site",
+            "REGION": "chips_region",
+            "TAXA": "chips_taxa",
+            "GEOG": "chips_geog",
+            "ALTI": "chips_alti",
+            "AGE": "chips_age", 
+            "EMAIL": "chips_email"}
+    for index, (label, name)  in enumerate(entities.items()):
+        children.append(
+            dmc.AccordionItem([
+                dmc.AccordionControl(
+                    dmc.Group([
+                        dmc.Text(name),
+                        dmc.Badge(
+                            f"{len(original[f'entities.{label}'][0])}",
+                            size="xs",
+                            p=0,
+                            variant="filled",
+                            sx={"width": 16, "height": 16, "pointerEvents": "none"}
+                )])),
+                dmc.AccordionPanel([
+                    html.Div(
+                        [
+                            dmc.ChipGroup(
+                                update_chips(True, original)[index],
+                                id=ids[label],
+                                value=None,
+                                multiple=False
+                            )
+                        ],
+                        style=chip_style
+                    ),
+                    
+                ]),
+            ],
+            value=label,
+    ))
+    
+    return children
 
 
 # Add home button callback
@@ -697,44 +548,6 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
     tab_component.children.extend(dmc_tabs_content)
     
     return tab_component
-
-# Delete the chip when the entity is deleted
-# @callback(
-#     Output("chips_site", "children"),
-#     Output("chips_region", "children"),
-#     Output("chips_taxa", "children"),
-#     Output("chips_geog", "children"),
-#     Output("chips_alti", "children"),
-#     Output("chips_age", "children"),
-#     Output("chips_email", "children"),
-#     Input("delete-button", "n_clicks"),
-#     State("entity-text", "children"),
-#     State("chips_site", "children"),
-#     State("chips_region", "children"),
-#     State("chips_taxa", "children"),
-#     State("chips_geog", "children"),
-#     State("chips_alti", "children"),
-#     State("chips_age", "children"),
-#     State("chips_email", "children"),
-#     State("accordion", "value"),
-#     prevent_initial_call=True,
-# )    
-# def delete_entity(n_clicks, entity, site, region, taxa, geog, alti, age, email, accordian):
-#     chips = {"SITE": site, "REGION": region, "TAXA": taxa, "GEOG": geog, "ALTI": alti, "AGE": age, "EMAIL": email}
-#     updated_chips = []
-#     if n_clicks:
-#         for ent in results[f"entities.{accordian}"][0]:
-#             if ent['name'] != entity:
-#                 new_chip = dmc.Chip(
-#                     ent['name'],
-#                     value=ent['name'],
-#                     variant="outline",
-#                 )
-#                 updated_chips.append(new_chip)
-        
-#         chips[accordian] = updated_chips
-    
-#     return chips['SITE'], chips['REGION'], chips['TAXA'], chips['GEOG'], chips['ALTI'], chips['AGE'], chips['EMAIL']
 
 # Enable correct button when corrected text is entered
 @callback(

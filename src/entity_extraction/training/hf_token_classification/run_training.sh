@@ -43,6 +43,7 @@ export AZUREML_ARTIFACTS_DEFAULT_TIMEOUT="3600" # large file upload times reuqir
 
 python src/entity_extraction/training/hf_token_classification/ner_training.py \
     --seed 42 \
+    --load_best_model_at_end True \
     --metric_for_best_model recall \
     --run_name finetuning-logging \
     --model_name_or_path "$MODEL_NAME_OR_PATH" \

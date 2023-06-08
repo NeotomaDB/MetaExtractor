@@ -12,6 +12,7 @@ import dash_mantine_components as dmc
 import dash_bootstrap_components as dbc
 from pages.navbar import df_denormalize
 from dash_iconify import DashIconify
+from pages.config import *
 
 dash.register_page(__name__,  path_template="/article/<gddid>")
 
@@ -29,207 +30,29 @@ def layout(gddid = None):
         results = pd.json_normalize(json.loads(article.read()))
 
     except FileNotFoundError:
-        return html.Div(
-    [
-        html.H1("Error - gddid Not Found"),
-        html.P("The requested gddid does not exist in the files."),
-        html.P("Please check the article's gddid and try again."),
-        dcc.Link("Go back to Home", href="/"),
-    ]
-)
-            
-        
+        return  html.Div([
+                    html.H1("Error - gddid Not Found"),
+                    html.P("The requested gddid does not exist in the files."),
+                    html.P("Please check the article's gddid and try again."),
+                    dcc.Link("Go back to Home", href="/"),
+                ])
 
-    # styling the sidebar
-    SIDEBAR_STYLE = {
-        # "position": "fixed",
-        "top": 0,
-        "left": 0,
-        "bottom": 0,
-        # "width": "16rem",
-        "padding": "2rem 1rem",
-        "background-color": "#f8f9fa",
-    }
-
-    # padding for the page content
-    CONTENT_STYLE = {
-        # "margin-left": "18rem",
-        # "margin-right": "2rem",
-        "padding": "0.3rem 0.3rem",
-    }
     sidebar = html.Div(
         [
             dmc.Accordion(
                 id="accordion",
-                children=[
-                    dmc.AccordionItem(
-                        [
-                            dmc.AccordionControl("Site Name"),
-                            dmc.AccordionPanel(
-                                [
-                                    dmc.ChipGroup(
-                                        [
-                                            dmc.Chip(
-                                                site['name'],
-                                                value=site['name'],
-                                                variant="outline",
-                                            )
-                                            for site in original["entities.SITE"][0]
-                                        ],
-                                        id="chips_site",
-                                        value=None,
-                                        multiple=False,
-                                    ),
-                                ],
-                            ),
-                        ],
-                        value="SITE",
-                    ),
-                    dmc.AccordionItem(
-                        [
-                            dmc.AccordionControl("Region Name"),
-                            dmc.AccordionPanel(
-                                [
-                                    dmc.ChipGroup(
-                                        [
-                                            dmc.Chip(
-                                                region['name'],
-                                                value=region['name'],
-                                                variant="outline",
-                                            )
-                                            for region in original["entities.REGION"][0]
-                                        ],
-                                        id="chips_region",
-                                        value=None,
-                                        multiple=False,
-                                    ),
-
-                                ],
-                            ),
-                        ],
-                        value="REGION",
-                    ),
-                    dmc.AccordionItem(
-                        [
-                            dmc.AccordionControl("Taxa"),
-                            dmc.AccordionPanel(
-                                [
-                                    dmc.ChipGroup(
-                                        [
-                                            dmc.Chip(
-                                                taxa['name'],
-                                                value=taxa['name'],
-                                                variant="outline",
-                                            )
-                                            for taxa in original["entities.TAXA"][0]
-                                        ],
-                                        id="chips_taxa",
-                                        value=None,
-                                        multiple=False,
-                                    ),
-
-                                ],
-                            ),
-                        ],
-                        value="TAXA",
-                    ),
-                    dmc.AccordionItem(
-                        [
-                            dmc.AccordionControl("Geographic Coordinates"),
-                            dmc.AccordionPanel(
-                                [
-                                    dmc.ChipGroup(
-                                        [
-                                            dmc.Chip(
-                                                geog['name'],
-                                                value=geog['name'],
-                                                variant="outline",
-                                            )
-                                            for geog in original["entities.GEOG"][0]
-                                        ],
-                                        id="chips_geog",
-                                        value=None,
-                                        multiple=False,
-                                    ),
-
-                                ],
-                            ),
-                        ],
-                        value="GEOG",
-                    ),
-                    dmc.AccordionItem(
-                        [
-                            dmc.AccordionControl("Altitude"),
-                            dmc.AccordionPanel(
-                                [
-                                    dmc.ChipGroup(
-                                        [
-                                            dmc.Chip(
-                                                alti['name'],
-                                                value=alti['name'],
-                                                variant="outline",
-                                            )
-                                            for alti in original["entities.ALTI"][0]
-                                        ],
-                                        id="chips_alti",
-                                        value=None,
-                                        multiple=False,
-                                    ),
-
-                                ],
-                            ),
-                        ],
-                        value="ALTI",
-                    ),
-                    dmc.AccordionItem(
-                        [
-                            dmc.AccordionControl("Age"),
-                            dmc.AccordionPanel(
-                                [
-                                    dmc.ChipGroup(
-                                        [
-                                            dmc.Chip(
-                                                age['name'],
-                                                value=age['name'],
-                                                variant="outline",
-                                            )
-                                            for age in original["entities.AGE"][0]
-                                        ],
-                                        id="chips_age",
-                                        value=None,
-                                        multiple=False,
-                                    ),
-
-                                ],
-                            ),
-                        ],
-                        value="AGE",
-                    ),
-                    dmc.AccordionItem(
-                        [
-                            dmc.AccordionControl("Email Address"),
-                            dmc.AccordionPanel(
-                                [
-                                    dmc.ChipGroup(
-                                        [
-                                            dmc.Chip(
-                                                email['name'],
-                                                value=email['name'],
-                                                variant="outline",
-                                            )
-                                            for email in original["entities.EMAIL"][0]
-                                        ],
-                                        id="chips_email",
-                                        value=None,
-                                        multiple=False,
-                                    ),
-
-                                ],
-                            ),
-                        ],
-                        value="EMAIL",
-                    ),
-                ],
+                disableChevronRotation=True,
+                children=get_accordion_items(original),
+            ),
+            html.Br(),
+            dmc.Switch(
+                id="toggle-switch",
+                size="lg",
+                radius="md",
+                onLabel=" Extracted entities",
+                offLabel="Deleted entities",
+                checked=True,
+                style={"position": "relative", "left": "35%"},
             ),
             html.Br(),
             dmc.Textarea(
@@ -292,28 +115,10 @@ def layout(gddid = None):
         [   
             dbc.Row(              
                 html.H2(original["title"][0],
-                        style={"textAlign": "center",
-                                "font-weight": "bold",
-                                "font-size": "30px",
-                                "font-family": "Arial, Helvetica, sans-serif",
-                                "color": "#000000",
-                                "margin-top": "10px",
-                                "margin-bottom": "10px",
-                                "padding-top": "10px",
-                                "padding-bottom": "10px",
-                                "padding-left": "20px",
-                                "padding-right": "20px",
-                                "text-overflow": "inherit"})),
+                        style=h2_style)),
             dbc.Row(
                 html.H4(original["journal_name"][0],
-                        style={"textAlign": "center",
-                                "font-weight": "semi-bold",
-                                "font-size": "20px",
-                                "font-family": "Arial, Helvetica, sans-serif",
-                                "color": "#000000",
-                                "padding-bottom": "10px",
-                                "border-bottom": "1px solid #000000",
-                                "text-overflow": "inherit"})),
+                        style=h4_style)),
             dbc.Row(
                 [   
                     dmc.Group([
@@ -386,6 +191,57 @@ def layout(gddid = None):
     return layout
 
 
+# Populate accordian
+def get_accordion_items(data):
+    children = []
+    entities = {"SITE": "Site Name", 
+                "REGION": "Region Name",
+                "TAXA": "Taxa",
+                "GEOG": "Geographic Coordinates",
+                "ALTI": "Altitude",
+                "AGE": "Age", 
+                "EMAIL": "Email Address"}
+    ids = {"SITE": "chips_site",
+            "REGION": "chips_region",
+            "TAXA": "chips_taxa",
+            "GEOG": "chips_geog",
+            "ALTI": "chips_alti",
+            "AGE": "chips_age", 
+            "EMAIL": "chips_email"}
+    for index, (label, name)  in enumerate(entities.items()):
+        children.append(
+            dmc.AccordionItem([
+                dmc.AccordionControl(
+                    dmc.Group([
+                        dmc.Text(name),
+                        dmc.Badge(
+                            f"{len(original[f'entities.{label}'][0])}",
+                            size="xs",
+                            p=0,
+                            variant="filled",
+                            sx={"width": 16, "height": 16, "pointerEvents": "none"}
+                )])),
+                dmc.AccordionPanel([
+                    html.Div(
+                        [
+                            dmc.ChipGroup(
+                                update_chips(True, original)[index],
+                                id=ids[label],
+                                value=None,
+                                multiple=False
+                            )
+                        ],
+                        style=chip_style
+                    ),
+                    
+                ]),
+            ],
+            value=label,
+    ))
+    
+    return children
+
+
 # Add home button callback
 @callback(
     Output("location_home", "href"),
@@ -397,7 +253,48 @@ def cell_clicked(n_clicks):
         return f"http://127.0.0.1:8050/"
     else:
         return dash.no_update
-    
+
+# update chip values on screen load
+@callback(
+    Output("chips_site", "children"),
+    Output("chips_region", "children"),
+    Output("chips_taxa", "children"),
+    Output("chips_geog", "children"),
+    Output("chips_alti", "children"),
+    Output("chips_age", "children"),
+    Output("chips_email", "children"),
+    Input("toggle-switch", "checked"),
+    State("results", "data"),
+)
+def update_chips(checked, data):
+    chips = {"SITE": [], "REGION": [], "TAXA": [], "GEOG": [], "ALTI": [], "AGE": [], "EMAIL": []}
+    if not isinstance(data, pd.DataFrame):
+        data = pd.read_json(data[0], orient="split")
+
+    # Get all the sentences and corresponding section names
+    for entity in chips.keys():
+        for ent in results[f"entities.{entity}"][0]:
+            chips[f"{entity}"].append(
+                dmc.Chip(
+                        # ent['name'],
+                    dmc.Group([
+                        ent['name'],
+                        dmc.Badge(
+                            f"{len(ent['sentence'])}",
+                            size="xs",
+                            p=0,
+                            variant="filled",
+                            sx={"width": 16, "height": 16, "pointerEvents": "none"}
+                        )
+                    ]),
+                    value=ent['name'],
+                    variant="outline",
+                    styles={"label": {"display": "inline-flex",
+                                      "justifyContent": "space-between"}},
+            ))
+                
+    return chips["SITE"], chips["REGION"], chips["TAXA"], chips["GEOG"], chips["ALTI"], chips["AGE"], chips["EMAIL"]
+
 # Update the chip selection when accordian value changes
 @callback(
     Output("chips_site", "value"),
@@ -426,42 +323,42 @@ def unselect_chips(accordian):
     Input("chips_alti", "value"),
     Input("chips_age", "value"),
     Input("chips_email", "value"),
-    State("accordion", "value")
+    State("accordion", "value"),
 )
 def chips_values(site, region, taxa, geog, alti, age, email, accordian):
     if accordian == "SITE":
         if site == None:
-            return site, True, True#, True
+            return "No entity selected", True, True#, True
         else:
             return site,  False, False#, False
     elif accordian == "REGION":
         if region == None:
-            return region, True, True#, True
+            return "No entity selected", True, True#, True
         else:
             return region, False, False#, False
     elif accordian == "TAXA":
         if taxa == None:
-            return taxa, True, True#, True
+            return "No entity selected", True, True#, True
         else:
             return taxa, False, False#, False
     elif accordian == "GEOG":
         if geog == None:
-            return geog, True, True#, True
+            return "No entity selected", True, True#, True
         else:
             return geog, False, False#, False
     elif accordian == "ALTI":
         if alti == None:
-            return alti, True, True#, True
+            return "No entity selected", True, True#, True
         else:
             return alti, False, False#, False
     elif accordian == "AGE":
         if age == None:
-            return age, True, True#, True
+            return "No entity selected", True, True#, True
         else:
             return age, False, False#, False
     elif accordian == "EMAIL":
         if email == None:
-            return email, True, True#, True
+            return "No entity selected", True, True#, True
         else:
             return email, False, False#, False
     else:
@@ -559,6 +456,7 @@ def save_submit(submit, save, relevant, data):
 @callback(
     Output("relevant-output", "children"),
     Input("yes-button", "n_clicks"),
+    prevent_initial_call=True,
 )
 def relevant(yes):
     if yes:
@@ -608,17 +506,22 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
     # Convert all the sentences in tabs to paper dmc components
     dmc_tabs_content = []
     for tab_name, tab_content in tabs.items():
-        dmc_tabs_content.append(dmc.TabsPanel(
-            dmc.Paper(
-                children=[
-                    dmc.Text(dmc.Highlight(text, highlight=highlight))
-                    for text in tab_content
-                ],
-                withBorder=True,
-                shadow="xs"
+        dmc_tabs_content.append(     
+            dmc.TabsPanel(
+                html.Div([
+                    dmc.Paper(
+                        children=[
+                            dmc.Text(dmc.Highlight(text, highlight=highlight))
+                        ],
+                        withBorder=True,
+                        shadow="xs",
+                        style={"padding": "1rem", "margin": "1rem"},
+                    ) for text in tab_content ],
+                    style=tab_body_style,
+                ),
+                value=tab_name
             ),
-            value=tab_name
-        ))
+        )
         
     # Convert to list of tabs
     dmc_tabs = [dmc.Tab(tab_name, 
@@ -645,44 +548,6 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
     tab_component.children.extend(dmc_tabs_content)
     
     return tab_component
-
-# Delete the chip when the entity is deleted
-@callback(
-    Output("chips_site", "children"),
-    Output("chips_region", "children"),
-    Output("chips_taxa", "children"),
-    Output("chips_geog", "children"),
-    Output("chips_alti", "children"),
-    Output("chips_age", "children"),
-    Output("chips_email", "children"),
-    Input("delete-button", "n_clicks"),
-    State("entity-text", "children"),
-    State("chips_site", "children"),
-    State("chips_region", "children"),
-    State("chips_taxa", "children"),
-    State("chips_geog", "children"),
-    State("chips_alti", "children"),
-    State("chips_age", "children"),
-    State("chips_email", "children"),
-    State("accordion", "value"),
-    prevent_initial_call=True,
-)    
-def delete_entity(n_clicks, entity, site, region, taxa, geog, alti, age, email, accordian):
-    chips = {"SITE": site, "REGION": region, "TAXA": taxa, "GEOG": geog, "ALTI": alti, "AGE": age, "EMAIL": email}
-    updated_chips = []
-    if n_clicks:
-        for ent in results[f"entities.{accordian}"][0]:
-            if ent['name'] != entity:
-                new_chip = dmc.Chip(
-                    ent['name'],
-                    value=ent['name'],
-                    variant="outline",
-                )
-                updated_chips.append(new_chip)
-        
-        chips[accordian] = updated_chips
-    
-    return chips['SITE'], chips['REGION'], chips['TAXA'], chips['GEOG'], chips['ALTI'], chips['AGE'], chips['EMAIL']
 
 # Enable correct button when corrected text is entered
 @callback(

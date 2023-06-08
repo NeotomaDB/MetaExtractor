@@ -469,7 +469,6 @@ def update_chips(checked, data):
                 
     return chips["SITE"], chips["REGION"], chips["TAXA"], chips["GEOG"], chips["ALTI"], chips["AGE"], chips["EMAIL"]
 
-
 # Update the chip selection when accordian value changes
 @callback(
     Output("chips_site", "value"),
@@ -498,7 +497,7 @@ def unselect_chips(accordian):
     Input("chips_alti", "value"),
     Input("chips_age", "value"),
     Input("chips_email", "value"),
-    State("accordion", "value")
+    State("accordion", "value"),
 )
 def chips_values(site, region, taxa, geog, alti, age, email, accordian):
     if accordian == "SITE":
@@ -631,6 +630,7 @@ def save_submit(submit, save, relevant, data):
 @callback(
     Output("relevant-output", "children"),
     Input("yes-button", "n_clicks"),
+    prevent_initial_call=True,
 )
 def relevant(yes):
     if yes:
@@ -653,7 +653,7 @@ def relevant(yes):
     Input("chips_age", "value"),
     Input("chips_email", "value"),
     State("accordion", "value"),
-    # prevent_initial_call=True,
+    prevent_initial_call=True,
 )    
 def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian):
     callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]

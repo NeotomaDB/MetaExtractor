@@ -52,6 +52,7 @@ def layout(gddid = None):
                 onLabel=" Extracted entities",
                 offLabel="Deleted entities",
                 checked=True,
+                color="teal",
                 style={"position": "relative", "left": "35%"},
             ),
             html.Br(),
@@ -65,12 +66,13 @@ def layout(gddid = None):
                 [
                     dmc.Button("Submit",
                                id="submit-button",
-                               color="green"),
+                               color="teal"),
                     dmc.Button("Save Progress", 
                                id = "save-button",
-                               color="green", 
+                               color="lime", 
                                variant="outline")
                 ],
+                style={"justify": "center"},
             ),
             dmc.Text(id="clicked-output", mt=10),    
         ],
@@ -225,7 +227,7 @@ def get_accordion_items(data):
                     html.Div(
                         [
                             dmc.ChipGroup(
-                                update_chips(True, original)[index],
+                                update_chips(True, data)[index],
                                 id=ids[label],
                                 value=None,
                                 multiple=False
@@ -264,34 +266,39 @@ def cell_clicked(n_clicks):
     Output("chips_age", "children"),
     Output("chips_email", "children"),
     Input("toggle-switch", "checked"),
-    State("results", "data"),
+    Input('results', 'data'),
 )
 def update_chips(checked, data):
     chips = {"SITE": [], "REGION": [], "TAXA": [], "GEOG": [], "ALTI": [], "AGE": [], "EMAIL": []}
     if not isinstance(data, pd.DataFrame):
         data = pd.read_json(data[0], orient="split")
-
+    
+    if checked:
+        deleted = False
+    else:
+        deleted = True
+        
     # Get all the sentences and corresponding section names
     for entity in chips.keys():
         for ent in results[f"entities.{entity}"][0]:
-            chips[f"{entity}"].append(
-                dmc.Chip(
-                        # ent['name'],
-                    dmc.Group([
-                        ent['name'],
-                        dmc.Badge(
-                            f"{len(ent['sentence'])}",
-                            size="xs",
-                            p=0,
-                            variant="filled",
-                            sx={"width": 16, "height": 16, "pointerEvents": "none"}
-                        )
-                    ]),
-                    value=ent['name'],
-                    variant="outline",
-                    styles={"label": {"display": "inline-flex",
-                                      "justifyContent": "space-between"}},
-            ))
+            if ent["deleted"] == deleted:
+                chips[f"{entity}"].append(
+                    dmc.Chip(
+                        dmc.Group([
+                            ent['name'],
+                            dmc.Badge(
+                                f"{len(ent['sentence'])}",
+                                size="xs",
+                                p=0,
+                                variant="filled",
+                                sx={"width": 16, "height": 16, "pointerEvents": "none"}
+                            )
+                        ]),
+                        value=ent['name'],
+                        variant="outline",
+                        styles={"label": {"display": "inline-flex",
+                                        "justifyContent": "space-between"}},
+                ))
                 
     return chips["SITE"], chips["REGION"], chips["TAXA"], chips["GEOG"], chips["ALTI"], chips["AGE"], chips["EMAIL"]
 
@@ -382,22 +389,20 @@ def chips_values(site, region, taxa, geog, alti, age, email, accordian):
 )
 def update_entity(correct, delete, entity, site, region, taxa, geog, alti, age, email, accordian):
     original_text, _, _ = chips_values(site, region, taxa, geog, alti, age, email, accordian)
-    # callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
-    print(original_text)
-    # if callback_context == "entity-text.n_clicks":
+    
     if correct:
         if accordian != None:
             for ent in results[f"entities.{accordian}"][0]:
                 if ent["name"] == original_text:
                     ent["name"] = entity
                     break
-    # elif callback_context == "delete-button.n_clicks":
+    
     if delete:
-            for ent in results[f"entities.{accordian}"][0]:
-                if ent["name"] == original_text:
-                    results[f"entities.{accordian}"][0].remove(ent)
-                    break
-            
+        for ent in results[f"entities.{accordian}"][0]:
+            if ent["name"] == original_text:
+                ent["deleted"] = True
+                break
+        
     return [results.reset_index().to_json(orient="split")]
 
 # Save the results to the appropriate folder

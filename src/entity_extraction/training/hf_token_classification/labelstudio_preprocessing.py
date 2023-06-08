@@ -2,11 +2,12 @@
 # Date: 2023-05-24
 """This script procsses the labelstudio output data into a format used by huggingface.
 
-Usage: labelstudio_preprocessing.py --label_files=<label_files> [--max_seq_length=<max_token_length>]
+Usage: labelstudio_preprocessing.py --label_files=<label_files> [--max_seq_length=<max_seq_length>] [--stride=<stride>]
 
 Options:
     --label_files=<label_files>             The path to where the label files are. [default: all]
-    --max_seq_length=<max_token_length>   How many tokens the text is split into per training example. [default: 256]
+    --max_seq_length=<max_seq_length>   How many tokens the text is split into per training example. [default: 256]
+    --stride=<stride>                     How many tokens to move the window by. [default: 128]
 """
 
 import os, sys
@@ -29,6 +30,7 @@ from src.entity_extraction.entity_extraction_evaluation import get_token_labels
 def convert_labelled_data_to_hf_format(
     labelled_file_path: str,
     max_seq_length: int = 256,
+    stride: int = 128,
 ):
     """
     Processes train/val/test data from labelstudio into a format used by huggingface.
@@ -90,11 +92,11 @@ def convert_labelled_data_to_hf_format(
                 # split the data into chunks of tokens and labels
                 chunked_tokens = [
                     tokens[i : i + max_seq_length]
-                    for i in range(0, len(tokens), max_seq_length)
+                    for i in range(0, len(tokens), stride)
                 ]
                 chunked_labels = [
                     token_labels[i : i + max_seq_length]
-                    for i in range(0, len(token_labels), max_seq_length)
+                    for i in range(0, len(token_labels), stride)
                 ]
 
                 # make each chunk a dict with keys ner_tags and tokens
@@ -122,8 +124,6 @@ if __name__ == "__main__":
     opt = docopt(__doc__)
     convert_labelled_data_to_hf_format(
         labelled_file_path=opt["--label_files"],
-        max_seq_length=int(opt["--max_token_length"]),
-        train_split=float(opt["--train_split"]),
-        val_split=float(opt["--val_split"]),
-        test_split=float(opt["--test_split"]),
+        max_seq_length=int(opt["--max_seq_length"]),
+        stride=int(opt["--stride"]),
     )

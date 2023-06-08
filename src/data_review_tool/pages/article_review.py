@@ -231,7 +231,7 @@ def layout(gddid = None):
                                 dmc.Group([
                                     dmc.Text("Email Address"),
                                     dmc.Badge(
-                                        f"2",
+                                        f"{len(original['entities.EMAIL'][0])}",
                                         size="xs",
                                         p=0,
                                         variant="filled",
@@ -245,7 +245,6 @@ def layout(gddid = None):
                                     value=None,
                                     multiple=False,
                                 ),
-
                             ]),
                         ],
                         value="EMAIL",
@@ -451,18 +450,21 @@ def update_chips(checked, data):
         for ent in results[f"entities.{entity}"][0]:
             chips[f"{entity}"].append(
                 dmc.Chip(
+                        # ent['name'],
                     dmc.Group([
-                        dmc.Text(ent['name']),
+                        ent['name'],
                         dmc.Badge(
                             f"{len(ent['sentence'])}",
                             size="xs",
                             p=0,
                             variant="filled",
                             sx={"width": 16, "height": 16, "pointerEvents": "none"}
-                    )]),
+                        )
+                    ]),
                     value=ent['name'],
                     variant="outline",
-                    sx={"maxWidth": "100%"},
+                    styles={"label": {"display": "inline-flex",
+                                      "justifyContent": "space-between"}},
             ))
                 
     return chips["SITE"], chips["REGION"], chips["TAXA"], chips["GEOG"], chips["ALTI"], chips["AGE"], chips["EMAIL"]
@@ -501,37 +503,37 @@ def unselect_chips(accordian):
 def chips_values(site, region, taxa, geog, alti, age, email, accordian):
     if accordian == "SITE":
         if site == None:
-            return site, True, True#, True
+            return "No entity selected", True, True#, True
         else:
             return site,  False, False#, False
     elif accordian == "REGION":
         if region == None:
-            return region, True, True#, True
+            return "No entity selected", True, True#, True
         else:
             return region, False, False#, False
     elif accordian == "TAXA":
         if taxa == None:
-            return taxa, True, True#, True
+            return "No entity selected", True, True#, True
         else:
             return taxa, False, False#, False
     elif accordian == "GEOG":
         if geog == None:
-            return geog, True, True#, True
+            return "No entity selected", True, True#, True
         else:
             return geog, False, False#, False
     elif accordian == "ALTI":
         if alti == None:
-            return alti, True, True#, True
+            return "No entity selected", True, True#, True
         else:
             return alti, False, False#, False
     elif accordian == "AGE":
         if age == None:
-            return age, True, True#, True
+            return "No entity selected", True, True#, True
         else:
             return age, False, False#, False
     elif accordian == "EMAIL":
         if email == None:
-            return email, True, True#, True
+            return "No entity selected", True, True#, True
         else:
             return email, False, False#, False
     else:

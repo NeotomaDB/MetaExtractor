@@ -12,6 +12,7 @@ import dash_mantine_components as dmc
 import dash_bootstrap_components as dbc
 from pages.navbar import df_denormalize
 from dash_iconify import DashIconify
+from pages.config import *
 
 dash.register_page(__name__,  path_template="/article/<gddid>")
 
@@ -37,26 +38,7 @@ def layout(gddid = None):
         dcc.Link("Go back to Home", href="/"),
     ]
 )
-            
-        
 
-    # styling the sidebar
-    SIDEBAR_STYLE = {
-        # "position": "fixed",
-        "top": 0,
-        "left": 0,
-        "bottom": 0,
-        # "width": "16rem",
-        "padding": "2rem 1rem",
-        "background-color": "#f8f9fa",
-    }
-
-    # padding for the page content
-    CONTENT_STYLE = {
-        # "margin-left": "18rem",
-        # "margin-right": "2rem",
-        "padding": "0.3rem 0.3rem",
-    }
     sidebar = html.Div(
         [
             dmc.Accordion(
@@ -75,16 +57,19 @@ def layout(gddid = None):
                                         variant="filled",
                                         sx={"width": 16, "height": 16, "pointerEvents": "none"}
                             )])),
-                            dmc.AccordionPanel(
-                                [
-                                    dmc.ChipGroup(
-                                        update_chips(True, original)[0],
-                                        id="chips_site",
-                                        value=None,
-                                        multiple=False,
-                                    ),
-                                ],
-                            ),
+                            dmc.AccordionPanel([
+                                html.Div(
+                                    [
+                                        dmc.ChipGroup(
+                                            update_chips(True, original)[0],
+                                            id="chips_site",
+                                            value=None,
+                                            multiple=False
+                                        )
+                                    ],
+                                    style=chip_style
+                                )
+                            ]),
                         ],
                         value="SITE",
                     ),
@@ -100,17 +85,19 @@ def layout(gddid = None):
                                         variant="filled",
                                         sx={"width": 16, "height": 16, "pointerEvents": "none"}
                             )])),
-                            dmc.AccordionPanel(
-                                [
-                                    dmc.ChipGroup(
-                                        update_chips(True, original)[1],
-                                        id="chips_region",
-                                        value=None,
-                                        multiple=False,
-                                    ),
-
-                                ],
-                            ),
+                            dmc.AccordionPanel([
+                                html.Div(
+                                    [
+                                        dmc.ChipGroup(
+                                            update_chips(True, original)[1],
+                                            id="chips_region",
+                                            value=None,
+                                            multiple=False
+                                        )
+                                    ],
+                                    style=chip_style
+                                )
+                            ]),
                         ],
                         value="REGION",
                     ),
@@ -126,17 +113,19 @@ def layout(gddid = None):
                                         variant="filled",
                                         sx={"width": 16, "height": 16, "pointerEvents": "none"}
                             )])),
-                            dmc.AccordionPanel(
-                                [
-                                    dmc.ChipGroup(
-                                        update_chips(True, original)[2],
-                                        id="chips_taxa",
-                                        value=None,
-                                        multiple=False,
-                                    ),
-
-                                ],
-                            ),
+                            dmc.AccordionPanel([
+                                html.Div(
+                                    [
+                                        dmc.ChipGroup(
+                                            update_chips(True, original)[2],
+                                            id="chips_taxa",
+                                            value=None,
+                                            multiple=False
+                                        )
+                                    ],
+                                    style=chip_style
+                                )
+                            ]),
                         ],
                         value="TAXA",
                     ),
@@ -152,17 +141,19 @@ def layout(gddid = None):
                                         variant="filled",
                                         sx={"width": 16, "height": 16, "pointerEvents": "none"}
                             )])),
-                            dmc.AccordionPanel(
-                                [
-                                    dmc.ChipGroup(
-                                        update_chips(True, original)[3],
-                                        id="chips_geog",
-                                        value=None,
-                                        multiple=False,
-                                    ),
-
-                                ],
-                            ),
+                            dmc.AccordionPanel([
+                                html.Div(
+                                    [
+                                        dmc.ChipGroup(
+                                            update_chips(True, original)[3],
+                                            id="chips_geog",
+                                            value=None,
+                                            multiple=False
+                                        )
+                                    ],
+                                    style=chip_style
+                                )
+                            ]),
                         ],
                         value="GEOG",
                     ),
@@ -178,17 +169,19 @@ def layout(gddid = None):
                                         variant="filled",
                                         sx={"width": 16, "height": 16, "pointerEvents": "none"}
                             )])),
-                            dmc.AccordionPanel(
-                                [
-                                    dmc.ChipGroup(
-                                        update_chips(True, original)[4],
-                                        id="chips_alti",
-                                        value=None,
-                                        multiple=False,
-                                    ),
-
-                                ],
-                            ),
+                            dmc.AccordionPanel([
+                                html.Div(
+                                    [
+                                        dmc.ChipGroup(
+                                            update_chips(True, original)[4],
+                                            id="chips_alti",
+                                            value=None,
+                                            multiple=False
+                                        )
+                                    ],
+                                    style=chip_style
+                                )
+                            ]),
                         ],
                         value="ALTI",
                     ),
@@ -204,24 +197,19 @@ def layout(gddid = None):
                                         variant="filled",
                                         sx={"width": 16, "height": 16, "pointerEvents": "none"}
                             )])),
-                            dmc.AccordionPanel(
-                                [
-                                    # add html panel here
-                                    html.Div([
-                                            
+                            dmc.AccordionPanel([
+                                html.Div(
+                                    [
                                         dmc.ChipGroup(
                                             update_chips(True, original)[5],
                                             id="chips_age",
                                             value=None,
-                                            multiple=False,
-                                        )],
-                                        style={"scrollbar-width": "none", 
-                                               "overflow": "auto",
-                                               "height": "auto",
-                                               "max-height": "200px"}
-                                    )
-                                ],
-                            ),
+                                            multiple=False
+                                        )
+                                    ],
+                                    style=chip_style
+                                )
+                            ]),
                         ],
                         value="AGE",
                     ),
@@ -239,12 +227,17 @@ def layout(gddid = None):
                                 )]
                             )),
                             dmc.AccordionPanel([
-                                dmc.ChipGroup(
-                                    update_chips(True, original)[6],
-                                    id="chips_email",
-                                    value=None,
-                                    multiple=False,
-                                ),
+                                html.Div(
+                                    [
+                                        dmc.ChipGroup(
+                                            update_chips(True, original)[6],
+                                            id="chips_email",
+                                            value=None,
+                                            multiple=False
+                                        )
+                                    ],
+                                    style=chip_style
+                                )
                             ]),
                         ],
                         value="EMAIL",
@@ -322,28 +315,10 @@ def layout(gddid = None):
         [   
             dbc.Row(              
                 html.H2(original["title"][0],
-                        style={"textAlign": "center",
-                                "font-weight": "bold",
-                                "font-size": "30px",
-                                "font-family": "Arial, Helvetica, sans-serif",
-                                "color": "#000000",
-                                "margin-top": "10px",
-                                "margin-bottom": "10px",
-                                "padding-top": "10px",
-                                "padding-bottom": "10px",
-                                "padding-left": "20px",
-                                "padding-right": "20px",
-                                "text-overflow": "inherit"})),
+                        style=h2_style)),
             dbc.Row(
                 html.H4(original["journal_name"][0],
-                        style={"textAlign": "center",
-                                "font-weight": "semi-bold",
-                                "font-size": "20px",
-                                "font-family": "Arial, Helvetica, sans-serif",
-                                "color": "#000000",
-                                "padding-bottom": "10px",
-                                "border-bottom": "1px solid #000000",
-                                "text-overflow": "inherit"})),
+                        style=h4_style)),
             dbc.Row(
                 [   
                     dmc.Group([
@@ -691,10 +666,7 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
                         shadow="xs",
                         style={"padding": "1rem", "margin": "1rem"},
                     ) for text in tab_content ],
-                    style={"scrollbar-width": "none", 
-                            "overflow": "auto",
-                            "height": "auto",
-                            "max-height": "500px"},
+                    style=tab_body_style,
                 ),
                 value=tab_name
             ),

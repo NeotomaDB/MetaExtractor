@@ -42,7 +42,9 @@ export MLFLOW_FLATTEN_PARAMS="2" # azure mlflow has a limit of 200 params, levei
 export AZUREML_ARTIFACTS_DEFAULT_TIMEOUT="3600" # large file upload times reuqire longer time out
 
 python src/entity_extraction/training/hf_token_classification/ner_training.py \
-    --run_name test-finetuning \
+    --seed 42 \
+    --metric_for_best_model recall \
+    --run_name finetuning-logging \
     --model_name_or_path "$MODEL_NAME_OR_PATH" \
     --output_dir "$(pwd)$OUTPUT_DIR" \
     --logging_dir "$(pwd)$LOG_DIR" \
@@ -64,10 +66,13 @@ python src/entity_extraction/training/hf_token_classification/ner_training.py \
     --learning_rate 2e-5 \
     --max_seq_length 512 \
     --num_train_epochs 2 \
-    --per_device_train_batch_size 16 \
-    --gradient_accumulation_steps 3 \
+    --per_device_train_batch_size 8 \
+    --gradient_accumulation_steps 8 \
     --max_train_samples 1 \
     --max_eval_samples 1 \
+    --warmup_steps 100 
+
+
 
 
 

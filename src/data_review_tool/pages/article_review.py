@@ -205,7 +205,7 @@ def layout(gddid=None):
             ),
             html.Br(),
             dcc.Store(id="results", data=[
-                      results.reset_index(drop=True).to_json(orient="split")]),
+                      original.reset_index(drop=True).to_json(orient="split")]),
             dbc.Row(
                 [
 

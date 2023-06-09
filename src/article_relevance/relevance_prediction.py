@@ -26,7 +26,15 @@ from sentence_transformers import SentenceTransformer
 import joblib
 import logging
 from docopt import docopt
-from src.logs import get_logger
+
+# Locate src module
+current_dir = os.path.dirname(os.path.abspath(__file__))
+print(current_dir)
+src_dir = os.path.dirname(current_dir)
+print(src_dir)
+sys.path.append(src_dir)
+
+from logs import get_logger
 
 logger = get_logger(__name__) # this gets the object with the current modules name
 
@@ -45,6 +53,9 @@ def crossref_extract(doi_path):
         pandas Dataframe containing CrossRef metadata.
     """
 
+    logger.info(f'Running crossref_extract function.')
+
+
     with open(doi_path) as json_file:
         data_dictionary = json.load(json_file)
 
@@ -56,6 +67,8 @@ def crossref_extract(doi_path):
 
     # Initialize
     crossref = pd.DataFrame()
+
+    logger.info(f'Querying CrossRef API for article metadata.')
 
     # Loop through all doi, concatenate metadata into dataframe
     for doi in input_doi:
@@ -76,6 +89,9 @@ def crossref_extract(doi_path):
         else: 
             pass
     
+    logger.info(f'CrossRef API query completed for {len(input_doi)} articles.')
+
+    
     # Clean up columns and return the resulting pandas data frame
     crossref_keep_col = ['valid_for_prediction', 'DOI',
         'URL',
@@ -94,7 +110,7 @@ def crossref_extract(doi_path):
     crossref = crossref.loc[:, crossref_keep_col].reset_index(drop = True)
 
 
-    # join gdd_id to the metadata df
+    # join gddid to the metadata df
     df = df.loc[:, ['DOI', 'gddid']]
     df['DOI'] = df['DOI'].str.lower() # CrossRef return lowercase DOI
     result_df = pd.merge(df, crossref, on='DOI', how='left')
@@ -131,6 +147,8 @@ def data_preprocessing(metadata_df):
         pd DataFrame containing all info required for model prediction.
     """
 
+    logger.info(f'Prediction data preprocessing begin.')
+
     metadata_df = metadata_df.reset_index(drop = True)
 
     # Clean text in Subject
@@ -154,6 +172,9 @@ def data_preprocessing(metadata_df):
     metadata_df['text_with_abstract'] =  metadata_df['title_clean'] + ' ' + metadata_df['subtitle_clean'] + ' ' + metadata_df['abstract_clean']
 
     # Impute missing language
+    
+    logger.info(f'Running article language imputation.')
+
     metadata_df['language'] = metadata_df['language'].fillna(value = '')
     metadata_df['text_with_abstract'] = metadata_df['text_with_abstract'].fillna(value = '')
     condition_row = (metadata_df['language'].str.len() == 0) & (metadata_df['text_with_abstract'].str.contains('[a-zA-Z]'))
@@ -163,7 +184,7 @@ def data_preprocessing(metadata_df):
     en_condition = metadata_df['language'] != 'en' 
     metadata_df.loc[en_condition, 'valid_for_prediction'] = 0
 
-    keep_col = ['DOI', 'URL', 'gdd_id', 'valid_for_prediction', 'title_clean', 'subtitle_clean', 'abstract_clean',
+    keep_col = ['DOI', 'URL', 'gddid', 'valid_for_prediction', 'title_clean', 'subtitle_clean', 'abstract_clean',
                 'subject_clean', 'journal', 'author', 'text_with_abstract',
                 'is-referenced-by-count', 'has_abstract', 'language', 'published', 'publisher']
     
@@ -172,6 +193,9 @@ def data_preprocessing(metadata_df):
     metadata_df = metadata_df.rename(columns={'title_clean': 'title',
                                 'subtitle_clean': 'subtitle',
                                 'abstract_clean': 'abstract'})
+    
+    logger.info(f'Data preprocessing completed.')
+
     
     return metadata_df
 
@@ -188,7 +212,8 @@ def add_embeddings(input_df, text_col, model = 'allenai/specter2'):
     Returns:
         pd DataFrame with origianl features and sentence embedding features added.
     """
-    
+    logger.info(f'Sentence embedding start.')
+
     embedding_model = SentenceTransformer(model)
 
     valid_df = input_df.query("valid_for_prediction == 1")
@@ -202,6 +227,9 @@ def add_embeddings(input_df, text_col, model = 'allenai/specter2'):
 
     # concatenate invalid_df with valid_df
     result = pd.concat([df_with_embeddings, invalid_df])
+
+    logger.info(f'Sentence embedding completed.')
+
 
     return result
 
@@ -220,6 +248,8 @@ def relevance_prediction(input_df, model_path, predict_thld = 0.5):
     Returns:
         pd DataFrame with prediction and predict_proba added.
     """
+    logger.info(f'Prediction start.')
+
     # load model
     model_object = joblib.load(model_path)
 
@@ -233,11 +263,11 @@ def relevance_prediction(input_df, model_path, predict_thld = 0.5):
     valid_df['prediction'] = valid_df.loc[:,'predict_proba'].apply(lambda x: 1 if x >= predict_thld else 0)
 
     # Filter results, store key information that could possibly be useful downstream
-    keyinfo_col = ['DOI', 'URL', 'gdd_id', 'valid_for_prediction',
+    keyinfo_col = ['DOI', 'URL', 'gddid', 'valid_for_prediction',
                     'prediction', 'predict_proba', 'title', 'subtitle', 'abstract',
                 'subject_clean', 'journal', 'author', 'text_with_abstract',
                 'is-referenced-by-count', 'has_abstract', 'language', 'published', 'publisher']
-    invalid_col = ['DOI', 'URL', 'gdd_id', 'valid_for_prediction',
+    invalid_col = ['DOI', 'URL', 'gddid', 'valid_for_prediction',
                  'title', 'subtitle', 'abstract',
                 'subject_clean', 'journal', 'author', 'text_with_abstract',
                 'is-referenced-by-count', 'has_abstract', 'language', 'published', 'publisher']
@@ -246,6 +276,9 @@ def relevance_prediction(input_df, model_path, predict_thld = 0.5):
 
     # Join it with invalid df to get back to the full dataframe
     result = pd.concat([keyinfo_df, invalid_df.loc[:, invalid_col]])
+
+    logger.info(f'Prediction completed.')
+
 
     return result
 
@@ -289,11 +322,12 @@ def prediction_export(input_df, output_path):
                     format='%(asctime)s - %(levelname)s - %(message)s',
                     filemode='w')
     # Create a logger
-    logger = logging.getLogger(__name__)
 
     logger.info(f'Total number of DOI processed: {input_df.shape[0]}')
     logger.info(f"Number of valid articles: {input_df.query('valid_for_prediction == 1').shape[0]}")
     logger.info(f"Number of invalid articles: {input_df.query('valid_for_prediction != 1').shape[0]}")
+    logger.info(f"Number of relevant articles: {input_df.query('prediction == 1').shape[0]}")
+
 
 
 def main():

@@ -229,7 +229,7 @@ def get_accordion_items(data):
                                 id=ids[label],
                                 value=None,
                                 multiple=False
-                            )
+                            ),
                         ],
                         style=chip_style
                     ),
@@ -290,8 +290,26 @@ def update_chips(checked, data):
                     value=ent['name'],
                     variant="outline",
                     styles={"label": {"display": "inline-flex",
-                                      "justifyContent": "space-between"}},
+                                      "justifyContent": "space-between",}},
             ))
+        chips[f"{entity}"].append(
+            dmc.Chip(
+                dmc.Group(
+                    ["New Entity", 
+                     dmc.Badge("+", size="s",
+                            p=0,
+                            variant="filled",
+                            sx={"width": 16, "height": 16,
+                                "pointerEvents": "none"} 
+                            ),
+                     ],
+                    ), 
+                value ="New Entity", 
+                variant="outline", 
+                styles={"label": {"display": "inline-flex",
+                                      "justifyContent": "space-between",
+                                      "color":"green"}}
+                ))
                 
     return chips["SITE"], chips["REGION"], chips["TAXA"], chips["GEOG"], chips["ALTI"], chips["AGE"], chips["EMAIL"]
 
@@ -314,7 +332,6 @@ def unselect_chips(accordian):
 @callback(
     Output("entity-text", "children"),
     Output("corrected-text", "disabled"),
-    # Output("correct-button", "disabled"),
     Output("delete-button", "disabled"),
     Input("chips_site", "value"),
     Input("chips_region", "value"),
@@ -325,42 +342,46 @@ def unselect_chips(accordian):
     Input("chips_email", "value"),
     State("accordion", "value"),
 )
-def chips_values(site, region, taxa, geog, alti, age, email, accordian):
+def chips_values(site, region, taxa, geog, alti, age, email, 
+                #  text_site, text_region, text_taxa, text_geog, text_alti, text_age, text_email,
+                 accordian):
+    
     if accordian == "SITE":
         if site == None:
             return "No entity selected", True, True#, True
         else:
-            return site,  False, False#, False
+            return site, False, False
     elif accordian == "REGION":
         if region == None:
             return "No entity selected", True, True#, True
         else:
-            return region, False, False#, False
+            return region, False, False
+            
     elif accordian == "TAXA":
         if taxa == None:
             return "No entity selected", True, True#, True
         else:
-            return taxa, False, False#, False
+            return taxa, False, False
     elif accordian == "GEOG":
         if geog == None:
             return "No entity selected", True, True#, True
         else:
-            return geog, False, False#, False
+            return geog, False, False
     elif accordian == "ALTI":
         if alti == None:
             return "No entity selected", True, True#, True
         else:
-            return alti, False, False#, False
+            return alti, False, False
     elif accordian == "AGE":
         if age == None:
             return "No entity selected", True, True#, True
         else:
-            return age, False, False#, False
+            return age, False, False
     elif accordian == "EMAIL":
-        if email == None:
+        if email == None :
             return "No entity selected", True, True#, True
         else:
-            return email, False, False#, False
+            return email, False, False
     else:
         return "No entity selected", True, True#, True
 
@@ -383,7 +404,6 @@ def chips_values(site, region, taxa, geog, alti, age, email, accordian):
 def update_entity(correct, delete, entity, site, region, taxa, geog, alti, age, email, accordian):
     original_text, _, _ = chips_values(site, region, taxa, geog, alti, age, email, accordian)
     # callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
-    print(original_text)
     # if callback_context == "entity-text.n_clicks":
     if correct:
         if accordian != None:
@@ -489,6 +509,31 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
     
     if accordian == None or (site == None and region == None and taxa == None and geog == None and alti == None and age == None and email == None):
         return []
+    
+    for ent in [site, region, taxa, geog, alti, age, email]:
+        if ent == "New Entity":
+            tab_component = dmc.Tabs(
+                [
+                    dmc.TabsList(
+                        dmc.Tab("New Entity", value ="new-entity"),
+                        position="center"
+                    ),
+
+                    dmc.TabsPanel(
+                        [
+                            dmc.Textarea(placeholder="Enter sentence containing new entity here", 
+                                        value="",
+                                        id="new-entity-text"),
+                            dmc.TextInput(placeholder="Enter the section of the paper containing the entity here",
+                                          id="new-entity-section"),
+                        ],
+                            value="new-entity"),
+                ],
+                color="red",
+                orientation="vertical",
+                value=ent
+            )
+            return tab_component.children
     
     # Key is the tab name, value is a list of texts
     tabs = defaultdict(list)

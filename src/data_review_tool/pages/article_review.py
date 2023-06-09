@@ -420,7 +420,9 @@ def update_entity(correct, delete, entity, text, section, site, region, taxa, ge
                                                                     "end": end
                                                                 },
                                                             }],
-                                                            "name": entity})
+                                                            "name": entity,
+                                                            "corrected_name": entity,
+                                                            "deleted": False,})
                 return [results.reset_index().to_json(orient="split")]
             for ent in results[f"entities.{accordian}"][0]:
                 if ent["name"] == original_text:

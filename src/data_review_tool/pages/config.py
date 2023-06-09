@@ -53,3 +53,23 @@ h4_style = {
     "border-bottom": "1px solid #000000",
     "text-overflow": "inherit"
 }
+
+entity_name_mapping = {
+    "SITE": "Site Name", 
+    "REGION": "Region Name",
+    "TAXA": "Taxa",
+    "GEOG": "Geographic Coordinates",
+    "ALTI": "Altitude",
+    "AGE": "Age", 
+    "EMAIL": "Email Address"
+}
+
+entity_id_mapping = {
+    "SITE": "chips_site",
+    "REGION": "chips_region",
+    "TAXA": "chips_taxa",
+    "GEOG": "chips_geog",
+    "ALTI": "chips_alti",
+    "AGE": "chips_age", 
+    "EMAIL": "chips_email"
+}

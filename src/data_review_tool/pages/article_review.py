@@ -1,6 +1,7 @@
 import os
 import json
 import pandas as pd
+import copy
 import numpy as np
 from collections import defaultdict
 from datetime import datetime
@@ -19,30 +20,34 @@ dash.register_page(__name__,  path_template="/article/<gddid>")
 original = None
 results = None
 
-def layout(gddid = None):
+
+def layout(gddid=None):
     try:
         global original
         global results
         # get the metadata of the article
-        article = open(f"data/data-review-tool/raw/{gddid}.json", "r")
+        article = open(os.path.join("data",
+                                    "data-review-tool",
+                                    "raw",
+                                    f"{gddid}.json"), "r")
+
         original = pd.json_normalize(json.loads(article.read()))
-        article = open(f"data/data-review-tool/raw/{gddid}.json", "r")
-        results = pd.json_normalize(json.loads(article.read()))
+        results = copy.deepcopy(original)
 
     except FileNotFoundError:
-        return  html.Div([
-                    html.H1("Error - gddid Not Found"),
-                    html.P("The requested gddid does not exist in the files."),
-                    html.P("Please check the article's gddid and try again."),
-                    dcc.Link("Go back to Home", href="/"),
-                ])
+        return html.Div([
+            html.H1("Error - gddid Not Found"),
+            html.P("The requested gddid does not exist in the files."),
+            html.P("Please check the article's gddid and try again."),
+            dcc.Link("Go back to Home", href="/"),
+        ])
 
     sidebar = html.Div(
         [
             dmc.Accordion(
                 id="accordion",
                 disableChevronRotation=True,
-                children=get_accordion_items(original),
+                children=get_accordion_items(True, original),
             ),
             html.Br(),
             dmc.Switch(
@@ -67,14 +72,14 @@ def layout(gddid = None):
                     dmc.Button("Submit",
                                id="submit-button",
                                color="teal"),
-                    dmc.Button("Save Progress", 
-                               id = "save-button",
-                               color="lime", 
+                    dmc.Button("Save Progress",
+                               id="save-button",
+                               color="lime",
                                variant="outline")
                 ],
                 style={"justify": "center"},
             ),
-            dmc.Text(id="clicked-output", mt=10),    
+            dmc.Text(id="clicked-output", mt=10),
         ],
         style=SIDEBAR_STYLE,
     )
@@ -83,27 +88,28 @@ def layout(gddid = None):
         [
             dbc.Row(
                 [
-                    dmc.Group(
-                        [   
-                            "Enitity Text: ",
-                            html.Label(id="entity-text", style={"font-weight": "bold"}),
-                            dmc.TextInput(
-                                id="corrected-text",
-                                placeholder="Add corrected text here",
-                                style={"width": 200},),
-                            dmc.Button("Correct",
-                                       id = "correct-button"),
-                            dmc.Button(
-                                "Delete Entity",
-                                id="delete-button",
-                                color="red",
-                                leftIcon=DashIconify(icon="dashicons-trash", height=16),
-                                disabled=True,
-                            ),
-                            
-                        ],
-                        style={"anchor": "middle", "justify": "center"}
-                    ),
+                    dbc.Col([
+                        dmc.Group(
+                            [
+                                "Enitity Text: ",
+                                html.Label(id="entity-text",
+                                           style={"font-weight": "bold"}),
+                                dmc.TextInput(
+                                    id="corrected-text",
+                                    placeholder="Add corrected text here",
+                                    style={"width": 200},),
+                                dmc.Button("Correct",
+                                           id="correct-button"),
+                            ],
+                            style={"anchor": "middle", "justify": "center"}
+                        )
+                    ], lg=6),
+                    dbc.Col([], lg=4),
+                    dbc.Col([
+                        dmc.Group([
+                            dmc.Button(id="delete-restore-button",),
+                        ], id="button-group")
+                    ], lg=2)
                 ],
             ),
             dmc.Tabs(
@@ -112,28 +118,29 @@ def layout(gddid = None):
                 orientation="horizontal",
             )
         ], style=CONTENT_STYLE)
-    
+
     layout = html.Div(
-        [   
-            dbc.Row(              
+        [
+            dbc.Row(
                 html.H2(original["title"][0],
                         style=h2_style)),
             dbc.Row(
                 html.H4(original["journal_name"][0],
                         style=h4_style)),
             dbc.Row(
-                [   
+                [
                     dmc.Group([
                         dbc.Col(
-                            [   
-                            # home button
-                            dmc.Button(
-                                "Home",
-                                id="home-button",
-                                color="blue",
-                                leftIcon=DashIconify(icon="dashicons-arrow-left-alt", height=16),
-                            ),
-                            dcc.Location(id='location_home', refresh=True),],
+                            [
+                                dmc.Button(
+                                    "Home",
+                                    id="home-button",
+                                    color="blue",
+                                    leftIcon=DashIconify(
+                                        icon="dashicons-arrow-left-alt", height=16),
+                                ),
+                                dcc.Location(id='location_home', refresh=True)
+                            ],
                             align="left",
                             lg=1,
                             md=1,
@@ -144,9 +151,10 @@ def layout(gddid = None):
                             [
                                 dmc.Group(
                                     [
-                                        html.Label("If this article is not relevant to NeotomaDB, click here:",),
+                                        html.Label(
+                                            "If this article is not relevant to NeotomaDB, click here:",),
                                         dmc.Button("Remove", color="green",
-                                                variant="outline", id="yes-button"),
+                                                   variant="outline", id="yes-button"),
                                         dmc.Text(id="relevant-output", mt=10),
                                     ],
                                     position="center",
@@ -158,22 +166,25 @@ def layout(gddid = None):
                             sm=9
                         ),
                         dbc.Col(
-                            [       
-                            # External link to the article
-                            dmc.NavLink(
-                                label="Go to Article",
-                                rightSection=DashIconify(icon="dashicons-admin-links", height=16),
-                                variant="filled",
-                                active=True,
-                                href="http://doi.org/" + original["doi"][0],
-                                target="_blank",
-                            )],
+                            [
+                                # External link to the article
+                                dmc.NavLink(
+                                    label="Go to Article",
+                                    rightSection=DashIconify(
+                                        icon="dashicons-admin-links", height=16),
+                                    variant="filled",
+                                    active=True,
+                                    href="http://doi.org/" + \
+                                    original["doi"][0],
+                                    target="_blank"
+                                )
+                            ],
                             align="right",
                             lg=1,
                             md=1,
                             sm=1,
                             style={"margin-right": "10px"},
-                        ),                          
+                        ),
                     ])
                 ],
             ),
@@ -189,60 +200,89 @@ def layout(gddid = None):
             ),
         ],
     )
-    
+
     return layout
 
+# Collapse the accordian when toggling between deleted and extracted entities
+@callback(
+    Output("accordion", "value"),
+    Input("toggle-switch", "checked"),
+)
+def collapse(checked):
+    return None
 
 # Populate accordian
-def get_accordion_items(data):
+@callback(
+    Output("accordion", "children"),
+    Input("toggle-switch", "checked"),
+    Input("results", "data"),
+)
+def get_accordion_items(checked, data):
+
+    if not isinstance(data, pd.DataFrame):
+        data = pd.read_json(data[0], orient="split")
+
     children = []
-    entities = {"SITE": "Site Name", 
-                "REGION": "Region Name",
-                "TAXA": "Taxa",
-                "GEOG": "Geographic Coordinates",
-                "ALTI": "Altitude",
-                "AGE": "Age", 
-                "EMAIL": "Email Address"}
-    ids = {"SITE": "chips_site",
-            "REGION": "chips_region",
-            "TAXA": "chips_taxa",
-            "GEOG": "chips_geog",
-            "ALTI": "chips_alti",
-            "AGE": "chips_age", 
-            "EMAIL": "chips_email"}
-    for index, (label, name)  in enumerate(entities.items()):
+
+    for label, name in entity_name_mapping.items():
         children.append(
             dmc.AccordionItem([
                 dmc.AccordionControl(
                     dmc.Group([
                         dmc.Text(name),
                         dmc.Badge(
-                            f"{len(original[f'entities.{label}'][0])}",
+                            f"{len([ent for ent in data[f'entities.{label}'][0] if ent['deleted'] != checked])}",
                             size="xs",
                             p=0,
                             variant="filled",
-                            sx={"width": 16, "height": 16, "pointerEvents": "none"}
-                )])),
+                            sx={"width": 16, "height": 16,
+                                "pointerEvents": "none"}
+                        )])),
                 dmc.AccordionPanel([
                     html.Div(
                         [
                             dmc.ChipGroup(
-                                update_chips(True, data)[index],
-                                id=ids[label],
+                                id=entity_id_mapping[label],
                                 value=None,
                                 multiple=False
                             )
                         ],
                         style=chip_style
                     ),
-                    
+
                 ]),
             ],
-            value=label,
-    ))
-    
+                value=label,
+            ))
+
     return children
 
+# Button group callback
+@callback(
+    Output("button-group", "children"),
+    Input("toggle-switch", "checked"),
+)
+def update_button(checked):
+    if checked:
+        return [
+            dmc.Button(
+                "Delete Entity",
+                id="delete-restore-button",
+                color="red",
+                leftIcon=DashIconify(icon="dashicons-trash", height=16),
+                disabled=True,
+            ),
+        ]
+    else:
+        return [
+            dmc.Button(
+                "Restore Entity",
+                id="delete-restore-button",
+                color="teal",
+                leftIcon=DashIconify(icon="dashicons-undo", height=16),
+                disabled=True,
+            ),
+        ]
 
 # Add home button callback
 @callback(
@@ -251,7 +291,7 @@ def get_accordion_items(data):
     prevent_initial_call=True,
 )
 def cell_clicked(n_clicks):
-    if n_clicks:        
+    if n_clicks:
         return f"http://127.0.0.1:8050/"
     else:
         return dash.no_update
@@ -269,15 +309,15 @@ def cell_clicked(n_clicks):
     Input('results', 'data'),
 )
 def update_chips(checked, data):
-    chips = {"SITE": [], "REGION": [], "TAXA": [], "GEOG": [], "ALTI": [], "AGE": [], "EMAIL": []}
-    if not isinstance(data, pd.DataFrame):
-        data = pd.read_json(data[0], orient="split")
-    
+
+    chips = {"SITE": [], "REGION": [], "TAXA": [],
+             "GEOG": [], "ALTI": [], "AGE": [], "EMAIL": []}
+
     if checked:
         deleted = False
     else:
         deleted = True
-        
+
     # Get all the sentences and corresponding section names
     for entity in chips.keys():
         for ent in results[f"entities.{entity}"][0]:
@@ -291,15 +331,16 @@ def update_chips(checked, data):
                                 size="xs",
                                 p=0,
                                 variant="filled",
-                                sx={"width": 16, "height": 16, "pointerEvents": "none"}
+                                sx={"width": 16, "height": 16,
+                                    "pointerEvents": "none"}
                             )
                         ]),
                         value=ent['name'],
                         variant="outline",
                         styles={"label": {"display": "inline-flex",
-                                        "justifyContent": "space-between"}},
-                ))
-                
+                                          "justifyContent": "space-between"}},
+                    ))
+
     return chips["SITE"], chips["REGION"], chips["TAXA"], chips["GEOG"], chips["ALTI"], chips["AGE"], chips["EMAIL"]
 
 # Update the chip selection when accordian value changes
@@ -322,7 +363,7 @@ def unselect_chips(accordian):
     Output("entity-text", "children"),
     Output("corrected-text", "disabled"),
     # Output("correct-button", "disabled"),
-    Output("delete-button", "disabled"),
+    Output("delete-restore-button", "disabled"),
     Input("chips_site", "value"),
     Input("chips_region", "value"),
     Input("chips_taxa", "value"),
@@ -335,47 +376,47 @@ def unselect_chips(accordian):
 def chips_values(site, region, taxa, geog, alti, age, email, accordian):
     if accordian == "SITE":
         if site == None:
-            return "No entity selected", True, True#, True
+            return "No entity selected", True, True  # , True
         else:
-            return site,  False, False#, False
+            return site,  False, False  # , False
     elif accordian == "REGION":
         if region == None:
-            return "No entity selected", True, True#, True
+            return "No entity selected", True, True  # , True
         else:
-            return region, False, False#, False
+            return region, False, False  # , False
     elif accordian == "TAXA":
         if taxa == None:
-            return "No entity selected", True, True#, True
+            return "No entity selected", True, True  # , True
         else:
-            return taxa, False, False#, False
+            return taxa, False, False  # , False
     elif accordian == "GEOG":
         if geog == None:
-            return "No entity selected", True, True#, True
+            return "No entity selected", True, True  # , True
         else:
-            return geog, False, False#, False
+            return geog, False, False  # , False
     elif accordian == "ALTI":
         if alti == None:
-            return "No entity selected", True, True#, True
+            return "No entity selected", True, True  # , True
         else:
-            return alti, False, False#, False
+            return alti, False, False  # , False
     elif accordian == "AGE":
         if age == None:
-            return "No entity selected", True, True#, True
+            return "No entity selected", True, True  # , True
         else:
-            return age, False, False#, False
+            return age, False, False  # , False
     elif accordian == "EMAIL":
         if email == None:
-            return "No entity selected", True, True#, True
+            return "No entity selected", True, True  # , True
         else:
-            return email, False, False#, False
+            return email, False, False  # , False
     else:
-        return "No entity selected", True, True#, True
+        return "No entity selected", True, True  # , True
 
 # Update the results store when entity text is changed or it needs to be deleted
 @callback(
     Output('results', 'data'),
     Input("correct-button", "n_clicks"),
-    Input("delete-button", "n_clicks"),
+    Input("delete-restore-button", "n_clicks"),
     State("corrected-text", "value"),
     State("chips_site", "value"),
     State("chips_region", "value"),
@@ -388,21 +429,22 @@ def chips_values(site, region, taxa, geog, alti, age, email, accordian):
     prevent_initial_call=True,
 )
 def update_entity(correct, delete, entity, site, region, taxa, geog, alti, age, email, accordian):
-    original_text, _, _ = chips_values(site, region, taxa, geog, alti, age, email, accordian)
-    
+    original_text, _, _ = chips_values(
+        site, region, taxa, geog, alti, age, email, accordian)
+
     if correct:
         if accordian != None:
             for ent in results[f"entities.{accordian}"][0]:
                 if ent["name"] == original_text:
                     ent["name"] = entity
                     break
-    
+
     if delete:
         for ent in results[f"entities.{accordian}"][0]:
             if ent["name"] == original_text:
-                ent["deleted"] = True
+                ent["deleted"] = not ent["deleted"]
                 break
-        
+
     return [results.reset_index().to_json(orient="split")]
 
 # Save the results to the appropriate folder
@@ -426,7 +468,7 @@ def save_submit(submit, save, relevant, data):
             metadata["last_updated"] = datetime.now().strftime("%Y-%m-%d")
             gddid = metadata["gddid"][0]
             metadata = df_denormalize(metadata)
-            metadata= metadata.to_dict(orient='records')[0]
+            metadata = metadata.to_dict(orient='records')[0]
             metadata = json.dumps(metadata)
             with open(f"data/data-review-tool/completed/{gddid}.json", "w") as f:
                 f.write(metadata)
@@ -437,7 +479,7 @@ def save_submit(submit, save, relevant, data):
             metadata["last_updated"] = datetime.now().strftime("%Y-%m-%d")
             gddid = metadata["gddid"][0]
             metadata = df_denormalize(metadata)
-            metadata= metadata.to_dict(orient='records')[0]
+            metadata = metadata.to_dict(orient='records')[0]
             metadata = json.dumps(metadata)
             with open(f"data/data-review-tool/nonrelevant/{gddid}.json", "w") as f:
                 f.write(metadata)
@@ -449,14 +491,14 @@ def save_submit(submit, save, relevant, data):
         metadata["status"] = "In Progress"
         gddid = metadata["gddid"][0]
         metadata = df_denormalize(metadata)
-        metadata= metadata.to_dict(orient='records')[0]
+        metadata = metadata.to_dict(orient='records')[0]
         metadata = json.dumps(metadata)
         with open(f"data/data-review-tool/completed/{gddid}.json", "w") as f:
             f.write(metadata)
         return "Saved"
     else:
         return None
-    
+
 # Remove article from queue if it is not relevant
 @callback(
     Output("relevant-output", "children"),
@@ -465,17 +507,17 @@ def save_submit(submit, save, relevant, data):
 )
 def relevant(yes):
     if yes:
-        if (yes%2) == 0:
+        if (yes % 2) == 0:
             return None
         else:
             return "Article Removed, please click Submit to remove from the queue"
     else:
         return None
-    
+
 # Populate tabs with sentences under corresponding sections
 @callback(
     Output("section-tabs", "children"),
-    Input("delete-button", "n_clicks"),
+    Input("delete-restore-button", "n_clicks"),
     Input("chips_site", "value"),
     Input("chips_region", "value"),
     Input("chips_taxa", "value"),
@@ -485,16 +527,17 @@ def relevant(yes):
     Input("chips_email", "value"),
     State("accordion", "value"),
     prevent_initial_call=True,
-)    
+)
 def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian):
-    callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
-    
-    if callback_context == "delete-button.n_clicks" and n_clicks:
+    callback_context = [p["prop_id"]
+                        for p in dash.callback_context.triggered][0]
+
+    if callback_context == "delete-restore-button.n_clicks" and n_clicks:
         return []
-    
+
     if accordian == None or (site == None and region == None and taxa == None and geog == None and alti == None and age == None and email == None):
         return []
-    
+
     # Key is the tab name, value is a list of texts
     tabs = defaultdict(list)
 
@@ -511,7 +554,7 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
     # Convert all the sentences in tabs to paper dmc components
     dmc_tabs_content = []
     for tab_name, tab_content in tabs.items():
-        dmc_tabs_content.append(     
+        dmc_tabs_content.append(
             dmc.TabsPanel(
                 html.Div([
                     dmc.Paper(
@@ -521,24 +564,24 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
                         withBorder=True,
                         shadow="xs",
                         style={"padding": "1rem", "margin": "1rem"},
-                    ) for text in tab_content ],
+                    ) for text in tab_content],
                     style=tab_body_style,
                 ),
                 value=tab_name
             ),
         )
-        
+
     # Convert to list of tabs
-    dmc_tabs = [dmc.Tab(tab_name, 
+    dmc_tabs = [dmc.Tab(tab_name,
                         value=tab_name,
                         rightSection=dmc.Badge(
                             f"{len(tabs[tab_name])}",
                             size="xs",
                             p=0,
                             variant="filled",
-                            sx={"width": 16, "height": 16, "pointerEvents": "none"})) 
+                            sx={"width": 16, "height": 16, "pointerEvents": "none"}))
                 for tab_name in tabs.keys()]
-    
+
     tab_component = dmc.Tabs(
         children=[
             dmc.TabsList(
@@ -551,7 +594,7 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
         value=list(tabs.keys())[0]
     )
     tab_component.children.extend(dmc_tabs_content)
-    
+
     return tab_component
 
 # Enable correct button when corrected text is entered

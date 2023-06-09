@@ -176,7 +176,9 @@ def layout(gddid=None):
                                     active=True,
                                     href="http://doi.org/" + \
                                     original["doi"][0],
-                                    target="_blank"
+                                    target="_blank",
+                                    style={"font-weight": "bold",
+                                           "border-radius": "3px"},
                                 )
                             ],
                             align="right",

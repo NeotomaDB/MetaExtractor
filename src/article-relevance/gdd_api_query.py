@@ -7,7 +7,7 @@
 
 """This script takes in user specified parameter values and query the GDD API for recently acquired articles. 
 
-Usage: gdd_api_query.py --doi_path=<doi_path> --n_recent=<n_recent> --min_date=<min_date> --max_date=<max_date>
+Usage: gdd_api_query.py --doi_path=<doi_path> [--n_recent=<n_recent>] [--min_date=<min_date>] [--max_date=<max_date>]
 
 Options:
     --doi_path=<doi_path>                   The path to where the DOI list JSON file should be stored.
@@ -144,6 +144,5 @@ def main():
                          n_recent_articles= param_n_recent)
     
 
-    
 if __name__ == "__main__":
     main()

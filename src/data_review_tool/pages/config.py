@@ -73,3 +73,13 @@ entity_id_mapping = {
     "AGE": "chips_age", 
     "EMAIL": "chips_email"
 }
+
+entity_add_mapping = {
+    "SITE": "new_site",
+    "REGION": "new_region",
+    "TAXA": "new_taxa",
+    "GEOG": "new_geog",
+    "ALTI": "new_alti",
+    "AGE": "new_age", 
+    "EMAIL": "new_email"
+}

@@ -67,7 +67,7 @@ def layout(gddid=None):
                 onLabel=" Extracted entities",
                 offLabel="Deleted entities",
                 checked=True,
-                color="teal",
+                color="green",
                 style={"position": "relative", "left": "35%"},
             ),
             html.Br(),
@@ -81,7 +81,7 @@ def layout(gddid=None):
                 [
                     dmc.Button("Submit",
                                id="submit-button",
-                               color="teal"),
+                               color="green"),
                     dmc.Button("Save Progress",
                                id="save-button",
                                color="lime",
@@ -164,10 +164,10 @@ def layout(gddid=None):
                             [
                                 dmc.Group(
                                     [   
-                                        html.Label("Relevance Score: {}".format(original["relevance_score"][0])),
+                                        html.Label("Relevance Score: {}".format(round(original["relevance_score"][0], 2))),
                                         dmc.Button("Mark as irrelevant",
                                                    color="red",
-                                                   variant="outline", id="irrelevant-button"),
+                                                   variant="filled", id="irrelevant-button"),
                                         html.Div(id="relevant-output"),
                                     ],
                                     position="center",
@@ -205,7 +205,7 @@ def layout(gddid=None):
             ),
             html.Br(),
             dcc.Store(id="results", data=[
-                      original.reset_index().to_json(orient="split")]),
+                      results.reset_index(drop=True).to_json(orient="split")]),
             dbc.Row(
                 [
 
@@ -264,7 +264,63 @@ def get_accordion_items(checked, data):
                         ],
                         style=chip_style
                     ),
+                    html.Div([
+                        dmc.Button(
+                            "Add New Entity",
+                            id="new-entity-button",
+                            color="blue",
+                            variant="outline",
+                            leftIcon=DashIconify(icon="dashicons-plus", height=16),
+                            style={"margin-top": "10px"},
+                        ),
+                        dmc.Modal(
+                            id="new-entity-modal",
+                            zIndex=10000,
+                            centered=True,
+                            children=[
+                                # dmc.Text("Please add in information for the new entity below:"),
+                                # dmc.Space(h=20),
+                                html.Div([
+                                    dmc.Textarea(
+                                        label="Entity Name:",
+                                        placeholder="Enter the name of the new entity here", 
+                                        value="",
+                                        id="new-entity-text"),
+                                    html.Br(),
+                                    dmc.Textarea(
+                                        label="Sentence:",
+                                        placeholder="Enter sentence containing new entity here", 
+                                        value="",
+                                        id="new-entity-sentence"),
+                                    html.Br(),
+                                    dmc.Textarea(
+                                        label="Section Name:",
+                                        placeholder="Enter sentence containing new entity here", 
+                                        value="",
+                                        id="new-entity-section"),
+                                    html.Br(),
+                                ]),
+                                dmc.Group(
+                                    [
+                                        dmc.Button(
+                                            "Add", 
+                                            color="green",
+                                            variant="light",
+                                            id="new-entity-submit"),
+                                        dmc.Button(
+                                            "Close",
+                                            color="red",
+                                            variant="light",
+                                            id="new-entity-close",
+                                        ),
+                                    ],
+                                    position="right",
+                                    style={"margin-top": "10px"},
+                                ),
+                            ],
+                        ),
 
+                    ])
                 ]),
             ],
                 value=label,
@@ -293,7 +349,7 @@ def update_button(checked):
             dmc.Button(
                 "Restore Entity",
                 id="delete-restore-button",
-                color="teal",
+                color="green",
                 leftIcon=DashIconify(icon="dashicons-undo", height=16),
                 disabled=True,
             ),
@@ -355,24 +411,6 @@ def update_chips(checked, data):
                         styles={"label": {"display": "inline-flex",
                                           "justifyContent": "space-between",}},
                     ))
-        chips[f"{entity}"].append(
-            dmc.Chip(
-                dmc.Group(
-                    ["New Entity", 
-                     dmc.Badge("+", size="s",
-                            p=0,
-                            variant="filled",
-                            sx={"width": 16, "height": 16,
-                                "pointerEvents": "none"} 
-                            ),
-                     ],
-                    ), 
-                value ="New Entity", 
-                variant="outline", 
-                styles={"label": {"display": "inline-flex",
-                                      "justifyContent": "space-between",
-                                      "color":"green"}}
-                ))
 
     return chips["SITE"], chips["REGION"], chips["TAXA"], chips["GEOG"], chips["ALTI"], chips["AGE"], chips["EMAIL"]
 
@@ -395,7 +433,6 @@ def unselect_chips(accordian):
 @callback(
     Output("entity-text", "children"),
     Output("corrected-text", "disabled"),
-    # Output("correct-button", "disabled"),
     Output("delete-restore-button", "disabled"),
     Input("chips_site", "value"),
     Input("chips_region", "value"),
@@ -449,14 +486,26 @@ def chips_values(site, region, taxa, geog, alti, age, email,
     else:
         return "No entity selected", True, True  # , True
 
+# toggle through the modal whenever the add-new-entity / close button is clicked
+@callback(
+    Output("new-entity-modal", "opened"),
+    Output("new-entity-modal", "title"),
+    Input("new-entity-button", "n_clicks"),
+    Input("new-entity-close", "n_clicks"),
+    State("new-entity-modal", "opened"),
+    State("accordion", "value"),
+    prevent_initial_call=True,
+)
+def toggle_modal(n_clicks, close, opened, accordian):
+    return not opened, f"Please add information for a new {accordian} entity below:"
+
 # Update the results store when entity text is changed or it needs to be deleted
 @callback(
     Output('results', 'data'),
     Input("correct-button", "n_clicks"),
     Input("delete-restore-button", "n_clicks"),
+    Input("new-entity-submit", "n_clicks"),
     State("corrected-text", "value"),
-    Input("new-entity-text", "value"),
-    Input("new-entity-section", "value"),
     State("chips_site", "value"),
     State("chips_region", "value"),
     State("chips_taxa", "value"),
@@ -465,56 +514,55 @@ def chips_values(site, region, taxa, geog, alti, age, email,
     State("chips_age", "value"),
     State("chips_email", "value"),
     State("accordion", "value"),
+    State("new-entity-text", "value"),
+    State("new-entity-sentence", "value"),
+    State("new-entity-section", "value"),
     prevent_initial_call=True,
 )
-def update_entity(correct, delete, entity, text, section, site, region, taxa, geog, alti, age, email, accordian):
+def update_entity(
+    correct, delete, submit, entity, site, region, 
+    taxa, geog, alti, age, email, accordian, 
+    new_entity_text, new_entity_sentence, new_entity_section):
+    
     original_text, _, _ = chips_values(site, region, taxa, geog, alti, age, email, accordian)
-    # callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
-    # if callback_context == "entity-text.n_clicks":
-    if correct:
+    
+    if submit:
+        if new_entity_text != None:
+            try:
+                start, end = find_start_end_char(new_entity_sentence, new_entity_text)
+            except:
+                start, end = 0, 0
+            
+            if not new_entity_section:
+                new_entity_section = "Manual Entry"
+                
+            results[f"entities.{accordian}"][0].append({
+                "sentence": [{
+                    "text": new_entity_sentence,
+                    "section_name": new_entity_section,
+                    "char_index": {
+                        "start": start,
+                        "end": end
+                    },
+                }],
+                "name": new_entity_text,
+                "corrected_name": None,
+                "deleted": False,
+            })
+    elif correct:
         if accordian != None:
-            if original_text == "New Entity":
-                start, end = find_start_end_char(text, entity)
-                results[f"entities.{accordian}"][0].append({
-                                                            "sentence": [{
-                                                                "text": text,
-                                                                "section_name": section,
-                                                                "char_index": {
-                                                                    "start": start,
-                                                                    "end": end
-                                                                },
-                                                            }],
-                                                            "name": entity,
-                                                            "corrected_name": entity,
-                                                            "deleted": False,})
-                return [results.reset_index().to_json(orient="split")]
             for ent in results[f"entities.{accordian}"][0]:
                 if ent["name"] == original_text:
                     ent["name"] = entity
                     break
 
-    if delete:
+    elif delete:
         for ent in results[f"entities.{accordian}"][0]:
             if ent["name"] == original_text:
                 ent["deleted"] = not ent["deleted"]
                 break
-
-    return [results.reset_index().to_json(orient="split")]
-
-# Notify user that the results have been saved
-@callback(
-    Output("notifications-container", "children"),
-    Input("notify", "n_clicks"),
-    prevent_initial_call=True,
-)
-def show(n_clicks):
-    return dmc.Notification(
-        title="Hey there!",
-        id="simple-notify",
-        action="show",
-        message="Notifications in Dash, Awesome!",
-        icon=DashIconify(icon="ic:round-celebration"),
-    )
+        
+    return [results.reset_index(drop=True).to_json(orient="split")]
 
 # Save the results to the appropriate folder
 @callback(
@@ -528,10 +576,6 @@ def show(n_clicks):
     prevent_initial_call=True,
 )
 def save_submit(submit, save, relevant, data):
-    # if not os.path.exists("data/data-review-tool/completed/"):
-    #     os.makedirs("data/data-review-tool/completed/")
-    # if not os.path.exists("data/data-review-tool/nonrelevant/"):
-    #     os.makedirs("data/data-review-tool/nonrelevant/")
     if submit:
         metadata = pd.read_json(data[0], orient="split")
         metadata["status"] = "Completed"
@@ -620,31 +664,6 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
 
     if accordian == None or (site == None and region == None and taxa == None and geog == None and alti == None and age == None and email == None):
         return []
-    
-    for ent in [site, region, taxa, geog, alti, age, email]:
-        if ent == "New Entity":
-            tab_component = dmc.Tabs(
-                [
-                    dmc.TabsList(
-                        dmc.Tab("New Entity", value ="new-entity"),
-                        position="center"
-                    ),
-
-                    dmc.TabsPanel(
-                        [
-                            dmc.Textarea(placeholder="Enter sentence containing new entity here", 
-                                        value="",
-                                        id="new-entity-text"),
-                            dmc.TextInput(placeholder="Enter the section of the paper containing the entity here",
-                                          id="new-entity-section"),
-                        ],
-                            value="new-entity"),
-                ],
-                color="red",
-                orientation="vertical",
-                value=ent
-            )
-            return tab_component
     
     # Key is the tab name, value is a list of texts
     tabs = defaultdict(list)

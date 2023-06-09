@@ -109,6 +109,7 @@ def get_new_gdd_articles(output_path, n_recent_articles = None, min_date = None,
 
     # =========== Format the API return to Json file ==========
     response = requests.get(api_call).json()
+    print(response)
 
     data = response['success']['data']
 
@@ -154,7 +155,11 @@ def get_new_gdd_articles(output_path, n_recent_articles = None, min_date = None,
 def main():
     opt = docopt(__doc__)
     doi_file_storage = opt["--doi_path"]
-    param_n_recent = int(opt["--n_recent"])
+    param_n_recent = opt["--n_recent"]
+
+    if param_n_recent is not None:
+        param_n_recent = int(opt["--n_recent"])
+
     param_min_date = opt["--min_date"]
     param_max_date = opt["--max_date"]
 

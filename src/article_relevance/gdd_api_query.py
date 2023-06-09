@@ -23,7 +23,18 @@ import numpy as np
 import pandas as pd
 import re
 from docopt import docopt
+import logging
 
+# Locate src module
+current_dir = os.path.dirname(os.path.abspath(__file__))
+print(current_dir)
+src_dir = os.path.dirname(current_dir)
+print(src_dir)
+sys.path.append(src_dir)
+
+from logs import get_logger
+
+logger = get_logger(__name__) # this gets the object with the current modules name
 
 def get_new_gdd_articles(output_path, n_recent_articles = None, min_date = None, max_date = None):
     """ 
@@ -98,6 +109,9 @@ def get_new_gdd_articles(output_path, n_recent_articles = None, min_date = None,
     response = requests.get(api_call).json()
 
     data = response['success']['data']
+
+    logger.info(f'{data.shape[0]} returned from GeoDeepDive.')
+
 
     # initialize the resulting dataframe
     gdd_df = pd.DataFrame()

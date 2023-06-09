@@ -79,7 +79,7 @@ def layout(gddid=None):
                 ],
                 style={"justify": "center"},
             ),
-            dmc.Text(id="clicked-output", mt=10),
+            html.Div(id="clicked-output"),
         ],
         style=SIDEBAR_STYLE,
     )
@@ -119,7 +119,8 @@ def layout(gddid=None):
             )
         ], style=CONTENT_STYLE)
 
-    layout = html.Div(
+    layout = dmc.NotificationsProvider(
+        html.Div(
         [
             dbc.Row(
                 html.H2(original["title"][0],
@@ -151,11 +152,10 @@ def layout(gddid=None):
                             [
                                 dmc.Group(
                                     [
-                                        html.Label(
-                                            "If this article is not relevant to NeotomaDB, click here:",),
-                                        dmc.Button("Remove", color="green",
-                                                   variant="outline", id="yes-button"),
-                                        dmc.Text(id="relevant-output", mt=10),
+                                        dmc.Button("Mark as irrelevant",
+                                                   color="red",
+                                                   variant="outline", id="irrelevant-button"),
+                                        html.Div(id="relevant-output"),
                                     ],
                                     position="center",
                                 ),
@@ -199,7 +199,7 @@ def layout(gddid=None):
                 ],
             ),
         ],
-    )
+    ))
 
     return layout
 
@@ -447,6 +447,21 @@ def update_entity(correct, delete, entity, site, region, taxa, geog, alti, age, 
 
     return [results.reset_index().to_json(orient="split")]
 
+# Notify user that the results have been saved
+@callback(
+    Output("notifications-container", "children"),
+    Input("notify", "n_clicks"),
+    prevent_initial_call=True,
+)
+def show(n_clicks):
+    return dmc.Notification(
+        title="Hey there!",
+        id="simple-notify",
+        action="show",
+        message="Notifications in Dash, Awesome!",
+        icon=DashIconify(icon="ic:round-celebration"),
+    )
+
 # Save the results to the appropriate folder
 @callback(
     Output("clicked-output", "children"),
@@ -462,30 +477,34 @@ def save_submit(submit, save, relevant, data):
     if not os.path.exists("data/data-review-tool/nonrelevant/"):
         os.makedirs("data/data-review-tool/nonrelevant/")
     if submit:
-        if relevant == None:
-            metadata = pd.read_json(data[0], orient="split")
-            metadata["status"] = "Completed"
-            metadata["last_updated"] = datetime.now().strftime("%Y-%m-%d")
-            gddid = metadata["gddid"][0]
-            metadata = df_denormalize(metadata)
-            metadata = metadata.to_dict(orient='records')[0]
-            metadata = json.dumps(metadata)
-            with open(f"data/data-review-tool/completed/{gddid}.json", "w") as f:
-                f.write(metadata)
-            return "Submitted"
-        elif relevant:
-            metadata = pd.read_json(data[0], orient="split")
-            metadata["status"] = "Non-relevant"
-            metadata["last_updated"] = datetime.now().strftime("%Y-%m-%d")
-            gddid = metadata["gddid"][0]
-            metadata = df_denormalize(metadata)
-            metadata = metadata.to_dict(orient='records')[0]
-            metadata = json.dumps(metadata)
-            with open(f"data/data-review-tool/nonrelevant/{gddid}.json", "w") as f:
-                f.write(metadata)
-            return "Submitted"
-        else:
-            return None
+        metadata = pd.read_json(data[0], orient="split")
+        metadata["status"] = "Completed"
+        metadata["last_updated"] = datetime.now().strftime("%Y-%m-%d")
+        gddid = metadata["gddid"][0]
+        metadata = df_denormalize(metadata)
+        metadata = metadata.to_dict(orient='records')[0]
+        metadata = json.dumps(metadata)
+        with open(f"data/data-review-tool/completed/{gddid}.json", "w") as f:
+            f.write(metadata)
+        return  dmc.Notification(
+                    title="Review Complete!",
+                    id="submit-notification",
+                    action="show",
+                    color="green",
+                    message="Proceed to home page",
+                    icon=DashIconify(icon="ic:round-celebration"),
+                )
+    elif relevant:
+        metadata = pd.read_json(data[0], orient="split")
+        metadata["status"] = "Non-relevant"
+        metadata["last_updated"] = datetime.now().strftime("%Y-%m-%d")
+        gddid = metadata["gddid"][0]
+        metadata = df_denormalize(metadata)
+        metadata = metadata.to_dict(orient='records')[0]
+        metadata = json.dumps(metadata)
+        with open(f"data/data-review-tool/nonrelevant/{gddid}.json", "w") as f:
+            f.write(metadata)
+        return  None
     elif save:
         metadata = pd.read_json(data[0], orient="split")
         metadata["status"] = "In Progress"
@@ -495,24 +514,32 @@ def save_submit(submit, save, relevant, data):
         metadata = json.dumps(metadata)
         with open(f"data/data-review-tool/completed/{gddid}.json", "w") as f:
             f.write(metadata)
-        return "Saved"
+        return  dmc.Notification(
+                    title="Progress Saved!",
+                    id="save-notification",
+                    action="show",
+                    color="yellow",
+                    message="Don't forget to comeback and finish the review",
+                    icon=DashIconify(icon="dashicons-saved"),
+                )
     else:
         return None
 
 # Remove article from queue if it is not relevant
 @callback(
     Output("relevant-output", "children"),
-    Input("yes-button", "n_clicks"),
+    Input("irrelevant-button", "n_clicks"),
     prevent_initial_call=True,
 )
-def relevant(yes):
-    if yes:
-        if (yes % 2) == 0:
-            return None
-        else:
-            return "Article Removed, please click Submit to remove from the queue"
-    else:
-        return None
+def relevant(n_clicks):
+    return dmc.Notification(
+            title="Article Removed!",
+            id="remove-notification",
+            action="show",
+            color="red",
+            message="Proceed to home page",
+            icon=DashIconify(icon="dashicons-remove"),
+        )
 
 # Populate tabs with sentences under corresponding sections
 @callback(

@@ -59,6 +59,7 @@ def layout():
             html.Br(),
             dash_table.DataTable(
                 id="current_table",
+                filter_action="native",
                 style_data={
                     'whiteSpace': 'normal',
                     'height': 'auto',
@@ -84,6 +85,7 @@ def layout():
             html.Br(),
             dash_table.DataTable(
                 id="completed_table",
+                filter_action="native",
                 style_data={
                     'whiteSpace': 'normal',
                     'height': 'auto',
@@ -109,6 +111,7 @@ def layout():
             html.Br(),
             dash_table.DataTable(
                 id="nonrelevant_table",
+                filter_action="native",
                 style_data={
                     'whiteSpace': 'normal',
                     'height': 'auto',

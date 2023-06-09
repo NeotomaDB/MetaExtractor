@@ -26,6 +26,9 @@ from sentence_transformers import SentenceTransformer
 import joblib
 import logging
 from docopt import docopt
+from src.logs import get_logger
+
+logger = get_logger(__name__) # this gets the object with the current modules name
 
 
 def crossref_extract(doi_path, doi_colname):
@@ -37,6 +40,9 @@ def crossref_extract(doi_path, doi_colname):
     Args:
         doi_path (str): Path to the doi list csv file.
         doi_col (str): Column name of DOI.
+    
+    Return:
+        pandas Dataframe containing CrossRef metadata.
     """
 
     df = pd.read_csv(doi_path)

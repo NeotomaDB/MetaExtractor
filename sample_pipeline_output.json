@@ -12,8 +12,8 @@
     "status": "False",
     "relevance_score": 0.5,
     "entities": {
-        "TAXA": [
-            {
+        "TAXA": {
+            "Pinaceae": {
                 "sentence": [
                     {
                         "text": "The genus Abies is a member of the Pinaceae family and is found in the Northern Hemisphere.",
@@ -21,7 +21,8 @@
                         "char_index": {
                             "start": 10,
                             "end": 15
-                        }
+                        },
+                        "sentid": 1
                     },
                     {
                         "text": "The Pinaceae pollen is also found in the Southern Hemisphere.",
@@ -29,16 +30,16 @@
                         "char_index": {
                             "start": 10,
                             "end": 15
-                        }
+                        },
+                        "sentid": 3
                     }
                 ],
-                "name": "Pinaceae",
                 "corrected_name": null, 
                 "deleted": false
             }
-        ],
-        "REGION": [
-            {
+        },
+        "REGION": {
+            "the Northern Hemisphere": {
                 "sentence": [
                     {
                         "text": "The genus Abies is a member of the Pinaceae family and is found in the Northern Hemisphere.",
@@ -46,16 +47,16 @@
                         "char_index": {
                             "start": 10,
                             "end": 15
-                        }
+                        },
+                        "sentid": 4
                     }
                 ],
-                "name": "the Northern Hemisphere",
                 "corrected_name": null, 
                 "deleted": false
             }
-        ],
-        "SITE": [
-            {
+        },
+        "SITE": {
+            "Abies" : {
                 "sentence": [
                     {
                         "text": "The genus Abies is a member of the Pinaceae family and is found in the Northern Hemisphere.",
@@ -63,16 +64,16 @@
                         "char_index": {
                             "start": 10,
                             "end": 15
-                        }
+                        },
+                        "sentid": 5
                     }
                 ],
-                "name": "Abies",
                 "corrected_name": null, 
                 "deleted": false
             }
-        ],
-        "GEOG": [
-            {
+        },
+        "GEOG": {
+            "140N 40W": {
                 "sentence": [
                     {
                         "text": "The site <i>Abies</i> is a member of the Pinaceae family and is found at 140N 40W.",
@@ -80,16 +81,16 @@
                         "char_index": {
                             "start": 10,
                             "end": 15
-                        }
+                        },
+                        "sentid": 4
                     }
                 ],
-                "name": "140N 40W",
                 "corrected_name": null, 
                 "deleted": false
             }
-        ],
-        "ALTI": [
-            {   
+        },
+        "ALTI": {
+            "100 m a.s.l.": {   
                 "sentence": [
                     {
                         "text": "The site <i>Abies</i> is a member of the Pinaceae family and is found at 100 m a.s.l.",
@@ -97,16 +98,16 @@
                         "char_index": {
                             "start": 10,
                             "end": 15
-                        }
+                        },
+                        "sentid": 4
                     }
                 ],
-                "name": "100 m a.s.l.",
                 "corrected_name": null, 
                 "deleted": false
             }
         ],
-        "AGE": [
-            {
+        "AGE": {
+            "ca. 12 001 BP": {
                 "sentence": [
                     {
                         "text": "The site <i>Abies</i> is a member of the Pinaceae family and was dated around ca. 12 000 BP",
@@ -114,14 +115,14 @@
                         "char_index": {
                             "start": 10,
                             "end": 15
-                        }
+                        },
+                        "sentid": 4
                     }
                 ],
-                "name": "ca. 12 001 BP",
                 "corrected_name": null, 
                 "deleted": false
             },
-            {
+            "ca. 13 001 BP": {
                 "sentence": [
                     {
                         "text": "The site <i>Abies</i> is a member of the Pinaceae family and was dated around ca. 13 001 BP",
@@ -129,16 +130,16 @@
                         "char_index": {
                             "start": 10,
                             "end": 15
-                        }
+                        },
+                        "sentid": 6
                     }
                 ],
-                "name": "ca. 13 001 BP",
                 "corrected_name": null, 
                 "deleted": false
             }
-        ],
-        "EMAIL": [
-            {
+        },
+        "EMAIL": {
+            "jenitjain10@gmail.com": {
                 "sentence": [
                     {
                         "text": "The author can be contacted at <a href=\"mailto:jenitjain10@gmail.com",
@@ -146,13 +147,20 @@
                         "char_index": {
                             "start": 10,
                             "end": 15
-                        }
+                        },
+                        "sentid": 7
                     }
                 ],
-                "name": "jenitjain10@gmail.com",
                 "corrected_name": null, 
                 "deleted": false
             }
-        ]
-    }
+        }
+    },
+    "relevant_sentences": [
+        {"sentid": 1, "text": "This sentences contains taxa Pinacea"},
+        {"sentid": 2, "text": "This is the sentence following an extracted entity"},
+        {"sentid": 10, "text": "This is the sentence before and site entity saying it's the main site for this article."},
+        {"sentid": 11, "text": "This sentence contains site name Surprise lake"},
+        {"sentid": 12, "text": "This sentence follows an entity"}
+    ]
 }

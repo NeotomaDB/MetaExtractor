@@ -24,6 +24,8 @@ import pandas as pd
 import re
 from docopt import docopt
 import logging
+import sys
+
 
 # Locate src module
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -110,9 +112,6 @@ def get_new_gdd_articles(output_path, n_recent_articles = None, min_date = None,
 
     data = response['success']['data']
 
-    logger.info(f'{data.shape[0]} returned from GeoDeepDive.')
-
-
     # initialize the resulting dataframe
     gdd_df = pd.DataFrame()
 
@@ -140,6 +139,9 @@ def get_new_gdd_articles(output_path, n_recent_articles = None, min_date = None,
     result_dict['param_n_recent_articles'] = n_recent_articles
     result_dict['data'] = gdd_df.to_dict()
 
+    logger.info(f'{gdd_df.shape[0]} articles returned from GeoDeepDive.')
+
+
     # Write the JSON object to a file
     directory = os.path.join(output_path)
     if not os.path.exists(directory):
@@ -152,7 +154,7 @@ def get_new_gdd_articles(output_path, n_recent_articles = None, min_date = None,
 def main():
     opt = docopt(__doc__)
     doi_file_storage = opt["--doi_path"]
-    param_n_recent = opt["--n_recent"]
+    param_n_recent = int(opt["--n_recent"])
     param_min_date = opt["--min_date"]
     param_max_date = opt["--max_date"]
 

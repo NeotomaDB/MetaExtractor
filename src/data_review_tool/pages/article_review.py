@@ -22,14 +22,24 @@ results = None
 
 
 def layout(gddid=None):
+    
     try:
         global original
         global results
         # get the metadata of the article
-        article = open(os.path.join("data",
-                                    "data-review-tool",
-                                    "raw",
-                                    f"{gddid}.json"), "r")
+        if os.path.exists(os.path.join("data",
+                                       "data-review-tool",
+                                       "completed",
+                                       f"{gddid}.json")):
+            article = open(os.path.join("data",
+                                        "data-review-tool",
+                                        "completed",
+                                        f"{gddid}.json"), "r")
+        else:
+            article = open(os.path.join("data",
+                                        "data-review-tool",
+                                        "raw",
+                                        f"{gddid}.json"), "r")
 
         original = pd.json_normalize(json.loads(article.read()))
         results = copy.deepcopy(original)
@@ -153,7 +163,8 @@ def layout(gddid=None):
                         dbc.Col(
                             [
                                 dmc.Group(
-                                    [
+                                    [   
+                                        html.Label("Relevance Score: {}".format(original["relevance_score"][0])),
                                         dmc.Button("Mark as irrelevant",
                                                    color="red",
                                                    variant="outline", id="irrelevant-button"),
@@ -164,8 +175,8 @@ def layout(gddid=None):
                             ],
                             align="center",
                             lg=9,
-                            md=9,
-                            sm=9
+                            md=8,
+                            sm=7
                         ),
                         dbc.Col(
                             [
@@ -185,8 +196,8 @@ def layout(gddid=None):
                             ],
                             align="right",
                             lg=1,
-                            md=1,
-                            sm=1,
+                            md=2,
+                            sm=3,
                             style={"margin-right": "10px"},
                         ),
                     ])
@@ -704,4 +715,13 @@ def enable_correct_button(corrected_text):
         return False
     else:
         return True
-    
+
+@callback(
+    Output("location-article", "href"),
+    Input("article-button", "n_clicks"),
+)
+def open_article(n_clicks):
+    if n_clicks:
+        return "http://doi.org/" + original["doi"][0]
+    else:
+        return None

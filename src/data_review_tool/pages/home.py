@@ -15,7 +15,7 @@ suppress_callback_exceptions = True
 def layout():
 
 
-    directories = ["data/data-review-tool/completed/", "data/data-review-tool/nonrelevant/", "data/data-review-tool/raw/"]
+    directories = ["data/data-review-tool/completed/", "data/data-review-tool/raw/"]
 
     # Initialize an empty dictionary to store the dataframes
     dfs = {}

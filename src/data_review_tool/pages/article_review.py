@@ -140,7 +140,9 @@ def layout(gddid=None):
                                     leftIcon=DashIconify(
                                         icon="dashicons-arrow-left-alt", height=16),
                                 ),
-                                dcc.Location(id='location_home', refresh=True)
+                                dcc.Location(id='location_home', refresh=True),
+                                dcc.Location(id='location-irrelevant', refresh=True),
+                                dcc.Location(id='location-submit', refresh=True),
                             ],
                             align="left",
                             lg=1,
@@ -506,6 +508,8 @@ def show(n_clicks):
 # Save the results to the appropriate folder
 @callback(
     Output("clicked-output", "children"),
+    Output("location-submit", "href"),
+    Output("location-irrelevant", "href"),
     Input("submit-button", "n_clicks"),
     Input("save-button", "n_clicks"),
     Input("relevant-output", "children"),
@@ -513,10 +517,10 @@ def show(n_clicks):
     prevent_initial_call=True,
 )
 def save_submit(submit, save, relevant, data):
-    if not os.path.exists("data/data-review-tool/completed/"):
-        os.makedirs("data/data-review-tool/completed/")
-    if not os.path.exists("data/data-review-tool/nonrelevant/"):
-        os.makedirs("data/data-review-tool/nonrelevant/")
+    # if not os.path.exists("data/data-review-tool/completed/"):
+    #     os.makedirs("data/data-review-tool/completed/")
+    # if not os.path.exists("data/data-review-tool/nonrelevant/"):
+    #     os.makedirs("data/data-review-tool/nonrelevant/")
     if submit:
         metadata = pd.read_json(data[0], orient="split")
         metadata["status"] = "Completed"
@@ -534,7 +538,7 @@ def save_submit(submit, save, relevant, data):
                     color="green",
                     message="Proceed to home page",
                     icon=DashIconify(icon="ic:round-celebration"),
-                )
+                ), "/", None
     elif relevant:
         metadata = pd.read_json(data[0], orient="split")
         metadata["status"] = "Non-relevant"
@@ -543,9 +547,9 @@ def save_submit(submit, save, relevant, data):
         metadata = df_denormalize(metadata)
         metadata = metadata.to_dict(orient='records')[0]
         metadata = json.dumps(metadata)
-        with open(f"data/data-review-tool/nonrelevant/{gddid}.json", "w") as f:
+        with open(f"data/data-review-tool/completed/{gddid}.json", "w") as f:
             f.write(metadata)
-        return  None
+        return  None, None, "/"
     elif save:
         metadata = pd.read_json(data[0], orient="split")
         metadata["status"] = "In Progress"
@@ -561,10 +565,10 @@ def save_submit(submit, save, relevant, data):
                     action="show",
                     color="yellow",
                     message="Don't forget to comeback and finish the review",
-                    icon=DashIconify(icon="dashicons-saved"),
-                )
+                    icon=DashIconify(icon="dashicons-saved"), 
+                ), None, None
     else:
-        return None
+        return None, None, None
 
 # Remove article from queue if it is not relevant
 @callback(

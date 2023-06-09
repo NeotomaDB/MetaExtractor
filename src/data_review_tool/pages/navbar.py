@@ -73,3 +73,7 @@ def df_denormalize(df: pd.DataFrame) -> pd.DataFrame:
         df[field] = json.loads(renamed_fields.to_json(orient="records"))
         df.drop(list_of_children, axis=1, inplace=True)
     return df
+def find_start_end_char(text, entity):
+    start = text.find(entity)
+    end = start + len(entity)
+    return start, end

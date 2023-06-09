@@ -10,7 +10,7 @@ import dash
 from dash import Dash, dcc, html, Input, Output, callback, State
 import dash_mantine_components as dmc
 import dash_bootstrap_components as dbc
-from pages.navbar import df_denormalize
+from pages.navbar import df_denormalize, find_start_end_char
 from dash_iconify import DashIconify
 from pages.config import *
 
@@ -391,6 +391,8 @@ def chips_values(site, region, taxa, geog, alti, age, email,
     Input("correct-button", "n_clicks"),
     Input("delete-button", "n_clicks"),
     State("corrected-text", "value"),
+    State("new-entity-text", "value"),
+    State("new-entity-section", "value"),
     State("chips_site", "value"),
     State("chips_region", "value"),
     State("chips_taxa", "value"),
@@ -401,12 +403,25 @@ def chips_values(site, region, taxa, geog, alti, age, email,
     State("accordion", "value"),
     prevent_initial_call=True,
 )
-def update_entity(correct, delete, entity, site, region, taxa, geog, alti, age, email, accordian):
+def update_entity(correct, delete, entity, text, section, site, region, taxa, geog, alti, age, email, accordian):
     original_text, _, _ = chips_values(site, region, taxa, geog, alti, age, email, accordian)
     # callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
     # if callback_context == "entity-text.n_clicks":
     if correct:
         if accordian != None:
+            if original_text == "New Entity":
+                start, end = find_start_end_char(text, entity)
+                results[f"entities.{accordian}"][0].append({
+                                                            "sentence": [{
+                                                                "text": text,
+                                                                "section_name": section,
+                                                                "char_index": {
+                                                                    "start": start,
+                                                                    "end": end
+                                                                },
+                                                            }],
+                                                            "name": entity})
+                return [results.reset_index().to_json(orient="split")]
             for ent in results[f"entities.{accordian}"][0]:
                 if ent["name"] == original_text:
                     ent["name"] = entity
@@ -604,3 +619,4 @@ def enable_correct_button(corrected_text):
         return False
     else:
         return True
+    

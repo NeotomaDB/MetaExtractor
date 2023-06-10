@@ -77,6 +77,15 @@ def layout(gddid=None):
                 autosize=True,
             ),
             html.Br(),
+            dmc.Modal(
+                id="modal-submit",
+                title="Are you sure you want to submit?",
+                children=
+                [
+                    dmc.Button("Submit",
+                               id="confirm-submit-button")
+                ]
+            ),
             dmc.Group(
                 [
                     dmc.Button("Submit",
@@ -165,6 +174,15 @@ def layout(gddid=None):
                                 dmc.Group(
                                     [   
                                         html.Label("Relevance Score: {}".format(original["relevance_score"][0])),
+                                        dmc.Modal(
+                                            id="modal-irrelevant",
+                                            title="Are you sure you want to mark this item as irrelevant?",
+                                            children=
+                                            [
+                                                dmc.Button("Yes",
+                                                           id="confirm-irrelevant-button"),
+                                            ]
+                                        ),
                                         dmc.Button("Mark as irrelevant",
                                                    color="red",
                                                    variant="outline", id="irrelevant-button"),
@@ -321,7 +339,7 @@ def cell_clicked(n_clicks):
     Output("chips_age", "children"),
     Output("chips_email", "children"),
     Input("toggle-switch", "checked"),
-    Input('results', 'data'),
+    Input('results', 'data')
 )
 def update_chips(checked, data):
 
@@ -455,8 +473,8 @@ def chips_values(site, region, taxa, geog, alti, age, email,
     Input("correct-button", "n_clicks"),
     Input("delete-restore-button", "n_clicks"),
     State("corrected-text", "value"),
-    Input("new-entity-text", "value"),
-    Input("new-entity-section", "value"),
+    State("new-entity-text", "value"),
+    State("new-entity-section", "value"),
     State("chips_site", "value"),
     State("chips_region", "value"),
     State("chips_taxa", "value"),
@@ -487,7 +505,7 @@ def update_entity(correct, delete, entity, text, section, site, region, taxa, ge
                                                             "name": entity,
                                                             "corrected_name": entity,
                                                             "deleted": False,})
-                return [results.reset_index().to_json(orient="split")]
+                return [results.reset_index(drop=True).to_json(orient="split")]
             for ent in results[f"entities.{accordian}"][0]:
                 if ent["name"] == original_text:
                     ent["name"] = entity
@@ -499,7 +517,7 @@ def update_entity(correct, delete, entity, text, section, site, region, taxa, ge
                 ent["deleted"] = not ent["deleted"]
                 break
 
-    return [results.reset_index().to_json(orient="split")]
+    return [results.reset_index(drop=True).to_json(orient="split")]
 
 # Notify user that the results have been saved
 @callback(
@@ -521,17 +539,13 @@ def show(n_clicks):
     Output("clicked-output", "children"),
     Output("location-submit", "href"),
     Output("location-irrelevant", "href"),
-    Input("submit-button", "n_clicks"),
+    Input("confirm-submit-button", "n_clicks"),
     Input("save-button", "n_clicks"),
     Input("relevant-output", "children"),
     State('results', 'data'),
     prevent_initial_call=True,
 )
 def save_submit(submit, save, relevant, data):
-    # if not os.path.exists("data/data-review-tool/completed/"):
-    #     os.makedirs("data/data-review-tool/completed/")
-    # if not os.path.exists("data/data-review-tool/nonrelevant/"):
-    #     os.makedirs("data/data-review-tool/nonrelevant/")
     if submit:
         metadata = pd.read_json(data[0], orient="split")
         metadata["status"] = "Completed"
@@ -584,7 +598,7 @@ def save_submit(submit, save, relevant, data):
 # Remove article from queue if it is not relevant
 @callback(
     Output("relevant-output", "children"),
-    Input("irrelevant-button", "n_clicks"),
+    Input("confirm-irrelevant-button", "n_clicks"),
     prevent_initial_call=True,
 )
 def relevant(n_clicks):
@@ -644,7 +658,7 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
                 orientation="vertical",
                 value=ent
             )
-            return tab_component
+            return tab_component.children
     
     # Key is the tab name, value is a list of texts
     tabs = defaultdict(list)
@@ -725,3 +739,15 @@ def open_article(n_clicks):
         return "http://doi.org/" + original["doi"][0]
     else:
         return None
+    
+def toggle_modal(n_clicks, opened):
+    return not opened
+
+
+for overflow in ["submit", "irrelevant"]:
+    callback(
+        Output(f"modal-{overflow}", "opened"),
+        Input(f"{overflow}-button", "n_clicks"),
+        State(f"modal-{overflow}", "opened"),
+        prevent_initial_call=True,
+    )(toggle_modal)

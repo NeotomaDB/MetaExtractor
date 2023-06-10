@@ -41,7 +41,7 @@ def layout(gddid=None):
                                         "raw",
                                         f"{gddid}.json"), "r")
 
-        original = pd.json_normalize(json.loads(article.read()))
+        original = json.loads(article.read())
         results = copy.deepcopy(original)
 
     except FileNotFoundError:
@@ -122,8 +122,8 @@ def layout(gddid=None):
                             ],
                             style={"anchor": "middle", "justify": "center"}
                         )
-                    ], lg=6),
-                    dbc.Col([], lg=4),
+                    ], lg=8),
+                    dbc.Col([], lg=2),
                     dbc.Col([
                         dmc.Group([
                             dmc.Button(id="delete-restore-button",),
@@ -142,10 +142,10 @@ def layout(gddid=None):
         html.Div(
         [
             dbc.Row(
-                html.H2(original["title"][0],
+                html.H2(original["title"],
                         style=h2_style)),
             dbc.Row(
-                html.H4(original["journal_name"][0],
+                html.H4(original["journal_name"],
                         style=h4_style)),
             dbc.Row(
                 [
@@ -173,7 +173,7 @@ def layout(gddid=None):
                             [
                                 dmc.Group(
                                     [   
-                                        html.Label("Relevance Score: {}".format(round(original["relevance_score"][0], 2))),
+                                        html.Label("Relevance Score: {}".format(round(original["relevance_score"], 2))),
                                         dmc.Modal(
                                             id="modal-irrelevant",
                                             title="Are you sure you want to mark this item as irrelevant?",
@@ -206,7 +206,7 @@ def layout(gddid=None):
                                     variant="filled",
                                     active=True,
                                     href="http://doi.org/" + \
-                                    original["doi"][0],
+                                    original["doi"],
                                     target="_blank",
                                     style={"font-weight": "bold",
                                            "border-radius": "3px"},
@@ -223,7 +223,7 @@ def layout(gddid=None):
             ),
             html.Br(),
             dcc.Store(id="results", data=[
-                      original.reset_index(drop=True).to_json(orient="split")]),
+                      original]),
             dbc.Row(
                 [
 
@@ -249,11 +249,9 @@ def collapse(checked):
     Output("accordion", "children"),
     Input("toggle-switch", "checked"),
     Input("results", "data"),
+    prevent_initial_call=True,
 )
 def get_accordion_items(checked, data):
-
-    if not isinstance(data, pd.DataFrame):
-        data = pd.read_json(data[0], orient="split")
 
     children = []
 
@@ -264,13 +262,14 @@ def get_accordion_items(checked, data):
                     dmc.Group([
                         dmc.Text(name),
                         dmc.Badge(
-                            f"{len([ent for ent in data[f'entities.{label}'][0] if ent['deleted'] != checked])}",
+                            f"{len([ent for ent in data['entities'][label].values() if ent['deleted'] != checked])}",
                             size="xs",
                             p=0,
                             variant="filled",
                             sx={"width": 16, "height": 16,
                                 "pointerEvents": "none"}
-                        )])),
+                        )
+                        ])),
                 dmc.AccordionPanel([
                     html.Div(
                         [
@@ -409,14 +408,14 @@ def update_chips(checked, data):
 
     # Get all the sentences and corresponding section names
     for entity in chips.keys():
-        for ent in results[f"entities.{entity}"][0]:
-            if ent["deleted"] == deleted:
+        for ent, values in results["entities"][entity].items():
+            if values["deleted"] == deleted:
                 chips[f"{entity}"].append(
                     dmc.Chip(
                         dmc.Group([
-                            ent['name'],
+                            ent,
                             dmc.Badge(
-                                f"{len(ent['sentence'])}",
+                                f"{len(values['sentence'])}",
                                 size="xs",
                                 p=0,
                                 variant="filled",
@@ -424,7 +423,7 @@ def update_chips(checked, data):
                                     "pointerEvents": "none"}
                             )
                         ]),
-                        value=ent['name'],
+                        value=ent,
                         variant="outline",
                         styles={"label": {"display": "inline-flex",
                                           "justifyContent": "space-between",}},
@@ -557,7 +556,7 @@ def update_entity(
             if not new_entity_section:
                 new_entity_section = "Manual Entry"
                 
-            results[f"entities.{accordian}"][0].append({
+            results["entities"][accordian][new_entity_text] = {
                 "sentence": [{
                     "text": new_entity_sentence,
                     "section_name": new_entity_section,
@@ -569,21 +568,21 @@ def update_entity(
                 "name": new_entity_text,
                 "corrected_name": None,
                 "deleted": False,
-            })
+            }
     elif correct:
         if accordian != None:
-            for ent in results[f"entities.{accordian}"][0]:
-                if ent["name"] == original_text:
-                    ent["name"] = entity
+            for ent, values in results["entities"][accordian].items():
+                if ent == original_text:
+                    values["corrected_name"] = entity
                     break
 
     elif delete:
-        for ent in results[f"entities.{accordian}"][0]:
-            if ent["name"] == original_text:
-                ent["deleted"] = not ent["deleted"]
+        for ent, values in results["entities"][accordian].items():
+            if ent == original_text:
+                values["deleted"] = not values["deleted"]
                 break
 
-    return [results.reset_index(drop=True).to_json(orient="split")]
+    return results
 
 # Notify user that the results have been saved
 @callback(
@@ -613,15 +612,12 @@ def show(n_clicks):
 )
 def save_submit(submit, save, relevant, data):
     if submit:
-        metadata = pd.read_json(data[0], orient="split")
-        metadata["status"] = "Completed"
-        metadata["last_updated"] = datetime.now().strftime("%Y-%m-%d")
-        gddid = metadata["gddid"][0]
-        metadata = df_denormalize(metadata)
-        metadata = metadata.to_dict(orient='records')[0]
-        metadata = json.dumps(metadata)
+        data["status"] = "Completed"
+        data["last_updated"] = datetime.now().strftime("%Y-%m-%d")
+        gddid = data["gddid"]
+        data = json.dumps(data)
         with open(f"data/data-review-tool/completed/{gddid}.json", "w") as f:
-            f.write(metadata)
+            f.write(data)
         return  dmc.Notification(
                     title="Review Complete!",
                     id="submit-notification",
@@ -631,25 +627,19 @@ def save_submit(submit, save, relevant, data):
                     icon=DashIconify(icon="ic:round-celebration"),
                 ), "/", None
     elif relevant:
-        metadata = pd.read_json(data[0], orient="split")
-        metadata["status"] = "Non-relevant"
-        metadata["last_updated"] = datetime.now().strftime("%Y-%m-%d")
-        gddid = metadata["gddid"][0]
-        metadata = df_denormalize(metadata)
-        metadata = metadata.to_dict(orient='records')[0]
-        metadata = json.dumps(metadata)
+        data["status"] = "Non-relevant"
+        data["last_updated"] = datetime.now().strftime("%Y-%m-%d")
+        gddid = data["gddid"]
+        data = json.dumps(data)
         with open(f"data/data-review-tool/completed/{gddid}.json", "w") as f:
-            f.write(metadata)
+            f.write(data)
         return  None, None, "/"
     elif save:
-        metadata = pd.read_json(data[0], orient="split")
-        metadata["status"] = "In Progress"
-        gddid = metadata["gddid"][0]
-        metadata = df_denormalize(metadata)
-        metadata = metadata.to_dict(orient='records')[0]
-        metadata = json.dumps(metadata)
+        data["status"] = "In Progress"
+        gddid = data["gddid"]
+        data = json.dumps(data)
         with open(f"data/data-review-tool/completed/{gddid}.json", "w") as f:
-            f.write(metadata)
+            f.write(meta)
         return  dmc.Notification(
                     title="Progress Saved!",
                     id="save-notification",
@@ -705,10 +695,10 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
     tabs = defaultdict(list)
 
     # Get all the sentences and corresponding section names
-    for entity in results[f"entities.{accordian}"][0]:
-        if entity["name"] in [site, region, taxa, geog, alti, age, email]:
-            sentences = entity["sentence"]
-            highlight = entity["name"]
+    for entity, values in results["entities"][accordian].items():
+        if entity in [site, region, taxa, geog, alti, age, email]:
+            sentences = values["sentence"]
+            highlight = entity
             for sentence in sentences:
                 section_name = sentence["section_name"]
                 text = sentence["text"]

@@ -77,6 +77,15 @@ def layout(gddid=None):
                 autosize=True,
             ),
             html.Br(),
+            dmc.Modal(
+                id="modal-submit",
+                title="Are you sure you want to submit?",
+                children=
+                [
+                    dmc.Button("Submit",
+                               id="confirm-submit-button")
+                ]
+            ),
             dmc.Group(
                 [
                     dmc.Button("Submit",
@@ -165,6 +174,15 @@ def layout(gddid=None):
                                 dmc.Group(
                                     [   
                                         html.Label("Relevance Score: {}".format(round(original["relevance_score"][0], 2))),
+                                        dmc.Modal(
+                                            id="modal-irrelevant",
+                                            title="Are you sure you want to mark this item as irrelevant?",
+                                            children=
+                                            [
+                                                dmc.Button("Yes",
+                                                           id="confirm-irrelevant-button"),
+                                            ]
+                                        ),
                                         dmc.Button("Mark as irrelevant",
                                                    color="red",
                                                    variant="filled", id="irrelevant-button"),
@@ -377,7 +395,7 @@ def cell_clicked(n_clicks):
     Output("chips_age", "children"),
     Output("chips_email", "children"),
     Input("toggle-switch", "checked"),
-    Input('results', 'data'),
+    Input('results', 'data')
 )
 def update_chips(checked, data):
 
@@ -434,6 +452,7 @@ def unselect_chips(accordian):
     Output("entity-text", "children"),
     Output("corrected-text", "disabled"),
     Output("delete-restore-button", "disabled"),
+    Output("corrected-text", "value"),
     Input("chips_site", "value"),
     Input("chips_region", "value"),
     Input("chips_taxa", "value"),
@@ -449,42 +468,42 @@ def chips_values(site, region, taxa, geog, alti, age, email,
     
     if accordian == "SITE":
         if site == None:
-            return "No entity selected", True, True  # , True
+            return "No entity selected", True, True, ""  # , True
         else:
-            return site, False, False
+            return site, False, False, site
     elif accordian == "REGION":
         if region == None:
-            return "No entity selected", True, True  # , True
+            return "No entity selected", True, True, ""  # , True
         else:
-            return region, False, False
+            return region, False, False, region
             
     elif accordian == "TAXA":
         if taxa == None:
-            return "No entity selected", True, True  # , True
+            return "No entity selected", True, True, ""  # , True
         else:
-            return taxa, False, False
+            return taxa, False, False, taxa
     elif accordian == "GEOG":
         if geog == None:
-            return "No entity selected", True, True  # , True
+            return "No entity selected", True, True, ""  # , True
         else:
-            return geog, False, False
+            return geog, False, False, geog
     elif accordian == "ALTI":
         if alti == None:
-            return "No entity selected", True, True  # , True
+            return "No entity selected", True, True, ""  # , True
         else:
-            return alti, False, False
+            return alti, False, False, alti
     elif accordian == "AGE":
         if age == None:
-            return "No entity selected", True, True  # , True
+            return "No entity selected", True, True, ""  # , True
         else:
-            return age, False, False
+            return age, False, False, age
     elif accordian == "EMAIL":
         if email == None:
-            return "No entity selected", True, True  # , True
+            return "No entity selected", True, True, ""  # , True
         else:
-            return email, False, False
+            return email, False, False, email
     else:
-        return "No entity selected", True, True  # , True
+        return "No entity selected", True, True, ""  # , True
 
 # toggle through the modal whenever the add-new-entity / close button is clicked
 @callback(
@@ -506,6 +525,8 @@ def toggle_modal(n_clicks, close, opened, accordian):
     Input("delete-restore-button", "n_clicks"),
     Input("new-entity-submit", "n_clicks"),
     State("corrected-text", "value"),
+    # Input("new-entity-text", "value"),
+    # Input("new-entity-section", "value"),
     State("chips_site", "value"),
     State("chips_region", "value"),
     State("chips_taxa", "value"),
@@ -524,7 +545,7 @@ def update_entity(
     taxa, geog, alti, age, email, accordian, 
     new_entity_text, new_entity_sentence, new_entity_section):
     
-    original_text, _, _ = chips_values(site, region, taxa, geog, alti, age, email, accordian)
+    original_text, _, _, _ = chips_values(site, region, taxa, geog, alti, age, email, accordian)
     
     if submit:
         if new_entity_text != None:
@@ -561,15 +582,30 @@ def update_entity(
             if ent["name"] == original_text:
                 ent["deleted"] = not ent["deleted"]
                 break
-        
+
     return [results.reset_index(drop=True).to_json(orient="split")]
+
+# Notify user that the results have been saved
+@callback(
+    Output("notifications-container", "children"),
+    Input("notify", "n_clicks"),
+    prevent_initial_call=True,
+)
+def show(n_clicks):
+    return dmc.Notification(
+        title="Hey there!",
+        id="simple-notify",
+        action="show",
+        message="Notifications in Dash, Awesome!",
+        icon=DashIconify(icon="ic:round-celebration"),
+    )
 
 # Save the results to the appropriate folder
 @callback(
     Output("clicked-output", "children"),
     Output("location-submit", "href"),
     Output("location-irrelevant", "href"),
-    Input("submit-button", "n_clicks"),
+    Input("confirm-submit-button", "n_clicks"),
     Input("save-button", "n_clicks"),
     Input("relevant-output", "children"),
     State('results', 'data'),
@@ -628,7 +664,7 @@ def save_submit(submit, save, relevant, data):
 # Remove article from queue if it is not relevant
 @callback(
     Output("relevant-output", "children"),
-    Input("irrelevant-button", "n_clicks"),
+    Input("confirm-irrelevant-button", "n_clicks"),
     prevent_initial_call=True,
 )
 def relevant(n_clicks):
@@ -727,6 +763,7 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
 # Enable correct button when corrected text is entered
 @callback(
     Output("correct-button", "disabled"),
+    
     Input("corrected-text", "value"),
 )
 def enable_correct_button(corrected_text):
@@ -744,3 +781,15 @@ def open_article(n_clicks):
         return "http://doi.org/" + original["doi"][0]
     else:
         return None
+    
+def toggle_modal(n_clicks, opened):
+    return not opened
+
+
+for overflow in ["submit", "irrelevant"]:
+    callback(
+        Output(f"modal-{overflow}", "opened"),
+        Input(f"{overflow}-button", "n_clicks"),
+        State(f"modal-{overflow}", "opened"),
+        prevent_initial_call=True,
+    )(toggle_modal)

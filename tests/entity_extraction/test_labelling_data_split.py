@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 import os
 import sys
 from distutils import dir_util
-from pytest import fixture
 import pytest
 import logging
 
@@ -17,7 +16,7 @@ from src.preprocessing.labelling_data_split import separate_labels_to_train_val_
 
 
 # testing setup inspiration from: https://stackoverflow.com/questions/29627341/pytest-where-to-store-expected-data
-@fixture
+@pytest.fixture
 def datadir(tmpdir, request):
     """
     Fixture responsible for searching a folder with the same name of test

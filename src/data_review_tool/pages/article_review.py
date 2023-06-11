@@ -786,14 +786,14 @@ def open_article(n_clicks):
     else:
         return None
     
-def toggle_modal(n_clicks, opened):
+def toggle_confirmation_modal(n_clicks, submit, opened):
     return not opened
-
 
 for overflow in ["submit", "irrelevant"]:
     callback(
         Output(f"modal-{overflow}", "opened"),
+        Input(f"confirm-{overflow}-close-button", "n_clicks"),
         Input(f"{overflow}-button", "n_clicks"),
         State(f"modal-{overflow}", "opened"),
         prevent_initial_call=True,
-    )(toggle_modal)
+    )(toggle_confirmation_modal)

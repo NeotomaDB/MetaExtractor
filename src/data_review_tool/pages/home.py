@@ -16,7 +16,7 @@ suppress_callback_exceptions = True
 def layout():
 
 
-    directories = ["data/data-review-tool/completed/", "data/data-review-tool/raw/"]
+    directories = [os.path.join("data", "data-review-tool", dir) for dir in ["completed", "raw"]]
 
     # Initialize an empty dictionary to store the dataframes
     dfs = {}
@@ -54,196 +54,20 @@ def layout():
 
     layout = html.Div(
         dbc.Col([
-            dmc.Tabs([
-                dmc.TabsList(
-                    [
-                        dmc.Tab(
-                            dmc.Text("Current Articles",
-                                     style={"font-weight": "bold",
-                                            "font-size": "25px",
-                                            "font-family": "Lato",
-                                            "padding-top": "20px",
-                                            "padding-bottom": "10px"}),
-                            "Current Articles",
-                            rightSection=dmc.Badge(
-                                f"{current.shape[0]}",
-                                p=0,
-                                variant="filled",
-                                style={
-                                    "background-color": "#F4C430",
-                                    "font-size": "15px",
-                                    "font-weight": "exta-bold",},
-                                sx={"width": 20, "height": 20, "pointerEvents": "none"}),
-                        ),
-                        dmc.Tab(
-                            dmc.Text("Completed Articles",
-                                     style={"font-weight": "bold",
-                                            "font-size": "25px",
-                                            "font-family": "Lato",
-                                            "padding-top": "20px",
-                                            "padding-bottom": "10px"}),
-                            "Completed Articles",
-                            rightSection=dmc.Badge(
-                                f"{completed.shape[0]}",
-                                p=0,
-                                variant="filled",
-                                style={
-                                    "background-color": "#F4C430",
-                                    "font-size": "15px",
-                                    "font-weight": "exta-bold",},
-                                sx={"width": 20, "height": 20, "pointerEvents": "none"},
-                            ),
-                        ),
-                        dmc.Tab(
-                            dmc.Text("Irrelevant Articles",
-                                     style={"font-weight": "bold",
-                                            "font-size": "25px",
-                                            "font-family": "Lato",
-                                            "padding-top": "10px",
-                                            "padding-bottom": "10px"}),
-                            "Irrelevant Articles",
-                            rightSection=dmc.Badge(
-                                f"{nonrelevant.shape[0]}",
-                                p=0,
-                                variant="filled",
-                                style={
-                                    "background-color": "#F4C430",
-                                    "font-size": "15px",
-                                    "font-weight": "exta-bold",},
-                                sx={"width": 20, "height": 20, "pointerEvents": "none"}),
-                        ),
-                    ],
-                    position="apart"
-                ),
-                    dmc.TabsPanel(
-                        html.Div([
-                            dash_table.DataTable(
-                                id="current_table",
-                                filter_action="native",
-                                sort_action="native",
-                                page_action="native",
-                                page_size=10,
-                                style_data={
-                                    'whiteSpace': 'normal',
-                                    'height': 'auto',
-                                    'lineHeight': '15px',
-                                    'font-family': 'montserrat',
-                                },
-                                filter_options={"placeholder_text": ""},
-                                columns=[{"name": i, "id": i} for i in current.columns],
-                                data=current.to_dict("records"),
-                                style_data_conditional=[
-                                    {'if': {'column_id': 'Review'}, 
-                                     'backgroundColor': 'blue', 
-                                     'text_align':'center',
-                                     'color': 'white',
-                                     "font-weight": "700",
-                                     'font-family': 'montserrat',},
-                                    {'if': {'column_id': 'Article'}, 
-                                     'text_align':'left',
-                                     'font-family': 'montserrat',},
-                                    {'if': {'column_id': 'Status'},
-                                     'fontWeight': 'bold'},
-                                ],
-                                style_table={'overflowX': 'auto',
-                                             "padding-top": "20px",},
-                                style_cell={'textAlign': 'center',
-                                            'font-family': 'montserrat',},
-                                style_header={"text-align": "center",
-                                              'font-family': 'montserrat',
-                                              "font-weight": "bold"}
-                            ),
-                            dcc.Location(id='location_current'),
+            dmc.Tabs(
+                [
+                    dmc.TabsList(
+                        [
+                            get_article_tab("Current Articles", current),
+                            get_article_tab("Completed Articles", completed),
+                            get_article_tab("Irrelevant Articles", nonrelevant),
                         ],
-                            style=tab_body_style),
-                        value="Current Articles"
+                        position="apart"
                     ),
-                    dmc.TabsPanel(
-                        html.Div([
-                            dash_table.DataTable(
-                                id="completed_table",
-                                filter_action="native",
-                                sort_action="native",
-                                page_action="native",
-                                page_size=10,
-                                style_data={
-                                    'whiteSpace': 'normal',
-                                    'height': 'auto',
-                                    'lineHeight': '15px',
-                                    'font-family': 'montserrat',
-                                },
-                                filter_options={"placeholder_text": ""},
-                                columns=[{"name": i, "id": i} for i in completed.columns],
-                                data=completed.to_dict("records"),
-                                style_data_conditional=[
-                                    {'if': {'column_id': 'Review'}, 
-                                     'backgroundColor': 'blue', 
-                                     'text_align':'center',
-                                     'color': 'white',
-                                     "font-weight": "700",
-                                     'font-family': 'montserrat',},
-                                    {'if': {'column_id': 'Article'}, 
-                                     'text_align':'left',
-                                     'font-family': 'montserrat',},
-                                    {'if': {'column_id': 'Status'},
-                                     'fontWeight': 'bold'},
-                                ],
-                                style_table={'overflowX': 'auto',
-                                             "padding-top": "20px",},
-                                style_cell={'textAlign': 'center',
-                                            'font-family': 'montserrat',},
-                                style_header={"text-align": "center",
-                                              'font-family': 'montserrat',
-                                              "font-weight": "bold"}
-                            ),
-                            dcc.Location(id='location_completed'),
-                        ],
-                            style=tab_body_style),
-                        value="Completed Articles"
-                    ),
-                    dmc.TabsPanel(
-                        html.Div([
-                            dash_table.DataTable(
-                                id="irrelevant_table",
-                                filter_action="native",
-                                sort_action="native",
-                                page_action="native",
-                                page_size=10,
-                                style_data={
-                                    'whiteSpace': 'normal',
-                                    'height': 'auto',
-                                    'lineHeight': '15px',
-                                    'font-family': 'montserrat',
-                                },
-                                filter_options={"placeholder_text": ""},
-                                columns=[{"name": i, "id": i} for i in nonrelevant.columns],
-                                data=nonrelevant.to_dict("records"),
-                                style_data_conditional=[
-                                    {'if': {'column_id': 'Review'}, 
-                                     'backgroundColor': 'blue', 
-                                     'text_align':'center',
-                                     'color': 'white',
-                                     "font-weight": "700",
-                                     'font-family': 'montserrat',},
-                                    {'if': {'column_id': 'Article'}, 
-                                     'text_align':'left',
-                                     'font-family': 'montserrat',},
-                                    {'if': {'column_id': 'Status'},
-                                     'fontWeight': 'bold'},
-                                ],
-                                style_table={'overflowX': 'auto',
-                                             "padding-top": "20px",},
-                                style_cell={'textAlign': 'center',
-                                            'font-family': 'montserrat',},
-                                style_header={"text-align": "center",
-                                              'font-family': 'montserrat',
-                                              "font-weight": "bold"}
-                            ),
-                            dcc.Location(id='location_irrelevant'),
-                        ],
-                            style=tab_body_style),
-                        value="Irrelevant Articles"
-                    ),],
+                    get_article_table("current_table", "Current Articles", current),
+                    get_article_table("completed_table", "Completed Articles", completed),
+                    get_article_table("irrelevant_table", "Irrelevant Articles", nonrelevant),
+                ],
                 id="article-tabs",
                 color="blue",
                 orientation="horizontal",
@@ -300,3 +124,41 @@ def cell_clicked(active_cell_nonrelevant, data):
             return f"http://127.0.0.1:8050/article/{selected}"
         else:
             return dash.no_update
+        
+def get_article_tab(tab_header, data):
+    return dmc.Tab(
+            children=dmc.Text(tab_header,
+                                style=tab_header_style),
+            value=tab_header,
+            rightSection=dmc.Badge(
+                f"{data.shape[0]}",
+                p=0,
+                variant="filled",
+                style=badge_style,
+                sx={"width": 20, "height": 20, "pointerEvents": "none"}),
+    )
+    
+def get_article_table(id, tab_header, data):
+    return dmc.TabsPanel(
+            html.Div([
+                dash_table.DataTable(
+                    id=id,
+                    filter_action="native",
+                    sort_action="native",
+                    page_action="native",
+                    page_size=10,
+                    style_data=table_data_style,
+                    filter_options={"placeholder_text": ""},
+                    columns=[{"name": i, "id": i} for i in data.columns],
+                    data=data.to_dict("records"),
+                    style_data_conditional=table_conditional_style,
+                    style_table={'overflowX': 'auto',
+                                    "padding-top": "20px",},
+                    style_cell=table_cell_style,
+                    style_header=table_header_style,
+                ),
+                dcc.Location(id='location_current'),
+            ],
+                style=tab_body_style),
+            value=tab_header
+        )

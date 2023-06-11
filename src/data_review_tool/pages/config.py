@@ -1,3 +1,53 @@
+# Tab header on home page
+tab_header_style = {
+    "font-weight": "bold",
+    "font-size": "25px",
+    "font-family": "Lato",
+    "padding-top": "20px",
+    "padding-bottom": "10px"
+}
+
+#Home page badge style
+badge_style = {
+    "background-color": "#F4C430",
+    "font-size": "15px",
+}
+
+# Data table conditional style
+table_conditional_style = [
+    {'if': {'column_id': 'Review'}, 
+        'backgroundColor': 'blue', 
+        'text_align':'center',
+        'color': 'white',
+        "font-weight": "700",
+        'font-family': 'montserrat',},
+    {'if': {'column_id': 'Article'}, 
+        'text_align':'left',
+        'font-family': 'montserrat',},
+    {'if': {'column_id': 'Status'},
+        'fontWeight': 'bold'},
+]
+
+# Data table data style
+table_data_style = {
+    'whiteSpace': 'normal',
+    'height': 'auto',
+    'lineHeight': '15px',
+    'font-family': 'montserrat',
+}
+
+# Data table cell style
+table_cell_style = {
+    'textAlign': 'center',
+    'font-family': 'montserrat'
+}
+
+# Data table header style
+table_header_style = {
+    "text-align": "center",
+    'font-family': 'montserrat',
+    "font-weight": "bold"
+}
 # Describe the configuration and the HTML styles for the review page
 chip_style={"scrollbar-width": "none", 
         "overflow": "auto",

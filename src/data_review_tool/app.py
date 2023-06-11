@@ -9,7 +9,7 @@ from pages.navbar import create_navbar
 
 app = dash.Dash(__name__, 
                 use_pages=True, 
-                external_stylesheets=[dbc.themes.BOOTSTRAP], 
+                external_stylesheets=[dbc.themes.BOOTSTRAP, "src/data_review_tool/assets/styles.css"], 
                 title="Finding Fossils",
                 suppress_callback_exceptions=True,)
 

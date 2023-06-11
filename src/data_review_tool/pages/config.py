@@ -19,7 +19,7 @@ table_conditional_style = [
         'backgroundColor': 'blue', 
         'text_align':'center',
         'color': 'white',
-        "font-weight": "700",
+        "fontWeight": "1000",
         'font-family': 'montserrat',},
     {'if': {'column_id': 'Article'}, 
         'text_align':'left',
@@ -39,7 +39,8 @@ table_data_style = {
 # Data table cell style
 table_cell_style = {
     'textAlign': 'center',
-    'font-family': 'montserrat'
+    'font-family': 'montserrat',
+    "background-color": "#fffff0",
 }
 
 # Data table header style
@@ -67,8 +68,8 @@ SIDEBAR_STYLE = {
     "left": 0,
     "bottom": 0,
     # "width": "16rem",
-    "padding": "2rem 1rem",
-    "background-color": "#f8f9fa",
+    "padding": "0.3rem 1rem",
+    "background-color": "#fffff0",
 }
 
 # padding for the page content
@@ -90,6 +91,17 @@ h2_style = {
     "padding-bottom": "10px",
     "padding-left": "20px",
     "padding-right": "20px",
+    "text-overflow": "inherit"
+}
+
+h3_style = {
+    "color": "#FFFFF0",
+    "textAlign": "right",
+    "font-size": "40px",
+    "font-weight": "bold",
+    "font-family": "Futura",
+    "margin-bottom": "10px",
+    "padding-left": "100px",
     "text-overflow": "inherit"
 }
 

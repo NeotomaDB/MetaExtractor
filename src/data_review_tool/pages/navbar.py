@@ -4,27 +4,24 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import json
 import dash_mantine_components as dmc
+from pages.config import *
 
 def create_navbar():
 
     navbar = dbc.Navbar(
         dbc.Container(
             [
-                    dbc.Row(
-                        [
-                            dbc.Col(html.Img(src="/assets/finding-fossils-logo-symbol_highres.png", height="30px")),
-                            dbc.Col(
-                                dmc.Text(
-                                    "Finding Fossils",
-                                    style={"color": "#FFFFF0",
-                                           "font-size": "2.3rem",
-                                           "font-weight": "bold",
-                                           "font-family": "Futura"
-                                    }
-                                ),
-                                className="navbar-brand"),
-                        ],
+                html.Div([
+                   html.Img(src="/assets/finding-fossils-logo-symbol_highres.png", 
+                            height="55px",
+                            style={"position": "relative", "left": "-60px"}),
+                ], style={"display": "flex"}),
+                html.Div([
+                    html.H3(
+                        "Finding Fossils",
+                        style=h3_style,
                     ),
+                ], style={"display": "flex"}),
                 dbc.Nav(
                     [
                         dbc.NavItem(
@@ -35,6 +32,7 @@ def create_navbar():
                     className="ml-auto",
                     navbar=True,
                     pills=True,
+                    style={"position": "relative", "right": "-60px"},
                 ),
             ],
         ),

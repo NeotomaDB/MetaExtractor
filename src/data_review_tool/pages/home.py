@@ -71,6 +71,7 @@ def layout():
                 id="article-tabs",
                 color="blue",
                 orientation="horizontal",
+                value="Current Articles",
             ),
         ],
         width=10,

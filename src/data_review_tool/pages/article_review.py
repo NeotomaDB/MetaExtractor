@@ -58,6 +58,7 @@ def layout(gddid=None):
                 id="accordion",
                 disableChevronRotation=True,
                 children=get_accordion_items(True, original),
+                style={"background-color": "#f8f9fa"},
             ),
             html.Br(),
             dmc.Switch(
@@ -75,7 +76,7 @@ def layout(gddid=None):
                 label="Reviewer's Comments",
                 placeholder="Add Comments",
                 autosize=True,
-                style={"padding-left": "15px"}
+                style={"padding-left": "1rem"}
             ),
             html.Br(),
             dmc.Modal(
@@ -110,7 +111,7 @@ def layout(gddid=None):
                                variant="outline")
                 ],
                 style={"justify": "center",
-                       "padding-left": "15px"},
+                       "padding-left": "1rem"},
             ),
             html.Div(id="clicked-output"),
         ],
@@ -169,9 +170,10 @@ def layout(gddid=None):
                                 dmc.Button(
                                     "Home",
                                     id="home-button",
-                                    color="blue",
                                     leftIcon=DashIconify(
                                         icon="dashicons-arrow-left-alt", height=16),
+                                    style={"background-color": "blue",
+                                           "padding-left": "1rem"}
                                 ),
                                 dcc.Location(id='location_home', refresh=True),
                                 dcc.Location(id='location-irrelevant', refresh=True),
@@ -181,6 +183,7 @@ def layout(gddid=None):
                             lg=1,
                             md=1,
                             sm=1,
+                            width=12,
                             style={"margin-left": "10px"},
                         ),
                         dbc.Col(
@@ -220,7 +223,8 @@ def layout(gddid=None):
                             align="center",
                             lg=9,
                             md=8,
-                            sm=7
+                            sm=7,
+                            width=12,
                         ),
                         dbc.Col(
                             [
@@ -235,14 +239,16 @@ def layout(gddid=None):
                                     original["doi"],
                                     target="_blank",
                                     style={"font-weight": "bold",
-                                           "border-radius": "3px"},
+                                           "border-radius": "3px",
+                                           "background-color": "blue"},
                                 )
                             ],
-                            align="right",
                             lg=1,
                             md=2,
                             sm=3,
-                            style={"margin-right": "10px"},
+                            width=12,
+                            style={"margin-left": "55px",
+                                "text-align": "right"},
                         ),
                     ])
                 ],
@@ -252,7 +258,6 @@ def layout(gddid=None):
                       original]),
             dbc.Row(
                 [
-
                     dbc.Col(sidebar, width=12, lg=3, className="g-0"),
                     dbc.Col(content, width=12, lg=9, className="g-0"),
                 ],

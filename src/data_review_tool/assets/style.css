@@ -1,0 +1,11 @@
+.container {
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  background-color: #fffff0;
+}
+  

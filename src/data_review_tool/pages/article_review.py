@@ -263,8 +263,11 @@ def get_accordion_items(checked, data):
                         dmc.Text(name),
                         dmc.Badge(
                             f"{len([ent for ent in data['entities'][label].values() if ent['deleted'] != checked])}",
-                            size="xs",
+                            size="xxs",
                             p=0,
+                            style={"background-color": "#F4C430",
+                                   "font-size": "10px",
+                                   "font-weight": "exta-bold",},
                             variant="filled",
                             sx={"width": 16, "height": 16,
                                 "pointerEvents": "none"}
@@ -285,7 +288,7 @@ def get_accordion_items(checked, data):
                         dmc.Button(
                             "Add New Entity",
                             id="new-entity-button",
-                            color="blue",
+                            color="green",
                             variant="outline",
                             leftIcon=DashIconify(icon="dashicons-plus", height=16),
                             style={"margin-top": "10px"},
@@ -295,8 +298,6 @@ def get_accordion_items(checked, data):
                             zIndex=10000,
                             centered=True,
                             children=[
-                                # dmc.Text("Please add in information for the new entity below:"),
-                                # dmc.Space(h=20),
                                 html.Div([
                                     dmc.Textarea(
                                         label="Entity Name:",
@@ -419,6 +420,9 @@ def update_chips(checked, data):
                                 size="xs",
                                 p=0,
                                 variant="filled",
+                                style={"background-color": "#F4C430",
+                                   "font-size": "10px",
+                                   "font-weight": "exta-bold",},
                                 sx={"width": 16, "height": 16,
                                     "pointerEvents": "none"}
                             )
@@ -461,48 +465,46 @@ def unselect_chips(accordian):
     Input("chips_email", "value"),
     State("accordion", "value"),
 )
-def chips_values(site, region, taxa, geog, alti, age, email, 
-                #  text_site, text_region, text_taxa, text_geog, text_alti, text_age, text_email,
-                 accordian):
+def chips_values(site, region, taxa, geog, alti, age, email, accordian):
     
     if accordian == "SITE":
         if site == None:
-            return "No entity selected", True, True, ""  # , True
+            return "No entity selected", True, True, ""
         else:
             return site, False, False, site
     elif accordian == "REGION":
         if region == None:
-            return "No entity selected", True, True, ""  # , True
+            return "No entity selected", True, True, ""
         else:
             return region, False, False, region
             
     elif accordian == "TAXA":
         if taxa == None:
-            return "No entity selected", True, True, ""  # , True
+            return "No entity selected", True, True, ""
         else:
             return taxa, False, False, taxa
     elif accordian == "GEOG":
         if geog == None:
-            return "No entity selected", True, True, ""  # , True
+            return "No entity selected", True, True, ""
         else:
             return geog, False, False, geog
     elif accordian == "ALTI":
         if alti == None:
-            return "No entity selected", True, True, ""  # , True
+            return "No entity selected", True, True, ""
         else:
             return alti, False, False, alti
     elif accordian == "AGE":
         if age == None:
-            return "No entity selected", True, True, ""  # , True
+            return "No entity selected", True, True, ""
         else:
             return age, False, False, age
     elif accordian == "EMAIL":
         if email == None:
-            return "No entity selected", True, True, ""  # , True
+            return "No entity selected", True, True, ""
         else:
             return email, False, False, email
     else:
-        return "No entity selected", True, True, ""  # , True
+        return "No entity selected", True, True, ""
 
 # toggle through the modal whenever the add-new-entity / close button is clicked
 @callback(
@@ -524,8 +526,6 @@ def toggle_modal(n_clicks, close, opened, accordian):
     Input("delete-restore-button", "n_clicks"),
     Input("new-entity-submit", "n_clicks"),
     State("corrected-text", "value"),
-    # Input("new-entity-text", "value"),
-    # Input("new-entity-section", "value"),
     State("chips_site", "value"),
     State("chips_region", "value"),
     State("chips_taxa", "value"),
@@ -584,21 +584,6 @@ def update_entity(
 
     return results
 
-# Notify user that the results have been saved
-@callback(
-    Output("notifications-container", "children"),
-    Input("notify", "n_clicks"),
-    prevent_initial_call=True,
-)
-def show(n_clicks):
-    return dmc.Notification(
-        title="Hey there!",
-        id="simple-notify",
-        action="show",
-        message="Notifications in Dash, Awesome!",
-        icon=DashIconify(icon="ic:round-celebration"),
-    )
-
 # Save the results to the appropriate folder
 @callback(
     Output("clicked-output", "children"),
@@ -639,7 +624,7 @@ def save_submit(submit, save, relevant, data):
         gddid = data["gddid"]
         data = json.dumps(data)
         with open(f"data/data-review-tool/completed/{gddid}.json", "w") as f:
-            f.write(meta)
+            f.write(data)
         return  dmc.Notification(
                     title="Progress Saved!",
                     id="save-notification",
@@ -732,6 +717,9 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
                             size="xs",
                             p=0,
                             variant="filled",
+                            style={"background-color": "#F4C430",
+                                   "font-size": "10px",
+                                   "font-weight": "exta-bold",},
                             sx={"width": 16, "height": 16, "pointerEvents": "none"}))
                 for tab_name in tabs.keys()]
 

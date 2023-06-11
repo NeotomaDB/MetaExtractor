@@ -64,9 +64,9 @@ def layout():
                         ],
                         position="apart"
                     ),
-                    get_article_table("current_table", "Current Articles", current),
-                    get_article_table("completed_table", "Completed Articles", completed),
-                    get_article_table("irrelevant_table", "Irrelevant Articles", nonrelevant),
+                    get_article_table("current_table", "location_current", "Current Articles", current),
+                    get_article_table("completed_table", "location_completed", "Completed Articles", completed),
+                    get_article_table("irrelevant_table", "location_irrelevant", "Irrelevant Articles", nonrelevant),
                 ],
                 id="article-tabs",
                 color="blue",
@@ -85,7 +85,7 @@ def layout():
     State("current_table", "derived_viewport_data"),
 )
 
-def cell_clicked(active_cell_current, data):
+def current_article_clicked(active_cell_current, data):
     if active_cell_current:
         row = active_cell_current["row"]
         col = active_cell_current["column_id"]
@@ -100,7 +100,7 @@ def cell_clicked(active_cell_current, data):
     Input("completed_table", "active_cell"),
     State("completed_table", "derived_viewport_data"),
 )
-def cell_clicked(active_cell_completed, data):        
+def completed_article_clicked(active_cell_completed, data):
     if active_cell_completed:
         row = active_cell_completed["row"]
         col = active_cell_completed["column_id"]
@@ -115,7 +115,7 @@ def cell_clicked(active_cell_completed, data):
     Input("irrelevant_table", "active_cell"),
     State("irrelevant_table", "derived_viewport_data"),
 )
-def cell_clicked(active_cell_nonrelevant, data):        
+def irrelevant_article_clicked(active_cell_nonrelevant, data):        
     if active_cell_nonrelevant:
         row = active_cell_nonrelevant["row"]
         col = active_cell_nonrelevant["column_id"]
@@ -138,11 +138,11 @@ def get_article_tab(tab_header, data):
                 sx={"width": 20, "height": 20, "pointerEvents": "none"}),
     )
     
-def get_article_table(id, tab_header, data):
+def get_article_table(table_id, location_id, tab_header, data):
     return dmc.TabsPanel(
             html.Div([
                 dash_table.DataTable(
-                    id=id,
+                    id=table_id,
                     filter_action="native",
                     sort_action="native",
                     page_action="native",
@@ -157,7 +157,7 @@ def get_article_table(id, tab_header, data):
                     style_cell=table_cell_style,
                     style_header=table_header_style,
                 ),
-                dcc.Location(id='location_current'),
+                dcc.Location(id=location_id, refresh=True),
             ],
                 style=tab_body_style),
             value=tab_header

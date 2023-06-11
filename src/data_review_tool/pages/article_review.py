@@ -75,16 +75,29 @@ def layout(gddid=None):
                 label="Reviewer's Comments",
                 placeholder="Add Comments",
                 autosize=True,
+                style={"padding-left": "15px"}
             ),
             html.Br(),
             dmc.Modal(
                 id="modal-submit",
                 title="Are you sure you want to submit?",
-                children=
-                [
-                    dmc.Button("Submit",
-                               id="confirm-submit-button")
-                ]
+                children=[
+                    dmc.Group(
+                        [
+                            dmc.Button(
+                                "Yes", 
+                                color="green",
+                                variant="light",
+                                id="confirm-submit-button"),
+                            dmc.Button(
+                                "Cancel",
+                                color="red",
+                                variant="light",
+                                id="confirm-submit-close-button"),
+                        ],
+                        position="center",
+                        style={"margin-top": "10px",},
+                    )],
             ),
             dmc.Group(
                 [
@@ -96,7 +109,8 @@ def layout(gddid=None):
                                color="lime",
                                variant="outline")
                 ],
-                style={"justify": "center"},
+                style={"justify": "center",
+                       "padding-left": "15px"},
             ),
             html.Div(id="clicked-output"),
         ],
@@ -177,11 +191,23 @@ def layout(gddid=None):
                                         dmc.Modal(
                                             id="modal-irrelevant",
                                             title="Are you sure you want to mark this item as irrelevant?",
-                                            children=
-                                            [
-                                                dmc.Button("Yes",
-                                                           id="confirm-irrelevant-button"),
-                                            ]
+                                            children=[
+                                                dmc.Group(
+                                                    [
+                                                        dmc.Button(
+                                                            "Yes", 
+                                                            color="green",
+                                                            variant="light",
+                                                            id="confirm-irrelevant-button"),
+                                                        dmc.Button(
+                                                            "Cancel",
+                                                            color="red",
+                                                            variant="light",
+                                                            id="confirm-irrelevant-close-button"),
+                                                    ],
+                                                    position="center",
+                                                    style={"margin-top": "10px"},
+                                            )],
                                         ),
                                         dmc.Button("Mark as irrelevant",
                                                    color="red",

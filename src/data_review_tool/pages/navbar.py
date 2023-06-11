@@ -3,27 +3,34 @@ from dash import dcc, html
 import dash_bootstrap_components as dbc
 import pandas as pd
 import json
-
+import dash_mantine_components as dmc
 
 def create_navbar():
 
     navbar = dbc.Navbar(
         dbc.Container(
             [
-                html.A(
                     dbc.Row(
                         [
                             dbc.Col(html.Img(src="/assets/finding-fossils-logo-symbol_highres.png", height="30px")),
-                             dbc.Col("MetaExtractor", className="navbar-brand"),
+                            dbc.Col(
+                                dmc.Text(
+                                    "Finding Fossils",
+                                    style={"color": "#FFFFF0",
+                                           "font-size": "2.3rem",
+                                           "font-weight": "bold",
+                                           "font-family": "Futura"
+                                    }
+                                ),
+                                className="navbar-brand"),
                         ],
                     ),
-                ),
                 dbc.Nav(
                     [
                         dbc.NavItem(
-                            dbc.NavLink("Article Review", href="/")),
+                            dbc.NavLink("Article Review", href="/", style={"color": "#FFFFF0"})),
                         dbc.NavItem(
-                            dbc.NavLink("About", href="/about")),
+                            dbc.NavLink("About", href="/about", style={"color": "#FFFFF0"})),
                     ],
                     className="ml-auto",
                     navbar=True,
@@ -32,24 +39,9 @@ def create_navbar():
             ],
         ),
         color="tan",
-        # dark=True,
+        dark=True,
     )
     return navbar
-
-
-def segment_control(data, selected_entity, selected_entity_type):
-    tab_data = {}
-    tab_data_list = []
-    for entity in data[f"entities.{selected_entity_type}"][0]:
-        if entity["name"] == selected_entity:
-            section_name = entity["sentence"][0]["section_name"]
-            text_value = entity["sentence"][0]["text"]
-
-            if section_name in tab_data:
-                tab_data[section_name].append(text_value)
-            else:
-                tab_data[section_name] = [text_value]
-    return [{"label": label, "value": values} for label, values in tab_data.items()]
 
 # The following two functions were taken from https://stackoverflow.com/questions/54776916/inverse-of-pandas-json-normalize
 def _get_nested_fields(df: pd.DataFrame):
@@ -57,6 +49,7 @@ def _get_nested_fields(df: pd.DataFrame):
     nested_fields = [*{field.rsplit(".", 1)[0] for field in df.columns if "." in field}]
     nested_fields.sort(key=lambda record: len(record.split(".")), reverse=True)
     return nested_fields
+
 def df_denormalize(df: pd.DataFrame) -> pd.DataFrame:
     """
     Convert a normalised DataFrame into a nested structure.
@@ -73,7 +66,11 @@ def df_denormalize(df: pd.DataFrame) -> pd.DataFrame:
         df[field] = json.loads(renamed_fields.to_json(orient="records"))
         df.drop(list_of_children, axis=1, inplace=True)
     return df
+
 def find_start_end_char(text, entity):
     start = text.find(entity)
-    end = start + len(entity)
+    if start == -1:
+        end = -1
+    else:
+        end = start + len(entity)
     return start, end

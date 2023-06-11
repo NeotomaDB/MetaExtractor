@@ -10,7 +10,7 @@ from pages.navbar import create_navbar
 app = dash.Dash(__name__, 
                 use_pages=True, 
                 external_stylesheets=[dbc.themes.BOOTSTRAP], 
-                title="MetaExtractor",
+                title="Finding Fossils",
                 suppress_callback_exceptions=True,)
 
 server = app.server
@@ -24,6 +24,8 @@ app.layout = html.Div(
         navbar,
         dash.page_container
         ],
+    style={"width": "100%",
+           "height": "100%"}
     )
 
 

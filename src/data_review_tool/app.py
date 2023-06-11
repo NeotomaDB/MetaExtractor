@@ -24,8 +24,10 @@ app.layout = html.Div(
         navbar,
         dash.page_container
         ],
-    style={"width": "100%",
-           "height": "100%"}
+    style={
+        "width": "100%",
+        "height": "100%",
+        "overflow": "hidden",}
     )
 
 

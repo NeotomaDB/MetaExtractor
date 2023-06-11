@@ -14,11 +14,13 @@ import dash_bootstrap_components as dbc
 from pages.navbar import df_denormalize, find_start_end_char
 from dash_iconify import DashIconify
 from pages.config import *
+import seaborn as sns
 
 dash.register_page(__name__,  path_template="/article/<gddid>")
 
 original = None
 results = None
+color_palette = sns.color_palette("RdYlGn", 100).as_hex()
 
 
 def layout(gddid=None):
@@ -51,7 +53,9 @@ def layout(gddid=None):
             html.P("Please check the article's gddid and try again."),
             dcc.Link("Go back to Home", href="/"),
         ])
-
+    
+    relevance_score = round(original["relevance_score"], 2) * 100
+    
     sidebar = html.Div(
         [
             dmc.Accordion(
@@ -181,16 +185,46 @@ def layout(gddid=None):
                             ],
                             align="left",
                             lg=1,
-                            md=1,
-                            sm=1,
+                            md=2,
+                            sm=3,
                             width=12,
                             style={"margin-left": "10px"},
                         ),
+                        dbc.Col([
+                            dmc.RingProgress(
+                                id="ring-progress",
+                                sections=[{
+                                    "value": relevance_score,
+                                    "color": color_palette[int(relevance_score)],
+                                    "tooltip": "Relevance Score"
+                                }],
+                                label=dmc.Center(dmc.Text(f"{int(relevance_score)}%",
+                                                          style={"font-size": "1rem",
+                                                                 "font-weight": "bold"})),
+                                size=80,
+                                thickness=10,
+                                roundCaps=True,
+                                style={
+                                    "position": "relative",
+                                    "margin-bottom": "-20px",
+                                    "bottom": "10px",
+                                    "display": "flex",
+                                    "left": "33%"}
+                            ),
+
+                        ],
+                            align="center",
+                            lg=2,
+                            md=3,
+                            sm=4,
+                            style={
+                                "position": "relative",
+                                "left": "4%"
+                            }),
                         dbc.Col(
                             [
                                 dmc.Group(
                                     [   
-                                        html.Label("Relevance Score: {}".format(round(original["relevance_score"], 2))),
                                         dmc.Modal(
                                             id="modal-irrelevant",
                                             title="Are you sure you want to mark this item as irrelevant?",
@@ -221,10 +255,14 @@ def layout(gddid=None):
                                 ),
                             ],
                             align="center",
-                            lg=9,
-                            md=8,
-                            sm=7,
+                            lg=7,
+                            md=5,
+                            sm=2,
                             width=12,
+                            style={
+                                "position": "relative",
+                                "right": "6%"
+                            },
                         ),
                         dbc.Col(
                             [
@@ -247,8 +285,10 @@ def layout(gddid=None):
                             md=2,
                             sm=3,
                             width=12,
-                            style={"margin-left": "55px",
-                                "text-align": "right"},
+                            style={
+                                "position": "relative",
+                                "width": "auto",
+                                "left": "2.5%"},
                         ),
                     ])
                 ],
@@ -579,14 +619,22 @@ def update_entity(
     
     if submit:
         if new_entity_text != None:
+            
             try:
                 start, end = find_start_end_char(new_entity_sentence, new_entity_text)
             except:
                 start, end = 0, 0
             
+            try:
+                sentences = pd.DataFrame(results["relevant_sentences"])
+                sentid = sentences['sentid'].min() - 1
+            except:
+                sentences = pd.DataFrame()
+                sentid = -1
+            
             if not new_entity_section:
                 new_entity_section = "Manual Entry"
-                
+            
             results["entities"][accordian][new_entity_text] = {
                 "sentence": [{
                     "text": new_entity_sentence,
@@ -595,11 +643,17 @@ def update_entity(
                         "start": start,
                         "end": end
                     },
+                    "sentid": sentid
                 }],
                 "name": new_entity_text,
                 "corrected_name": None,
                 "deleted": False,
             }
+            results["relevant_sentences"].append({
+                "sentid": sentid,
+                "text": new_entity_sentence,
+            })
+            
     elif correct:
         if accordian != None:
             for ent, values in results["entities"][accordian].items():
@@ -717,6 +771,7 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
             highlight = entity
             for sentence in sentences:
                 section_name = sentence["section_name"]
+                #TODO: get text using `sentid` attribute
                 text = sentence["text"]
                 tabs[section_name].append(text)
 

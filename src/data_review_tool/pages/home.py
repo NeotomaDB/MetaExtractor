@@ -75,7 +75,9 @@ def layout():
             ),
         ],
         width=10,
-        style = {'margin-left': 'auto', 'margin-right': 'auto'}
+        style = {'margin-left': 'auto', 'margin-right': 'auto',
+                 "max-width": "100%",
+                "word-wrap": "break-word"}
         )
     )
     return layout

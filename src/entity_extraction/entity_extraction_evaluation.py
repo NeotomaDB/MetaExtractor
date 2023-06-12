@@ -125,32 +125,19 @@ def generate_confusion_matrix(
         Name of the model to include in the diagram title
     """
     
-    def get_label_to_index(labels):
-        """
-        Generates dictionary of labels to index
     
-        Parameters
-        ----------
-        labels : list[list[str]]
-            The predicted labels per token.
-        """
-        # Create empty dictionary
-        label_to_index = {}
-        
-        # Loop through each document
-        for i in range(len(labels)):
-            # Loop through each token
-            for j in range(len(labels[i])):
-                # Get the label
-                label = labels[i][j]
-                label = label.replace("B-", "").replace("I-", "")
-                # If the label is not in the dictionary, add it
-                if label not in label_to_index.keys():
-                    label_to_index[label] = len(label_to_index)
-                    
-        return label_to_index
+    label_to_index = {}
     
-    label_to_index = get_label_to_index(labelled_tokens)
+    # Loop through each document
+    for i in range(len(labelled_tokens)):
+        # Loop through each token
+        for j in range(len(labelled_tokens[i])):
+            # Get the label
+            label = labelled_tokens[i][j]
+            label = label.replace("B-", "").replace("I-", "")
+            # If the label is not in the dictionary, add it
+            if label not in label_to_index.keys():
+                label_to_index[label] = len(label_to_index)
     
     num_tags = len(label_to_index)
     # Create empty confusion matrix

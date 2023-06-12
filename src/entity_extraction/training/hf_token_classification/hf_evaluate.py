@@ -17,7 +17,7 @@ import os, sys
 import pandas as pd
 import numpy as np
 import json
-import logging
+from tqdm import tqdm
 from docopt import docopt
 from transformers import AutoTokenizer, AutoModelForTokenClassification, pipeline
 
@@ -28,10 +28,14 @@ sys.path.append(
 from src.entity_extraction.entity_extraction_evaluation import (
     calculate_entity_classification_metrics,
     plot_token_classification_report,
+    generate_classification_results,
+    generate_confusion_matrix,
+    export_classification_results,
+    export_classification_report_plots,
 )
+from src.logs import get_logger
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 opt = docopt(__doc__)
 
@@ -111,10 +115,7 @@ def load_ner_model_pipeline(model_path: str):
     model = AutoModelForTokenClassification.from_pretrained(model_path)
     tokenizer = AutoTokenizer.from_pretrained(model_path, model_max_length=512)
     ner_pipe = pipeline(
-        "ner",
-        model=model,
-        tokenizer=tokenizer,
-        grouped_entities=True,
+        "ner", model=model, tokenizer=tokenizer, aggregation_strategy="simple"
     )
 
     return ner_pipe, model, tokenizer
@@ -165,11 +166,19 @@ def get_predicted_labels(ner_pipe, df):
         The evaluation data with the predicted labels added.
     """
 
-    # get the predicted labels
-    df["predicted_labels"] = df["text"].apply(lambda x: ner_pipe(" ".join(x)))
+    # create empty column to be filled with predicted labels
+    df["predicted_labels"] = len(df) * [None]
+
+    # use tqdm to showprogress in batches
+    batch_size = 1
+    for i in tqdm(range(0, len(df), batch_size)):
+        result = ner_pipe(
+            df.tokens.iloc[i : i + batch_size].apply(lambda x: " ".join(x)).tolist()
+        )
+        df.predicted_labels.iloc[i : i + batch_size] = result
 
     df[["split_text", "predicted_tokens"]] = df.apply(
-        lambda row: get_hf_token_labels(row.predicted_labels, " ".join(row.text)),
+        lambda row: get_hf_token_labels(row.predicted_labels, " ".join(row.tokens)),
         axis="columns",
         result_type="expand",
     )
@@ -177,146 +186,14 @@ def get_predicted_labels(ner_pipe, df):
     return df
 
 
-def generate_classification_results(true_tokens, predicted_tokens):
-    """
-    Summarizes the classification results by both entity and token based methods.
-
-    Parameters
-    ----------
-    true_tokens : list[list[str]]
-        The true labels per token.
-    predicted_tokens : list[list[str]]
-        The predicted labels per token.
-
-    Returns
-    -------
-    classification_results : dict
-        The classification results.
-    """
-
-    (
-        token_accuracy,
-        token_f1,
-        token_recall,
-        token_precision,
-    ) = calculate_entity_classification_metrics(
-        predicted_tokens=predicted_tokens, labelled_tokens=true_tokens, method="tokens"
-    )
-    (
-        entity_accuracy,
-        entity_f1,
-        entity_recall,
-        entity_precision,
-    ) = calculate_entity_classification_metrics(
-        predicted_tokens=predicted_tokens,
-        labelled_tokens=true_tokens,
-        method="entities",
-    )
-
-    # make a dict of all the number of each label type
-    label_counts = {}
-    for document in true_tokens:
-        for label in document:
-            label = label.replace("B-", "").replace("I-", "")
-            if label not in label_counts.keys():
-                label_counts[label] = 1
-            else:
-                label_counts[label] += 1
-
-    # make the results into a dict
-    results_dict = {
-        "token": {
-            "accuracy": token_accuracy,
-            "f1": token_f1,
-            "recall": token_recall,
-            "precision": token_precision,
-        },
-        "entity": {
-            "accuracy": entity_accuracy,
-            "f1": entity_f1,
-            "recall": entity_recall,
-            "precision": entity_precision,
-        },
-        # calculate total tokens from the true tokens list of lists
-        "num_tokens": sum([len(document) for document in true_tokens]),
-        "entity_counts": label_counts,
-    }
-
-    return results_dict
-
-
-def export_classification_report_plots(
-    true_tokens, predicted_tokens, output_path: str, model_name: str
-):
-    """
-    Exports the classification report plots.
-
-    Parameters
-    ----------
-    true_tokens : list[list[str]]
-        The true labels per token.
-    predicted_tokens : list[list[str]]
-        The predicted labels per token.
-    output_path : str
-        The path to export the plots to.
-    model_name : str
-        The name of the model.
-    """
-
-    # plot the classification report
-    token_results_fig = plot_token_classification_report(
-        labelled_tokens=true_tokens,
-        predicted_tokens=predicted_tokens,
-        title=f"{model_name} Token Based Classification Report",
-        method="tokens",
-        display=False,
-    )
-
-    entity_results_fig = plot_token_classification_report(
-        labelled_tokens=true_tokens,
-        predicted_tokens=predicted_tokens,
-        title=f"{model_name} Entity Based Classification Report",
-        method="entities",
-        display=False,
-    )
-
-    # export the plots
-    token_results_fig.savefig(
-        os.path.join(output_path, f"{model_name}_token_classification_report.png")
-    )
-    entity_results_fig.savefig(
-        os.path.join(output_path, f"{model_name}_entity_classification_report.png")
-    )
-
-
-def export_classification_results(
-    classification_results: dict, output_path: str, model_name: str
-):
-    """
-    Exports the classification results.
-
-    Parameters
-    ----------
-    classification_results : dict
-        The classification results.
-    output_path : str
-        The path to export the plots to.
-    model_name : str
-        The name of the model.
-    """
-
-    # export the classification results
-    with open(
-        os.path.join(output_path, f"{model_name}_classification_results.json"), "w"
-    ) as f:
-        json.dump(classification_results, f, indent=4)
-
-
 def main():
     # run evaluation for each json file in the data directory
     for file in os.listdir(opt["--data_path"]):
         # skip non json files
-        if not file.endswith(".json"):
+        if (not file.endswith(".json")) | (
+            "train" not in file and "test" not in file and "val" not in file
+        ):
+            logger.info(f"Skipping {file}")
             continue
         logger.info(f"Evaluating {file}")
         file_name = file.split(".")[0]
@@ -353,6 +230,13 @@ def main():
         # export the classification report plots
         export_classification_report_plots(
             true_tokens=df.ner_tags.tolist(),
+            predicted_tokens=df.predicted_tokens.tolist(),
+            output_path=opt["--output_path"],
+            model_name=opt["--model_name"] + "_" + file_name,
+        )
+
+        generate_confusion_matrix(
+            labelled_tokens=df.ner_tags.tolist(),
             predicted_tokens=df.predicted_tokens.tolist(),
             output_path=opt["--output_path"],
             model_name=opt["--model_name"] + "_" + file_name,

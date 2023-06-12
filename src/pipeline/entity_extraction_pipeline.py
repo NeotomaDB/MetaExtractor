@@ -1,12 +1,13 @@
 # Author: Ty Andrews
 # Date: 2023-06-05
 """
-Usage: entity_extraction.py --article_text_path=<article_text_path> --output_path=<output_path> [--max_sentences=<max_sentences>]
+Usage: entity_extraction.py --article_text_path=<article_text_path> --output_path=<output_path> [--max_sentences=<max_sentences>] [--max_articles=<max_articles>]
 
 Options:
 --article_text_path=<article_text_path> The path to the article text data file.
 --output_path=<output_path> The path to export the extracted entities to.
 --max_sentences=<max_sentences> The maximum number of sentences to extract entities from. [default: -1]
+--max_articles <max_articles> The maximum number of articles to extract entities from. [default: -1]
 """
 
 import os
@@ -501,6 +502,13 @@ def main():
     # if max_sentences is not -1 then only use the first max_sentences sentences
     if opt["--max_sentences"] is not None and int(opt["--max_sentences"]) != -1:
         article_text_data = article_text_data.head(int(opt["--max_sentences"]))
+
+    if opt["--max_articles"] is not None and int(opt["--max_articles"]) != -1:
+        article_text_data = article_text_data[
+            article_text_data["gddid"].isin(
+                article_text_data["gddid"].unique()[: int(opt["--max_articles"])]
+            )
+        ]
 
     for article_gdd in article_text_data["gddid"].unique():
         logger.info(f"Processing GDD ID: {article_gdd}")

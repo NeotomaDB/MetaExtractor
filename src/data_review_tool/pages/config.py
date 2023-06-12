@@ -95,9 +95,9 @@ h2_style = {
 }
 
 h3_style = {
-    "color": "#FFFFF0",
+    "color": "white",
     "textAlign": "right",
-    "font-size": "40px",
+    "font-size": "45px",
     "font-weight": "bold",
     "font-family": "Futura",
     "margin-bottom": "10px",

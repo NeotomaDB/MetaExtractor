@@ -28,13 +28,13 @@ def create_navbar():
                             dbc.NavLink("Article Review", 
                                         href="/", 
                                         style={
-                                            "color": "#FFFFF0",
+                                            "color": "white",
                                             "font-family": "Futura"})),
                         dbc.NavItem(
                             dbc.NavLink("About", 
                                         href="/about",
                                         style={
-                                            "color": "#FFFFF0",
+                                            "color": "white",
                                             "font-family": "Futura"})),
                     ],
                     className="ml-auto",

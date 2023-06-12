@@ -136,8 +136,12 @@ def layout(gddid=None):
                                     id="corrected-text",
                                     placeholder="Add corrected text here",
                                     style={"width": 200},),
-                                dmc.Button("Correct",
-                                           id="correct-button"),
+                                dmc.Button(
+                                    "Correct",
+                                    id="correct-button",
+                                    color="lime",
+                                    variant="outline",
+                                ),
                             ],
                             style={"anchor": "middle", "justify": "center"}
                         )
@@ -180,8 +184,8 @@ def layout(gddid=None):
                                            "padding-left": "1rem"}
                                 ),
                                 dcc.Location(id='location_home', refresh=True),
-                                dcc.Location(id='location-irrelevant', refresh=True),
-                                dcc.Location(id='location-submit', refresh=True),
+                                # dcc.Location(id='location-irrelevant', refresh=True),
+                                # dcc.Location(id='location-submit', refresh=True),
                             ],
                             align="left",
                             lg=1,
@@ -249,7 +253,7 @@ def layout(gddid=None):
                                         dmc.Button("Mark as irrelevant",
                                                    color="red",
                                                    variant="filled", id="irrelevant-button"),
-                                        html.Div(id="relevant-output"),
+                                        # html.Div(id="relevant-output"),
                                     ],
                                     position="center",
                                 ),
@@ -303,7 +307,9 @@ def layout(gddid=None):
                 ],
             ),
         ],
-    ))
+    ),
+        position="top-right",
+        autoClose=3000)
 
     return layout
 
@@ -493,7 +499,7 @@ def update_chips(checked, data):
                                 variant="filled",
                                 style={"background-color": "#F4C430",
                                    "font-size": "10px",
-                                   "font-weight": "exta-bold",},
+                                    "font-weight": "bold"},
                                 sx={"width": 16, "height": 16,
                                     "pointerEvents": "none"}
                             )
@@ -672,16 +678,19 @@ def update_entity(
 # Save the results to the appropriate folder
 @callback(
     Output("clicked-output", "children"),
-    Output("location-submit", "href"),
-    Output("location-irrelevant", "href"),
+    # Output("location-submit", "href"),
+    # Output("location-irrelevant", "href"),
     Input("confirm-submit-button", "n_clicks"),
     Input("save-button", "n_clicks"),
-    Input("relevant-output", "children"),
+    Input("confirm-irrelevant-button", "n_clicks"),
+    # Input("relevant-output", "children"),
     State('results', 'data'),
     prevent_initial_call=True,
 )
 def save_submit(submit, save, relevant, data):
-    if submit:
+    callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
+    
+    if callback_context == "confirm-submit-button.n_clicks":
         data["status"] = "Completed"
         data["last_updated"] = datetime.now().strftime("%Y-%m-%d")
         gddid = data["gddid"]
@@ -695,16 +704,23 @@ def save_submit(submit, save, relevant, data):
                     color="green",
                     message="Proceed to home page",
                     icon=DashIconify(icon="ic:round-celebration"),
-                ), "/", None
-    elif relevant:
+                )#, "/", None
+    elif callback_context == "confirm-irrelevant-button.n_clicks":
         data["status"] = "Non-relevant"
         data["last_updated"] = datetime.now().strftime("%Y-%m-%d")
         gddid = data["gddid"]
         data = json.dumps(data)
         with open(f"data/data-review-tool/completed/{gddid}.json", "w") as f:
             f.write(data)
-        return  None, None, "/"
-    elif save:
+        return  dmc.Notification(
+                    title="Article Removed!",
+                    id="remove-notification",
+                    action="show",
+                    color="red",
+                    message="Proceed to home page",
+                    icon=DashIconify(icon="dashicons-remove"),
+                )#, None, "/"
+    elif callback_context == "save-button.n_clicks":
         data["status"] = "In Progress"
         gddid = data["gddid"]
         data = json.dumps(data)
@@ -717,25 +733,9 @@ def save_submit(submit, save, relevant, data):
                     color="yellow",
                     message="Don't forget to comeback and finish the review",
                     icon=DashIconify(icon="dashicons-saved"), 
-                ), None, None
+                )#, None, None
     else:
-        return None, None, None
-
-# Remove article from queue if it is not relevant
-@callback(
-    Output("relevant-output", "children"),
-    Input("confirm-irrelevant-button", "n_clicks"),
-    prevent_initial_call=True,
-)
-def relevant(n_clicks):
-    return dmc.Notification(
-            title="Article Removed!",
-            id="remove-notification",
-            action="show",
-            color="red",
-            message="Proceed to home page",
-            icon=DashIconify(icon="dashicons-remove"),
-        )
+        return None#, None, None
 
 # Populate tabs with sentences under corresponding sections
 @callback(
@@ -846,13 +846,14 @@ def open_article(n_clicks):
     else:
         return None
     
-def toggle_confirmation_modal(n_clicks, submit, opened):
+def toggle_confirmation_modal(n_clicks_close, n_clicks, submit, opened):
     return not opened
 
 for overflow in ["submit", "irrelevant"]:
     callback(
         Output(f"modal-{overflow}", "opened"),
         Input(f"confirm-{overflow}-close-button", "n_clicks"),
+        Input(f"confirm-{overflow}-button", "n_clicks"),
         Input(f"{overflow}-button", "n_clicks"),
         State(f"modal-{overflow}", "opened"),
         prevent_initial_call=True,

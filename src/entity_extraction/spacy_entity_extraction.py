@@ -6,7 +6,7 @@ import sys
 import spacy
 
 # ensure that the parent directory is on the path for relative imports
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
 
 
 def spacy_extract_all(text: str,

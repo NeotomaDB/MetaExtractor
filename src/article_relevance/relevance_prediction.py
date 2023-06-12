@@ -123,13 +123,18 @@ def crossref_extract(doi_path):
 
 
 def en_only_helper(value):
-     ''' Helper function for en_only. 
-     Apply row-wise to impute missing language data.'''
+    ''' Helper function for en_only. 
+    Apply row-wise to impute missing language data.'''
      
-     detect_lang = detect(value)
-     if 'en' in detect_lang:
+    try:
+        detect_lang = detect(value)
+    except:
+        detect_lang = "error"
+        logger.info("This text throws an error:", value)
+     
+    if 'en' in detect_lang:
         return 'en'
-     else:
+    else:
         return 'non-en'
      
 
@@ -177,7 +182,7 @@ def data_preprocessing(metadata_df):
 
     metadata_df['language'] = metadata_df['language'].fillna(value = '')
     metadata_df['text_with_abstract'] = metadata_df['text_with_abstract'].fillna(value = '')
-    condition_row = (metadata_df['language'].str.len() == 0) & (metadata_df['text_with_abstract'].str.contains('[a-zA-Z]'))
+    condition_row = (metadata_df['language'].str.len() >= 20) & (metadata_df['text_with_abstract'].str.contains('[a-zA-Z]'))
     metadata_df.loc[condition_row,'language'] = metadata_df.loc[condition_row, 'language'].apply(lambda x: en_only_helper(x))
     
     # Set valid_for_prediction col to 0 if detected language is not English

@@ -7,13 +7,14 @@
 
 """This script takes in user specified parameter values and query the GDD API for recently acquired articles. 
 
-Usage: gdd_api_query.py --doi_path=<doi_path> [--n_recent=<n_recent>] [--min_date=<min_date>] [--max_date=<max_date>]
+Usage: gdd_api_query.py --doi_path=<doi_path> [--n_recent=<n_recent>] [--min_date=<min_date>] [--max_date=<max_date>] [--term=<term>]
 
 Options:
     --doi_path=<doi_path>                   The path to where the DOI list JSON file should be stored.
     --n_recent=<n_recent>                   If specified, n most recent articles will be returned. Default is None.
     --min_date=<min_date>                   Query by date. Articles acquired since this date will be returned. Default is None.
     --max_date=<max_date>                   Query by date. Articles acquired before this date will be returned. Default is None.
+    --term=<term>                           Query by term. Default is None.
 """
 
 import requests
@@ -38,29 +39,26 @@ from logs import get_logger
 
 logger = get_logger(__name__) # this gets the object with the current modules name
 
-def get_new_gdd_articles(output_path, n_recent_articles = None, min_date = None, max_date = None):
+def get_new_gdd_articles(output_path, n_recent_articles = None, min_date = None, max_date = None, term = None):
     """ 
     Get newly acquired articles from min_date to (optional) max_date. 
     Or get the most recent new articles added to GeoDeepDive.
     Return API resuls as a list of article metadata information.
 
     Args:
-        output_path (str)
-        n_recent_articles (int)
-        min_date
-        max_date
-
-        doi_path (str): Path to the doi list csv file.
-        doi_col (str): Column name of DOI.
+        output_path (str)       The path where the output JSON file is saved to.
+        n_recent_articles (int) Number of most recent articles GeoDeepDive acquired.
+        min_date (str)          Lower limit of GeoDeepDive acquired date.
+        max_date (str)          Upper limit of GeoDeepDive acquired date.
+        term (str)              Term to search for.
     
     Return:
-        pandas Dataframe containing CrossRef metadata.
+        Write JSON output to output_path.
 
     Example:
         get_new_gdd_articles(min_date='2023-06-07')
         get_new_gdd_articles(min_date='2023-06-01', max_date = '2023-06-08')
         get_new_gdd_articles(n_recent_articles = 1000)
-
     """
 
     # ======== Tests for input data type ==========
@@ -89,9 +87,9 @@ def get_new_gdd_articles(output_path, n_recent_articles = None, min_date = None,
          if not isinstance(n_recent_articles, int):
                 raise ValueError("n_recent_articles should be an integer.")
             
-    # ========== Query API by n most recent article ==========
+    # ========== Query API ==========
     if n_recent_articles is not None:
-        api_call = "https://geodeepdive.org/api/articles?recent" + f"&max={n_recent_articles}"
+        api_call = "https://geodeepdive.org/api/articles?recent" + f"&max={n_recent_articles}" + "&full_results=true"
 
     # Query API by date range
     elif (min_date is not None) and (max_date is not None):
@@ -105,13 +103,42 @@ def get_new_gdd_articles(output_path, n_recent_articles = None, min_date = None,
     
     else:
         raise ValueError("Please check input parameter values.")
+    
+    if term is not None:
+         api_extend = f"&term={term}"
+         api_call += api_extend
 
 
     # =========== Format the API return to Json file ==========
-    response = requests.get(api_call).json()
-    print(response)
+    session = requests.Session()
+    response = session.get(api_call)
 
-    data = response['success']['data']
+    while response.status_code != 200:
+        response = requests.get(api_call)
+    
+    response_dict = response.json()
+    data = response_dict['success']['data']
+
+    i = 1
+    logger.info(f'{len(data)} articles queried from GeoDeepDive (page {i}).')
+
+    next_page = response_dict['success']['next_page']
+    while (next_page != ''):
+        i += 1
+        logger.info(f"going to the next page: page{i}")
+
+        next_response = session.get(next_page)
+        while next_response.status_code != 200:
+            next_response = session.get(next_page)
+
+        next_response_dict = next_response.json()
+        new_data = next_response_dict['success']['data']
+        logger.info(f'{len(new_data)} articles queried from GeoDeepDive (page {i}).')
+        data.extend(new_data)
+        
+        next_page = next_response_dict['success']['next_page']
+
+    logger.info(f'GeoDeepDive query completed. Converting to JSON output.')
 
     # initialize the resulting dataframe
     gdd_df = pd.DataFrame()
@@ -162,11 +189,14 @@ def main():
 
     param_min_date = opt["--min_date"]
     param_max_date = opt["--max_date"]
+    param_term = opt["--term"]
+
 
     get_new_gdd_articles(output_path = doi_file_storage, 
                          min_date = param_min_date, 
                          max_date = param_max_date, 
-                         n_recent_articles= param_n_recent)
+                         n_recent_articles= param_n_recent,
+                         term = param_term)
     
 
 if __name__ == "__main__":

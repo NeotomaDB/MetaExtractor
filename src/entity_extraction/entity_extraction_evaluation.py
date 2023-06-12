@@ -61,6 +61,7 @@ def export_classification_results(
     ) as f:
         json.dump(classification_results, f, indent=4, cls=NumpyJsonEncoder)
 
+
 def export_classification_report_plots(
     true_tokens, predicted_tokens, output_path: str, model_name: str
 ):
@@ -103,6 +104,7 @@ def export_classification_report_plots(
     entity_results_fig.savefig(
         os.path.join(output_path, f"{model_name}_entity_classification_report.png")
     )
+
 
 def load_json_label_files(labelled_file_path: str):
     """
@@ -238,7 +240,7 @@ def generate_confusion_matrix(
 
         return label_to_index
 
-    label_to_index = get_label_to_index(labelled_tokens)
+    label_to_index = get_label_to_index(labelled_tokens + predicted_tokens)
 
     num_tags = len(label_to_index)
     # Create empty confusion matrix

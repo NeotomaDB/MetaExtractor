@@ -11,8 +11,54 @@ import pandas as pd
 from spacy import displacy
 from spacy.tokens import Doc
 import spacy
+import json
+import copy
+import numpy as np
 
+def load_json_label_files(labelled_file_path:str):
+    """
+    Load the json files containing the labelled data and combines the text
+    into a complete text string.
+ 
+    Parameters
+    ----------
+    label_files : list
+        List of json files containing the labelled data.
 
+    Returns
+    -------
+    combined_text : str
+        The combined text from all the files.
+    all_labelled_entities : list
+        List of all the labelled entities re-indexed to account for the combined text.
+    """
+
+    combined_text = ""
+    all_labelled_entities = []
+    for file in os.listdir(labelled_file_path):
+
+        # if file is a txt file load it
+        if  file.endswith(".txt"):
+        
+            with open(os.path.join(labelled_file_path, file), "r") as f:
+                task = json.load(f)
+
+            raw_text = task['task']['data']['text']
+
+            annotation_result = task['result']
+            labelled_entities = [annotation['value'] for annotation in annotation_result]
+
+            # add the current text length to the start and end indices of labels plus one for the space
+            for entity in labelled_entities:
+                entity['start'] += len(combined_text)
+                entity['end'] += len(combined_text)
+
+            all_labelled_entities += labelled_entities
+
+            # add the current text to the combined text with space in between
+            combined_text += raw_text + " "
+
+    return combined_text, all_labelled_entities
 
 def get_token_labels(labelled_entities, raw_text):
     """
@@ -56,7 +102,103 @@ def get_token_labels(labelled_entities, raw_text):
         else:
             token_labels[token_start] = f"B-{label}"
 
-    return token_labels
+    return split_text, token_labels
+
+def generate_confusion_matrix(
+    labelled_tokens: list,
+    predicted_tokens: list,
+    output_path: str,
+    model_name: str
+):
+    """
+    Generates confusion matrix 
+    
+    Parameters
+    ----------
+    labelled_tokens : list[list[str]]
+        The true labels per token.
+    predicted_tokens : list[list[str]]
+        The predicted labels per token.
+    output_path: str
+        Path to output the confusion matrix diagram
+    model_name: str
+        Name of the model to include in the diagram title
+    """
+    
+    
+    label_to_index = {}
+    
+    # Loop through each document
+    for i in range(len(labelled_tokens)):
+        # Loop through each token
+        for j in range(len(labelled_tokens[i])):
+            # Get the label
+            label = labelled_tokens[i][j]
+            label = label.replace("B-", "").replace("I-", "")
+            # If the label is not in the dictionary, add it
+            if label not in label_to_index.keys():
+                label_to_index[label] = len(label_to_index)
+    
+    num_tags = len(label_to_index)
+    # Create empty confusion matrix
+    confusion_matrix = np.zeros((num_tags, num_tags))
+    
+    labels = ["O"] * num_tags
+    for key, value in label_to_index.items():
+        labels[value] = key
+        
+    # Loop through each document
+    for i in range(len(predicted_tokens)):
+        # Loop through each token
+        for j in range(len(predicted_tokens[i])):
+            
+            # Get the predicted and tagged labels
+            predicted_label = predicted_tokens[i][j].replace("B-", "").replace("I-", "")
+            tagged_label = labelled_tokens[i][j].replace("B-", "").replace("I-", "")
+            
+            # Get the index of the predicted and tagged labels
+            predicted_index = label_to_index[predicted_label]
+            tagged_index = label_to_index[tagged_label]
+            
+            # Add 1 to the confusion matrix
+            confusion_matrix[tagged_index][predicted_index] += 1
+    
+    # normalize the matrix
+    confusion_matrix = (
+        confusion_matrix.astype('float') / confusion_matrix.sum(axis=1)[:, np.newaxis]
+    )
+    
+    # Create a heatmap
+    fig, ax = plt.subplots()
+    heatmap = ax.imshow(confusion_matrix, cmap='viridis')
+    
+    # Add colorbar
+    cbar = plt.colorbar(heatmap)
+
+    # Add labels
+    ax.set_xticks(np.arange(confusion_matrix.shape[1]))
+    ax.set_yticks(np.arange(confusion_matrix.shape[0]))
+    ax.set_xticklabels(labels)
+    ax.set_yticklabels(labels)
+    
+    # set labels
+    ax.set_title("Confusion Matrix")
+    ax.set_ylabel('True')
+    ax.set_xlabel('Predicted')
+    ax.grid(False)
+    
+    #set labels for each grid box
+    for i in range(confusion_matrix.shape[0]):
+        for j in range(confusion_matrix.shape[1]):
+            _ = ax.text(j, i, round(confusion_matrix[i, j], 2),
+                           ha="center", va="center", color="w")
+    
+    plt.setp(ax.get_xticklabels(), rotation=30, ha="right", rotation_mode="anchor")
+    
+    output_path = os.path.join(output_path, f"{model_name}_confusion_matrix.png")
+    
+    # Save the figure
+    plt.savefig(output_path, dpi=300)
 
 
 def plot_token_classification_report(
@@ -71,9 +213,9 @@ def plot_token_classification_report(
 
     Parameters
     ----------
-    labelled_tokens : list
+    labelled_tokens : list[lists]
         A list of labels per token in the raw text.
-    predicted_tokens : list
+    predicted_tokens : list[lists]
         A list of labels per token in the raw text.
     title : str
         The title of the plot.
@@ -91,14 +233,25 @@ def plot_token_classification_report(
         The figure containing the classification report.
     """
 
+    # prevent over writing of original lists in memory
+    predicted = copy.deepcopy(predicted_tokens)
+    labelled = copy.deepcopy(labelled_tokens)
+
     if method == "tokens":
+        # copy the lists so they aren't modified outside this function
+        labelled = copy.deepcopy(labelled)
+        predicted = copy.deepcopy(predicted)
         # in each list replace all I- labels with B- labels so each token is
-        # considered a separate entity
-        labelled_tokens = [label.replace("I-", "B-") for label in labelled_tokens]
-        predicted_tokens = [label.replace("I-", "B-") for label in predicted_tokens]
+        # considered a separate entity and update the token label objects
+        for i, document in enumerate(labelled):
+            document = [label.replace("I-", "B-") for label in document]
+            labelled[i] = document
+        for i, document in enumerate(predicted):
+            document = [label.replace("I-", "B-") for label in document]
+            predicted[i] = document
 
     clf_report = classification_report(
-        [labelled_tokens], [predicted_tokens], output_dict=True, zero_division=0
+        labelled, predicted, output_dict=True, zero_division=0
     )
 
     fig, ax = plt.subplots(figsize=(8, 6))
@@ -128,10 +281,10 @@ def calculate_entity_classification_metrics(
 
     Parameters
     ----------
-    labelled_tokens : list
-        The labelled tokens.
-    predicted_tokens : list
-        The predicted tokens.
+    labelled_tokens : list[lists]
+        The labelled tokens per document.
+    predicted_tokens : list[lists]
+        The predicted tokens per document.
     method : str, optional
         The method to use to calculate the scores, by default "entities"
         which calculates the scores based on complete entities extracted from BIO
@@ -148,19 +301,30 @@ def calculate_entity_classification_metrics(
         The recall score.
     """
 
+    # prevent over writing of original lists in memory
+    predicted = copy.deepcopy(predicted_tokens)
+    labelled = copy.deepcopy(labelled_tokens)
+
     if method == "tokens":
+        # copy the lists so they aren't modified outside this function
+        labelled = copy.deepcopy(labelled)
+        predicted = copy.deepcopy(predicted)
         # in each list replace all I- labels with B- labels so each token is
-        # considered a separate entity
-        labelled_tokens = [label.replace("I-", "B-") for label in labelled_tokens]
-        predicted_tokens = [label.replace("I-", "B-") for label in predicted_tokens]
+        # considered a separate entity and update the token label objects
+        for i, document in enumerate(labelled):
+            document = [label.replace("I-", "B-") for label in document]
+            labelled[i] = document
+        for i, document in enumerate(predicted):
+            document = [label.replace("I-", "B-") for label in document]
+            predicted[i] = document
 
-    accuracy = accuracy_score([labelled_tokens], [predicted_tokens])
+    accuracy = accuracy_score(labelled, predicted)
 
-    f1 = f1_score([labelled_tokens], [predicted_tokens])
+    f1 = f1_score(labelled, predicted)
 
-    recall = recall_score([labelled_tokens], [predicted_tokens])
+    recall = recall_score(labelled, predicted)
 
-    precision = precision_score([labelled_tokens], [predicted_tokens])
+    precision = precision_score(labelled, predicted)
 
     return accuracy, f1, recall, precision
 

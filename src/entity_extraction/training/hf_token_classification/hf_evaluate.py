@@ -170,7 +170,7 @@ def get_predicted_labels(ner_pipe, df):
     df["predicted_labels"] = len(df) * [None]
 
     # use tqdm to showprogress in batches
-    batch_size = 1
+    batch_size = 32
     for i in tqdm(range(0, len(df), batch_size)):
         result = ner_pipe(
             df.tokens.iloc[i : i + batch_size].apply(lambda x: " ".join(x)).tolist()

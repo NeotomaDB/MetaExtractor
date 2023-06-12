@@ -194,6 +194,7 @@ def main():
             "train" not in file and "test" not in file and "val" not in file
         ):
             logger.info(f"Skipping {file}")
+
             continue
         logger.info(f"Evaluating {file}")
         file_name = file.split(".")[0]

@@ -167,7 +167,6 @@ def get_labels(ner_model, data):
     -------
     predicted_labels : list
         The predicted labels per token.
-
     tagged_labels : list
         The tagged labels per token.
     """

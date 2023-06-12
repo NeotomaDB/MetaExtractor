@@ -67,13 +67,25 @@ def layout(gddid=None):
             html.Br(),
             dmc.Switch(
                 id="toggle-switch",
-                size="lg",
+                size="xl",
                 radius="md",
-                onLabel=" Extracted entities",
-                offLabel="Deleted entities",
+                onLabel="Show deleted entities",
+                offLabel="Hide deleted entities",
                 checked=True,
-                color="green",
-                style={"position": "relative", "left": "35%"},
+                styles={
+                    "labelWrapper":{
+                        "font-color": "white",
+                    },
+                    "track": {
+                        "background-color": "green",
+                        "color": "white"
+                }},
+                style={
+                    "align-items": "center",
+                    "position": "relative",
+                    "left": "30%",
+                },
+                color="red",
             ),
             html.Br(),
             dmc.Textarea(
@@ -158,6 +170,7 @@ def layout(gddid=None):
                 id="section-tabs",
                 color="red",
                 orientation="horizontal",
+                style={"padding-top": "1rem"}
             )
         ], style=CONTENT_STYLE)
 
@@ -195,36 +208,42 @@ def layout(gddid=None):
                             style={"margin-left": "10px"},
                         ),
                         dbc.Col([
-                            dmc.RingProgress(
-                                id="ring-progress",
-                                sections=[{
-                                    "value": relevance_score,
-                                    "color": color_palette[int(relevance_score)],
-                                    "tooltip": "Relevance Score"
-                                }],
-                                label=dmc.Center(dmc.Text(f"{int(relevance_score)}%",
-                                                          style={"font-size": "1rem",
-                                                                 "font-weight": "bold"})),
-                                size=80,
-                                thickness=10,
-                                roundCaps=True,
-                                style={
-                                    "position": "relative",
-                                    "margin-bottom": "-20px",
-                                    "bottom": "10px",
-                                    "display": "flex",
-                                    "left": "33%"}
-                            ),
-
-                        ],
-                            align="center",
+                            html.Div([
+                                dmc.Text("Relevance Score: ",
+                                        style={
+                                             "display": "inline-block",
+                                             "padding-right": "0px",
+                                             "position": "relative",
+                                             "font-weight": "bold",
+                                }),
+                                dmc.RingProgress(
+                                    id="ring-progress",
+                                    sections=[{
+                                        "value": relevance_score,
+                                        "color": color_palette[int(relevance_score)],
+                                    }],
+                                    label=dmc.Center(dmc.Text(f"{int(relevance_score)}%",
+                                                            style={"font-size": "1rem",
+                                                                    "font-weight": "bold"})),
+                                    size=80,
+                                    thickness=10,
+                                    roundCaps=True,
+                                    style={
+                                        "position": "relative",
+                                        "margin-bottom": "-20px",
+                                        "bottom": "10px",
+                                        "display": "inline-block",
+                                    }
+                                ),
+                            ])
+                        ],  align="center",
                             lg=2,
                             md=3,
                             sm=4,
                             style={
                                 "position": "relative",
-                                "left": "4%"
-                            }),
+                                "left": "2%"
+                        }),
                         dbc.Col(
                             [
                                 dmc.Group(
@@ -342,9 +361,8 @@ def get_accordion_items(checked, data):
                             f"{len([ent for ent in data['entities'][label].values() if ent['deleted'] != checked])}",
                             size="xxs",
                             p=0,
-                            style={"background-color": "#F4C430",
-                                   "font-size": "10px",
-                                   "font-weight": "exta-bold",},
+                            style={"background-color": "#b8864b",
+                                   "font-size": "10px"},
                             variant="filled",
                             sx={"width": 16, "height": 16,
                                 "pointerEvents": "none"}
@@ -356,7 +374,8 @@ def get_accordion_items(checked, data):
                             dmc.ChipGroup(
                                 id=entity_id_mapping[label],
                                 value=None,
-                                multiple=False
+                                multiple=False,
+                                
                             ),
                         ],
                         style=chip_style
@@ -497,7 +516,7 @@ def update_chips(checked, data):
                                 size="xs",
                                 p=0,
                                 variant="filled",
-                                style={"background-color": "#F4C430",
+                                style={"background-color": "#b8864b",
                                    "font-size": "10px",
                                     "font-weight": "bold"},
                                 sx={"width": 16, "height": 16,
@@ -507,7 +526,12 @@ def update_chips(checked, data):
                         value=ent,
                         variant="outline",
                         styles={"label": {"display": "inline-flex",
-                                          "justifyContent": "space-between",}},
+                                          "justifyContent": "space-between",
+                                          "&[data-checked]":{
+                                              "borderColor": "#b8864b",
+                                              "fontWeight": "bold",                                                    
+                                            }
+                                          }},
                     ))
 
     return chips["SITE"], chips["REGION"], chips["TAXA"], chips["GEOG"], chips["ALTI"], chips["AGE"], chips["EMAIL"]
@@ -783,7 +807,10 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
                 html.Div([
                     dmc.Paper(
                         children=[
-                            dmc.Text(dmc.Highlight(text, highlight=highlight))
+                            dmc.Text(dmc.Highlight(text,
+                                                   highlight=highlight,
+                                                   highlightColor="blue",
+                                                   ))
                         ],
                         withBorder=True,
                         shadow="xs",
@@ -803,7 +830,7 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
                             size="xs",
                             p=0,
                             variant="filled",
-                            style={"background-color": "#F4C430",
+                            style={"background-color": "#b8864b",
                                    "font-size": "10px",
                                    "font-weight": "exta-bold",},
                             sx={"width": 16, "height": 16, "pointerEvents": "none"}))
@@ -816,7 +843,7 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
                 position="center"
             ),
         ],
-        color="red",
+        variant='outline',
         orientation="horizontal",
         value=list(tabs.keys())[0]
     )

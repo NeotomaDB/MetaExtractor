@@ -9,7 +9,7 @@ tab_header_style = {
 
 #Home page badge style
 badge_style = {
-    "background-color": "#F4C430",
+    "background-color": "#b8864b",
     "font-size": "15px",
 }
 
@@ -102,7 +102,9 @@ h3_style = {
     "font-family": "Futura",
     "margin-bottom": "10px",
     "padding-left": "100px",
-    "text-overflow": "inherit"
+    "text-overflow": "inherit",
+    "background-color": "#b8864b",
+    "text-shadow": "1px 1px #000000"
 }
 
 h4_style = {

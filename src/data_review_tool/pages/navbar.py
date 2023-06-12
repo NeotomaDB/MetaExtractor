@@ -44,7 +44,7 @@ def create_navbar():
                 ),
             ],
         ),
-        color="tan",
+        color="#b8864b",
         dark=True,
     )
     return navbar

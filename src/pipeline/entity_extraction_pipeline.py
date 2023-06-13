@@ -16,15 +16,18 @@ import sys
 import pandas as pd
 import json
 from docopt import docopt
+import spacy
+from tqdm import tqdm
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from src.preprocessing.labelling_preprocessing import get_journal_articles
 from src.logs import get_logger
 from src.entity_extraction.hf_entity_extraction import (
-    get_predicted_labels,
     load_ner_model_pipeline,
-    get_hf_token_labels,
+)
+from src.entity_extraction.spacy_entity_extraction import (
+    spacy_extract_all,
 )
 
 logger = get_logger(__name__)
@@ -221,9 +224,6 @@ def recreate_original_sentences_with_labels(row):
     # get the original sentence
     original_sentence = row["text"]
 
-    # initialize empty df with columns for each label
-    labels_df = pd.DataFrame(columns=ALL_LABELS)
-
     split_df = pd.DataFrame()
 
     for i in range(0, len(row["text_length_list"])):
@@ -310,6 +310,7 @@ def extract_entities(
 
         start_time = pd.Timestamp.now()
         logger.info("Starting entity extraction. This may take a while...")
+
         raw_labels = ner_pipe(article_batch["text"].tolist())
         logger.info(
             f"Finished entity extraction in {pd.Timestamp.now() - start_time} to process {len(article_batch)} batches."
@@ -325,10 +326,49 @@ def extract_entities(
         # get the predicted labels
         # article_batch["raw_labels"] = ner_pipe(article_batch["text"].tolist())
         article_batch["raw_labels"] = raw_labels
-        article_batch["model_name"] = model_name
+
+        # # create empty column to be filled with predicted labels
+        # article_batch["raw_labels"] = len(article_batch) * [None]
+
+        # try:
+        #     # use tqdm to showprogress in batches, use base 4 or if less samples use single batch
+        #     batch_size = min(2, len(article_batch))
+        #     for i in tqdm(range(0, len(article_batch), batch_size)):
+        #         raw_labels = ner_pipe(
+        #             article_batch.text.iloc[i : i + batch_size]
+        #             .apply(lambda x: " ".join(x))
+        #             .tolist()
+        #         )
+        #         logger.debug(f"Found {len(raw_labels)} entities in batch {i}")
+        #         # update "word" attribute to be called "text" to match spacy
+        #         # update "entitiy_group" to a list of the entity groups called labels
+        #         for label in raw_labels:
+        #             for entity in label:
+        #                 entity["text"] = entity.pop("word")
+        #                 entity["labels"] = [entity.pop("entity_group")]
+        #         article_batch.raw_labels.iloc[i : i + batch_size] = raw_labels
+        # except Exception as e:
+        #     logger.error(
+        #         f"Error extracting entities for GDD ID: {article_batch['gddid'].iloc[0]}, skipping rest of article and returning results to this point. Error: {e}"
+        #     )
+        #     pass
+
+        logger.info(
+            f"Finished entity extraction in {pd.Timestamp.now() - start_time} to process {len(article_batch)} batches."
+        )
 
     elif model_type == "spacy":
-        print("Spacy model not implemented yet.")
+
+        spacy_model = spacy.load(model_path)
+
+        start_time = pd.Timestamp.now()
+        logger.info("Starting entity extraction. This may take a while...")
+
+        article_batch["raw_labels"] = article_batch["text"].apply(
+            lambda x: spacy_extract_all(x, spacy_model)
+        )
+
+    article_batch["model_name"] = model_name
 
     # TODO: deal with multiple labels for words in this grouping
     for label in ALL_LABELS:
@@ -484,7 +524,7 @@ def export_extracted_entities(
                     )
 
     # export file name is gddid_timestamp.json without : in timestamp
-    file_name = f"{results_dict['gddid']}_{'-'.join(results_dict['date_processed'].replace(' ', 'T').split(':'))}.json"
+    file_name = f"{results_dict['gddid']}.json"
     # export the results to json
     with open(os.path.join(output_path, file_name), "w") as f:
         json.dump(results_dict, f, indent=4)
@@ -499,25 +539,25 @@ def main():
 
     article_text_data = load_article_text_data(opt["--article_text_path"])
 
-    # if max_sentences is not -1 then only use the first max_sentences sentences
-    if opt["--max_sentences"] is not None and int(opt["--max_sentences"]) != -1:
-        article_text_data = article_text_data.head(int(opt["--max_sentences"]))
-
     if opt["--max_articles"] is not None and int(opt["--max_articles"]) != -1:
         article_text_data = article_text_data[
             article_text_data["gddid"].isin(
-                article_text_data["gddid"].unique()[: int(opt["--max_articles"])]
+                article_text_data["gddid"].unique()[7 : 7 + int(opt["--max_articles"])]
             )
         ]
+
+    # if max_sentences is not -1 then only use the first max_sentences sentences
+    if opt["--max_sentences"] is not None and int(opt["--max_sentences"]) != -1:
+        article_text_data = article_text_data.head(int(opt["--max_sentences"]))
 
     for article_gdd in article_text_data["gddid"].unique():
         logger.info(f"Processing GDD ID: {article_gdd}")
 
         article_text = article_text_data[article_text_data["gddid"] == article_gdd]
 
-        # preprocessed_article_text_data = preprocess_article_text_data(article_text)
         try:
             extracted_entities = extract_entities(article_text)
+
         except Exception as e:
             logger.error(
                 f"Error extracting entities for GDD ID: {article_gdd}, skipping article. Error: {e}"
@@ -526,6 +566,12 @@ def main():
 
         try:
             pprocessed_entities = post_process_extracted_entities(extracted_entities)
+
+            if len(pprocessed_entities) == 0:
+                logger.warning(
+                    f"No entities extracted for GDD ID: {article_gdd}, skipping article."
+                )
+                continue
         except Exception as e:
             logger.error(
                 f"Error post processing entities for GDD ID: {article_gdd}, no results output. Error: {e}"

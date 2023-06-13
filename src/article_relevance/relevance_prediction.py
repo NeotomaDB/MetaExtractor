@@ -164,27 +164,37 @@ def data_preprocessing(metadata_df):
     metadata_df['subtitle_clean'] = metadata_df['subtitle'].fillna(value='').apply(lambda x: ''.join(x))
     metadata_df['journal'] = metadata_df['journal'].fillna(value='').apply(lambda x: ''.join(x))
 
-    # Add has_abstract indicator
+    # Add has_abstract indicator for valid articles
     valid_condition = (metadata_df['valid_for_prediction'] == 1)
+
     metadata_df.loc[valid_condition, 'has_abstract'] = metadata_df.loc[valid_condition, "abstract"].isnull()
 
     # Remove tags from abstract
     metadata_df['abstract_clean'] = metadata_df['abstract'].fillna(value='').apply(lambda x: ''.join(x))
-    metadata_df['abstract_clean'] = metadata_df['abstract_clean'].str.replace(pat = '<(jats|/jats):(p|sec|title|italic|sup|sub)>', repl = ' ')
-    metadata_df['abstract_clean'] = metadata_df['abstract_clean'].str.replace(pat = '<(jats|/jats):(list|inline-graphic|related-article).*>', repl = ' ')
+    metadata_df['abstract_clean'] = metadata_df['abstract_clean'].str.replace(pat = '<(jats|/jats):(p|sec|title|italic|sup|sub)>', repl = ' ', regex=True)
+    metadata_df['abstract_clean'] = metadata_df['abstract_clean'].str.replace(pat = '<(jats|/jats):(list|inline-graphic|related-article).*>', repl = ' ', regex=True)
 
     # Concatenate descriptive text
     metadata_df['text_with_abstract'] =  metadata_df['title_clean'] + ' ' + metadata_df['subtitle_clean'] + ' ' + metadata_df['abstract_clean']
 
     # Impute missing language
-    
     logger.info(f'Running article language imputation.')
 
     metadata_df['language'] = metadata_df['language'].fillna(value = '')
     metadata_df['text_with_abstract'] = metadata_df['text_with_abstract'].fillna(value = '')
-    condition_row = (metadata_df['language'].str.len() >= 20) & (metadata_df['text_with_abstract'].str.contains('[a-zA-Z]'))
-    metadata_df.loc[condition_row,'language'] = metadata_df.loc[condition_row, 'language'].apply(lambda x: en_only_helper(x))
     
+    # impute only when there are > 5 characters for langdetect to impute accurately
+    ok_condition_row = (metadata_df['language'].str.len() == 0) & (metadata_df['text_with_abstract'].str.contains('[a-zA-Z]', regex=True)) & (metadata_df['text_with_abstract'].str.len() >= 5)
+    cannot_impute_condition = (metadata_df['language'].str.len() == 0) & ~((metadata_df['text_with_abstract'].str.contains('[a-zA-Z]', regex=True)) & (metadata_df['text_with_abstract'].str.len() >= 5))
+
+    metadata_df.loc[ok_condition_row,'language'] = metadata_df.loc[ok_condition_row, 'language'].apply(lambda x: en_only_helper(x))
+    metadata_df.loc[cannot_impute_condition, 'valid_for_prediction'] = 0
+    
+    n_missing_lang = sum(metadata_df['language'].str.len() == 0)
+    n_cannot_impute = sum(cannot_impute_condition)
+    logger.info(f'{n_missing_lang} articles require language imputation')
+    logger.info(f'{n_cannot_impute} cannot be imputed due to too short text metadata(title, subtitle and abstract less than 5 character).')
+
     # Set valid_for_prediction col to 0 if detected language is not English
     en_condition = metadata_df['language'] != 'en' 
     metadata_df.loc[en_condition, 'valid_for_prediction'] = 0
@@ -199,6 +209,14 @@ def data_preprocessing(metadata_df):
                                 'subtitle_clean': 'subtitle',
                                 'abstract_clean': 'abstract'})
     
+    # invalid when required input field is Null
+    mask = metadata_df[['text_with_abstract', 'subject_clean', 'is-referenced-by-count', 'has_abstract']].isnull().any(axis=1)
+
+    metadata_df.loc[mask, 'valid_for_prediction'] = 0
+
+    with_missing_df = metadata_df.loc[mask, :]
+    
+    logger.info(f'{with_missing_df.shape[0]} articles has missing feature and its relevance cannot be predicted.')
     logger.info(f'Data preprocessing completed.')
 
     
@@ -227,6 +245,8 @@ def add_embeddings(input_df, text_col, model = 'allenai/specter2'):
     # add embeddings to valid_df
     embeddings = valid_df[text_col].apply(embedding_model.encode)
     embeddings_df = pd.DataFrame(embeddings.tolist())
+    embeddings_df.index = valid_df.index
+
     df_with_embeddings = pd.concat([valid_df, embeddings_df], axis = 1)
     df_with_embeddings.columns = df_with_embeddings.columns.astype(str)
 
@@ -234,7 +254,6 @@ def add_embeddings(input_df, text_col, model = 'allenai/specter2'):
     result = pd.concat([df_with_embeddings, invalid_df])
 
     logger.info(f'Sentence embedding completed.')
-
 
     return result
 
@@ -254,7 +273,7 @@ def relevance_prediction(input_df, model_path, predict_thld = 0.5):
         pd DataFrame with prediction and predict_proba added.
     """
     logger.info(f'Prediction start.')
-
+    
     # load model
     model_object = joblib.load(model_path)
 
@@ -262,10 +281,18 @@ def relevance_prediction(input_df, model_path, predict_thld = 0.5):
     valid_df = input_df.query('valid_for_prediction == 1')
     invalid_df = input_df.query('valid_for_prediction != 1')
 
+    logger.info(f"Running prediction for {valid_df.shape[0]} articles.")
+
+    # filter out rows with NaN value
+    feature_col = ['has_abstract', 'subject_clean', 'is-referenced-by-count'] + [str(i) for i in range(0,768)]
+    nan_exists = valid_df.loc[:, feature_col].isnull().any(axis = 1)
+    df_nan_exist = valid_df.loc[nan_exists, :]
+    valid_df.loc[nan_exists, 'valid_for_prediction'] = 0
+    logger.info(f"{df_nan_exist.shape[0]} articles's input feature contains NaN value.")
+
     # Use the loaded model for prediction on a new dataset
-    valid_df['predict_proba'] = model_object.predict_proba(valid_df)[:, 1]
-    print
-    valid_df['prediction'] = valid_df.loc[:,'predict_proba'].apply(lambda x: 1 if x >= predict_thld else 0)
+    valid_df.loc[:, 'predict_proba'] = model_object.predict_proba(valid_df)[:, 1]
+    valid_df.loc[:, 'prediction'] = valid_df.loc[:,'predict_proba'].apply(lambda x: 1 if x >= predict_thld else 0)
 
     # Filter results, store key information that could possibly be useful downstream
     keyinfo_col = ['DOI', 'URL', 'gddid', 'valid_for_prediction',

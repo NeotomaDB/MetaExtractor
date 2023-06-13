@@ -39,7 +39,12 @@ from logs import get_logger
 
 logger = get_logger(__name__) # this gets the object with the current modules name
 
-def get_new_gdd_articles(output_path, n_recent_articles = None, min_date = None, max_date = None, term = None):
+def get_new_gdd_articles(output_path, 
+                         n_recent_articles = None, 
+                         min_date = None, 
+                         max_date = None, 
+                         term = None,
+                         sample_n = None):
     """ 
     Get newly acquired articles from min_date to (optional) max_date. 
     Or get the most recent new articles added to GeoDeepDive.

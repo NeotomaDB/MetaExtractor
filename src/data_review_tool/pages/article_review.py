@@ -161,7 +161,13 @@ def layout(gddid=None):
                     dbc.Col([], lg=2),
                     dbc.Col([
                         dmc.Group([
-                            dmc.Button(id="delete-restore-button",),
+                            dmc.Button(
+                                "Delete Entity",
+                                id="delete-restore-button",
+                                color="red",
+                                leftIcon=DashIconify(icon="dashicons-trash", height=16),
+                                disabled=True,
+                            )
                         ], id="button-group")
                     ], lg=2)
                 ],
@@ -437,6 +443,7 @@ def get_accordion_items(checked, data):
 @callback(
     Output("button-group", "children"),
     Input("toggle-switch", "checked"),
+    prevent_initial_call=True,
 )
 def update_button(checked):
     if checked:
@@ -498,10 +505,16 @@ def update_chips(checked, data):
     for entity in chips.keys():
         for ent, values in results["entities"][entity].items():
             if values["deleted"] == deleted:
+                # Use the updated name for the chip
+                if values["corrected_name"] != None:
+                    name = values["corrected_name"]
+                else:
+                    name = ent
+                    
                 chips[f"{entity}"].append(
                     dmc.Chip(
                         dmc.Group([
-                            ent,
+                            name,
                             dmc.Badge(
                                 dmc.Text(f"{len(values['sentence'])}",
                                          style=review_badge_style),
@@ -512,7 +525,7 @@ def update_chips(checked, data):
                                     "pointerEvents": "none"}
                             )
                         ]),
-                        value=ent,
+                        value=name,
                         variant="outline",
                         styles=toggle_style,
                     ))
@@ -628,9 +641,10 @@ def update_entity(
     taxa, geog, alti, age, email, accordian, 
     new_entity_text, new_entity_sentence, new_entity_section):
     
+    callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
     original_text, _, _, _ = chips_values(site, region, taxa, geog, alti, age, email, accordian)
     
-    if submit:
+    if callback_context == "new-entity-submit.n_clicks":
         if new_entity_text != None:
             
             try:
@@ -667,14 +681,35 @@ def update_entity(
                 "text": new_entity_sentence,
             })
             
-    elif correct:
-        if accordian != None:
+    elif callback_context == "correct-button.n_clicks":
+        # for ent, values in results["entities"][accordian].items():
+        #     if ent == original_text:
+        #         values["corrected_name"] = entity
+        #         break
+        # TODO: verify with team whether deleting the old entity is fine or not
+        if entity in results["entities"][accordian]:
+            for sentence in results["entities"][accordian][original_text]["sentence"]:
+                try:
+                    start, end = find_start_end_char(sentence['text'], entity)
+                except:
+                    start, end = 0, 0
+                    
+                sentence["char_index"]["start"] = start
+                sentence["char_index"]["end"] = end
+                
+                # Add to sentences if not already present
+                if sentence not in results["entities"][accordian][entity]["sentence"]:
+                    results["entities"][accordian][entity]["sentence"].append(sentence)
+            # Delete the old entity
+            del results['entities'][accordian][original_text]
+            
+        else:
             for ent, values in results["entities"][accordian].items():
                 if ent == original_text:
                     values["corrected_name"] = entity
                     break
 
-    elif delete:
+    elif callback_context == "delete-restore-button.n_clicks":
         for ent, values in results["entities"][accordian].items():
             if ent == original_text:
                 values["deleted"] = not values["deleted"]
@@ -762,7 +797,7 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
     callback_context = [p["prop_id"]
                         for p in dash.callback_context.triggered][0]
 
-    if callback_context == "delete-restore-button.n_clicks" and n_clicks:
+    if callback_context == "delete-restore-button.n_clicks":
         return []
 
     if accordian == None or (site == None and region == None and taxa == None and geog == None and alti == None and age == None and email == None):
@@ -836,7 +871,6 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
 # Enable correct button when corrected text is entered
 @callback(
     Output("correct-button", "disabled"),
-    
     Input("corrected-text", "value"),
 )
 def enable_correct_button(corrected_text):

@@ -189,12 +189,13 @@ def layout(gddid=None):
                         dbc.Col(
                             [
                                 dmc.Button(
-                                    "Home",
+                                    dmc.Text(
+                                        "Home",
+                                        style=nav_text_style),
                                     id="home-button",
                                     leftIcon=DashIconify(
                                         icon="dashicons-arrow-left-alt", height=16),
-                                    style={"background-color": "blue",
-                                           "padding-left": "1rem"}
+                                    style=nav_button_style,
                                 ),
                                 dcc.Location(id='location_home', refresh=True),
                                 # dcc.Location(id='location-irrelevant', refresh=True),
@@ -210,12 +211,7 @@ def layout(gddid=None):
                         dbc.Col([
                             html.Div([
                                 dmc.Text("Relevance Score: ",
-                                        style={
-                                             "display": "inline-block",
-                                             "padding-right": "0px",
-                                             "position": "relative",
-                                             "font-weight": "bold",
-                                }),
+                                        style=relevance_score_style),
                                 dmc.RingProgress(
                                     id="ring-progress",
                                     sections=[{
@@ -228,12 +224,7 @@ def layout(gddid=None):
                                     size=80,
                                     thickness=10,
                                     roundCaps=True,
-                                    style={
-                                        "position": "relative",
-                                        "margin-bottom": "-20px",
-                                        "bottom": "10px",
-                                        "display": "inline-block",
-                                    }
+                                    style=progress_ring_style,
                                 ),
                             ])
                         ],  align="center",
@@ -272,7 +263,6 @@ def layout(gddid=None):
                                         dmc.Button("Mark as irrelevant",
                                                    color="red",
                                                    variant="filled", id="irrelevant-button"),
-                                        # html.Div(id="relevant-output"),
                                     ],
                                     position="center",
                                 ),
@@ -291,7 +281,9 @@ def layout(gddid=None):
                             [
                                 # External link to the article
                                 dmc.NavLink(
-                                    label="Go to Article",
+                                    label=dmc.Text(
+                                        "Go to Article",
+                                        style=nav_button_style),
                                     rightSection=DashIconify(
                                         icon="dashicons-admin-links", height=16),
                                     variant="filled",
@@ -299,9 +291,7 @@ def layout(gddid=None):
                                     href="http://doi.org/" + \
                                     original["doi"],
                                     target="_blank",
-                                    style={"font-weight": "bold",
-                                           "border-radius": "3px",
-                                           "background-color": "blue"},
+                                    style=nav_button_style,
                                 )
                             ],
                             lg=1,
@@ -358,13 +348,14 @@ def get_accordion_items(checked, data):
                     dmc.Group([
                         dmc.Text(name),
                         dmc.Badge(
-                            f"{len([ent for ent in data['entities'][label].values() if ent['deleted'] != checked])}",
-                            size="xxs",
+                            dmc.Text(
+                                f"{len([ent for ent in data['entities'][label].values() if ent['deleted'] != checked])}",
+                                style=review_badge_style
+                            ),
                             p=0,
-                            style={"background-color": "#b8864b",
-                                   "font-size": "10px"},
+                            style={"background-color": "#b8864b"},
                             variant="filled",
-                            sx={"width": 16, "height": 16,
+                            sx={"width": 17, "height": 17,
                                 "pointerEvents": "none"}
                         )
                         ])),
@@ -512,26 +503,18 @@ def update_chips(checked, data):
                         dmc.Group([
                             ent,
                             dmc.Badge(
-                                f"{len(values['sentence'])}",
-                                size="xs",
+                                dmc.Text(f"{len(values['sentence'])}",
+                                         style=review_badge_style),
                                 p=0,
                                 variant="filled",
-                                style={"background-color": "#b8864b",
-                                   "font-size": "10px",
-                                    "font-weight": "bold"},
-                                sx={"width": 16, "height": 16,
+                                style={"background-color": "#b8864b"},
+                                sx={"width": 17, "height": 17,
                                     "pointerEvents": "none"}
                             )
                         ]),
                         value=ent,
                         variant="outline",
-                        styles={"label": {"display": "inline-flex",
-                                          "justifyContent": "space-between",
-                                          "&[data-checked]":{
-                                              "borderColor": "#b8864b",
-                                              "fontWeight": "bold",                                                    
-                                            }
-                                          }},
+                        styles=toggle_style,
                     ))
 
     return chips["SITE"], chips["REGION"], chips["TAXA"], chips["GEOG"], chips["ALTI"], chips["AGE"], chips["EMAIL"]
@@ -826,14 +809,13 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
     dmc_tabs = [dmc.Tab(tab_name,
                         value=tab_name,
                         rightSection=dmc.Badge(
-                            f"{len(tabs[tab_name])}",
-                            size="xs",
+                            dmc.Text(
+                                f"{len(tabs[tab_name])}",
+                                style=review_badge_style),
                             p=0,
                             variant="filled",
-                            style={"background-color": "#b8864b",
-                                   "font-size": "10px",
-                                   "font-weight": "exta-bold",},
-                            sx={"width": 16, "height": 16, "pointerEvents": "none"}))
+                            style={"background-color": "#b8864b"},
+                            sx={"width": 17, "height": 17, "pointerEvents": "none"}))
                 for tab_name in tabs.keys()]
 
     tab_component = dmc.Tabs(

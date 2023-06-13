@@ -11,6 +11,51 @@ tab_header_style = {
 badge_style = {
     "background-color": "#b8864b",
     "font-size": "15px",
+    "color": "white",
+    "font-weight": "bold"
+}
+
+nav_button_style = {
+    "font-weight": "bold",
+    "border-radius": "3px",
+    "background-color": "#1F3A5F",
+    "padding-left": "1rem"
+}
+
+nav_text_style = {
+    "display": "inline-block",
+    "font-size": "0.9rem",
+    "font-weight": "bold",
+}
+
+progress_ring_style = {
+    "position": "relative",
+    "margin-bottom": "-20px",
+    "bottom": "10px",
+    "display": "inline-block",
+}
+relevance_score_style = {
+    "display": "inline-block",
+    "padding-right": "0px",
+    "position": "relative",
+    "font-weight": "bold",
+    "bottom": "10px",
+}
+toggle_style = {
+    "label": {
+        "display": "inline-flex",
+        "justifyContent": "space-between",
+        "&[data-checked]":{
+            "borderColor": "#b8864b",
+            "fontWeight": "bold",                                                    
+        }
+    }
+}
+
+review_badge_style = {
+    "color": "white",
+    "font-size": "12px",
+    "font-weight": "bold"
 }
 
 # Data table conditional style
@@ -53,13 +98,18 @@ table_header_style = {
 chip_style={"scrollbar-width": "none", 
         "overflow": "auto",
         "height": "auto",
-        "max-height": "200px"}
+        "max-height": "200px",
+        "padding-bottom": "10px",}
 
 tab_body_style = {
     "scrollbar-width": "none", 
     "overflow": "auto",
     "height": "auto",
-    "max-height": "500px"
+    "max-height": "800px",
+    "border": "1px outset #000000",
+    "border-radius": "5px",
+    "border-color": "lightgrey",
+    "border-shadow": "15px 15px 10px grey",
 }
 # styling the sidebar
 SIDEBAR_STYLE = {

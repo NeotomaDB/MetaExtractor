@@ -26,6 +26,8 @@ from sentence_transformers import SentenceTransformer
 import joblib
 import logging
 from docopt import docopt
+import pyarrow as pa
+import pyarrow.parquet as pq
 
 # Locate src module
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -376,6 +378,17 @@ def main():
     embedded = add_embeddings(preprocessed, 'text_with_abstract', model = 'allenai/specter2')
     predicted = relevance_prediction(embedded, model_path, predict_thld = 0.5)
     prediction_export(predicted, output_path)
+
+    # Export Parquet
+    # The parquet contains: parameters used when queried, 
+    # Create a PyArrow table from the DataFrame
+    table = pa.Table.from_pandas(df)
+
+# Specify the Parquet file path
+parquet_file = 'path/to/your/file.parquet'
+
+# Write the table to a Parquet file
+pq.write_table(table, parquet_file)
 
 
 if __name__ == "__main__":

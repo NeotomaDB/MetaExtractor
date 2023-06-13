@@ -26,6 +26,8 @@ import re
 from docopt import docopt
 import logging
 import sys
+import pyarrow as pa
+import pyarrow.parquet as pq
 
 
 # Locate src module
@@ -43,8 +45,7 @@ def get_new_gdd_articles(output_path,
                          n_recent_articles = None, 
                          min_date = None, 
                          max_date = None, 
-                         term = None,
-                         sample_n = None):
+                         term = None):
     """ 
     Get newly acquired articles from min_date to (optional) max_date. 
     Or get the most recent new articles added to GeoDeepDive.
@@ -165,15 +166,14 @@ def get_new_gdd_articles(output_path,
     
     gdd_df = gdd_df.reset_index(drop=True)
 
+    #JSON output
     result_dict = {}
     result_dict['n_returned_article'] = gdd_df.shape[0]
     result_dict['param_min_date'] = min_date
     result_dict['param_max_date'] = max_date
     result_dict['param_n_recent_articles'] = n_recent_articles
     result_dict['data'] = gdd_df.to_dict()
-
     logger.info(f'{gdd_df.shape[0]} articles returned from GeoDeepDive.')
-
 
     # Write the JSON object to a file
     directory = os.path.join(output_path)
@@ -182,6 +182,20 @@ def get_new_gdd_articles(output_path,
 
     with open(output_path + '/gdd_api_return.json', "w") as file:
         json.dump(result_dict, file)
+
+    # Export Parquet
+    # The parquet contains: parameters used when queried, predicted(gddid, DOI, metadata & prediction results)
+    gdd_df['min_date'] = n_recent_articles
+    gdd_df['max_date'] = min_date
+    gdd_df['max_date'] = max_date
+    gdd_df['term'] = term
+
+     # Create a PyArrow table from the DataFrame
+    table = pa.Table.from_pandas(gdd_df)
+    # Specify the Parquet file path
+    parquet_file = output_path + '/gdd_api_return.parquet'
+    # Write the table to a Parquet file
+    pq.write_table(table, parquet_file)
 
 
 def main():

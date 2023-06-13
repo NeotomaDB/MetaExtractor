@@ -283,7 +283,7 @@ def layout(gddid=None):
                                 dmc.NavLink(
                                     label=dmc.Text(
                                         "Go to Article",
-                                        style=nav_button_style),
+                                        style=nav_text_style),
                                     rightSection=DashIconify(
                                         icon="dashicons-admin-links", height=16),
                                     variant="filled",

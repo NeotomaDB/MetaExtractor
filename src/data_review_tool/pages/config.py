@@ -61,7 +61,7 @@ review_badge_style = {
 # Data table conditional style
 table_conditional_style = [
     {'if': {'column_id': 'Review'}, 
-        'backgroundColor': 'blue', 
+        'backgroundColor': '#1F3A5F', 
         'text_align':'center',
         'color': 'white',
         "fontWeight": "1000",

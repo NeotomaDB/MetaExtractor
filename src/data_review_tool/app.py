@@ -29,7 +29,7 @@ app.layout = html.Div(
         "height": "100%",
         "overflow": "hidden",}
     )
-app._favicon = "assets/finding-fossils.ico"
+app._favicon = "finding-fossils.ico"
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server("0.0.0.0", debug=True)

@@ -6,15 +6,13 @@ import pandas as pd
 from dash.dependencies import Input, Output, State
 dash.register_page(__name__, path="/")
 
-from dash import Dash, dcc, html, Input, Output, callback
-import plotly.express as px
+from dash import dcc, html, Input, Output, callback
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 from pages.config import *
 suppress_callback_exceptions = True
 
 def layout():
-
 
     directories = [os.path.join("data", "data-review-tool", dir) for dir in ["completed", "raw"]]
 
@@ -86,49 +84,48 @@ def layout():
     Output("location_current", "href"),
     Input("current_table", "active_cell"),  
     State("current_table", "derived_viewport_data"),
-)
-
-def current_article_clicked(active_cell_current, data):
-    if active_cell_current:
-        row = active_cell_current["row"]
-        col = active_cell_current["column_id"]
-        if col == "Review":  # or whatever column you want
-            selected = data[row]["gddid"]
-            return f"http://127.0.0.1:8050/article/{selected}"
-        else:
-            return dash.no_update
-
-@callback(
-    Output("location_completed", "href"),
-    Input("completed_table", "active_cell"),
+    Input("completed_table", "active_cell"),  
     State("completed_table", "derived_viewport_data"),
-)
-def completed_article_clicked(active_cell_completed, data):
-    if active_cell_completed:
-        row = active_cell_completed["row"]
-        col = active_cell_completed["column_id"]
-        if col == "Review":  # or whatever column you want
-            selected = data[row]["gddid"]
-            return f"http://127.0.0.1:8050/article/{selected}"
-        else:
-            return dash.no_update
-    
-@callback(
-    Output("location_irrelevant", "href"),
-    Input("irrelevant_table", "active_cell"),
+    Input("irrelevant_table", "active_cell"),  
     State("irrelevant_table", "derived_viewport_data"),
 )
-def irrelevant_article_clicked(active_cell_nonrelevant, data):        
-    if active_cell_nonrelevant:
-        row = active_cell_nonrelevant["row"]
-        col = active_cell_nonrelevant["column_id"]
-        if col == "Review":  # or whatever column you want
-            selected = data[row]["gddid"]
-            return f"http://127.0.0.1:8050/article/{selected}"
-        else:
-            return dash.no_update
+
+def current_article_clicked(active_cell_current, current_data, 
+                            active_cell_completed, completed_data, 
+                            active_cell_nonrelevant, nonrelevant_data):
+    """Get the URL of the article that was clicked on for each data table
+
+    Args:
+        active_cell_current (dict): The active cell of the current articles table
+        current_data (dict): The data of the current articles table
+        active_cell_completed (dict): The active cell of the completed articles table
+        completed_data (dict): The data of the completed articles table
+        active_cell_nonrelevant (dict): The active cell of the nonrelevant articles table
+        nonrelevant_data (dict): The data of the nonrelevant articles table
+
+    Returns:
+        str: The URL of the article that was clicked on
+    """
+    for active_cell, data in [(active_cell_current, current_data), (active_cell_completed, completed_data), (active_cell_nonrelevant, nonrelevant_data)]:
+        if active_cell:
+            row = active_cell["row"]
+            col = active_cell["column_id"]
+            if col == "Review":
+                selected = data[row]["gddid"]
+                return f"http://127.0.0.1:8050/article/{selected}"
+            else:
+                return dash.no_update
         
 def get_article_tab(tab_header, data):
+    """Get the tab for the specified article table
+
+    Args:
+        tab_header (str): The header of the tab
+        data (pandas.DataFrame): The data for the table
+
+    Returns:
+        dash_mantine_components.Tab: The tab for the specified article table
+    """
     return dmc.Tab(
             children=dmc.Text(tab_header,
                                 style=tab_header_style),
@@ -142,6 +139,17 @@ def get_article_tab(tab_header, data):
     )
     
 def get_article_table(table_id, location_id, tab_header, data):
+    """Get the table for the specified article table
+
+    Args:
+        table_id (str): The ID of the table
+        location_id (str): The ID of the location
+        tab_header (str): The header of the tab
+        data (pandas.DataFrame): The data for the table
+
+    Returns:
+        dash_mantine_components.TabsPanel: The table for the specified article table
+    """
     return dmc.TabsPanel(
             html.Div([
                 dash_table.DataTable(

@@ -141,7 +141,7 @@ def layout(gddid=None):
                     dbc.Col([
                         dmc.Group(
                             [
-                                "Enitity Text: ",
+                                "Original Text: ",
                                 html.Label(id="entity-text",
                                            style={"font-weight": "bold"}),
                                 dmc.TextInput(
@@ -313,8 +313,7 @@ def layout(gddid=None):
                 ],
             ),
             html.Br(),
-            dcc.Store(id="results", data=[
-                      original]),
+            dcc.Store(id="results", data=[results]),
             dbc.Row(
                 [
                     dbc.Col(sidebar, width=12, lg=3, className="g-0"),
@@ -355,7 +354,7 @@ def get_accordion_items(checked, data):
                         dmc.Text(name),
                         dmc.Badge(
                             dmc.Text(
-                                f"{len([ent for ent in data['entities'][label].values() if ent['deleted'] != checked])}",
+                                f"{len([ent for ent in results['entities'][label].values() if ent['deleted'] != checked])}",
                                 style=review_badge_style
                             ),
                             p=0,
@@ -525,7 +524,7 @@ def update_chips(checked, data):
                                     "pointerEvents": "none"}
                             )
                         ]),
-                        value=name,
+                        value=ent,
                         variant="outline",
                         styles=toggle_style,
                     ))
@@ -562,46 +561,61 @@ def unselect_chips(accordian):
     Input("chips_email", "value"),
     State("accordion", "value"),
 )
-def chips_values(site, region, taxa, geog, alti, age, email, accordian):
+def chips_values(site,
+                 region,
+                 taxa,
+                 geog,
+                 alti,
+                 age,
+                 email,
+                 accordian):
+
+    if accordian == None:
+        return "No entity selected", True, True, ""
     
+    for entity, value in results["entities"][accordian].items():
+        if entity in [site, region, taxa, geog, alti, age, email]:
+            if value["corrected_name"] != None:
+                corrected_name = value["corrected_name"]
+            else:
+                corrected_name = entity
+
     if accordian == "SITE":
         if site == None:
             return "No entity selected", True, True, ""
         else:
-            return site, False, False, site
+            return site, False, False, corrected_name
     elif accordian == "REGION":
         if region == None:
             return "No entity selected", True, True, ""
         else:
-            return region, False, False, region
+            return region, False, False, corrected_name
             
     elif accordian == "TAXA":
         if taxa == None:
             return "No entity selected", True, True, ""
         else:
-            return taxa, False, False, taxa
+            return taxa, False, False, corrected_name
     elif accordian == "GEOG":
         if geog == None:
             return "No entity selected", True, True, ""
         else:
-            return geog, False, False, geog
+            return geog, False, False, corrected_name
     elif accordian == "ALTI":
         if alti == None:
             return "No entity selected", True, True, ""
         else:
-            return alti, False, False, alti
+            return alti, False, False, corrected_name
     elif accordian == "AGE":
         if age == None:
             return "No entity selected", True, True, ""
         else:
-            return age, False, False, age
+            return age, False, False, corrected_name
     elif accordian == "EMAIL":
         if email == None:
             return "No entity selected", True, True, ""
         else:
-            return email, False, False, email
-    else:
-        return "No entity selected", True, True, ""
+            return email, False, False, corrected_name
 
 # toggle through the modal whenever the add-new-entity / close button is clicked
 @callback(
@@ -644,7 +658,7 @@ def update_entity(
     callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
     original_text, _, _, _ = chips_values(site, region, taxa, geog, alti, age, email, accordian)
     
-    if callback_context == "new-entity-submit.n_clicks":
+    if callback_context == "new-entity-submit.n_clicks" and submit:
         if new_entity_text != None:
             
             try:
@@ -681,12 +695,11 @@ def update_entity(
                 "text": new_entity_sentence,
             })
             
-    elif callback_context == "correct-button.n_clicks":
+    elif callback_context == "correct-button.n_clicks" and correct:
         # for ent, values in results["entities"][accordian].items():
         #     if ent == original_text:
         #         values["corrected_name"] = entity
         #         break
-        # TODO: verify with team whether deleting the old entity is fine or not
         if entity in results["entities"][accordian]:
             for sentence in results["entities"][accordian][original_text]["sentence"]:
                 try:
@@ -709,7 +722,7 @@ def update_entity(
                     values["corrected_name"] = entity
                     break
 
-    elif callback_context == "delete-restore-button.n_clicks":
+    elif callback_context == "delete-restore-button.n_clicks" and delete:
         for ent, values in results["entities"][accordian].items():
             if ent == original_text:
                 values["deleted"] = not values["deleted"]
@@ -732,11 +745,11 @@ def update_entity(
 def save_submit(submit, save, relevant, data):
     callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
     
-    if callback_context == "confirm-submit-button.n_clicks":
-        data["status"] = "Completed"
-        data["last_updated"] = datetime.now().strftime("%Y-%m-%d")
-        gddid = data["gddid"]
-        data = json.dumps(data)
+    if callback_context == "confirm-submit-button.n_clicks" and submit:
+        results["status"] = "Completed"
+        results["last_updated"] = datetime.now().strftime("%Y-%m-%d")
+        gddid = results["gddid"]
+        data = json.dumps(results)
         with open(f"data/data-review-tool/completed/{gddid}.json", "w") as f:
             f.write(data)
         return  dmc.Notification(
@@ -747,11 +760,11 @@ def save_submit(submit, save, relevant, data):
                     message="Proceed to home page",
                     icon=DashIconify(icon="ic:round-celebration"),
                 )#, "/", None
-    elif callback_context == "confirm-irrelevant-button.n_clicks":
-        data["status"] = "Non-relevant"
-        data["last_updated"] = datetime.now().strftime("%Y-%m-%d")
-        gddid = data["gddid"]
-        data = json.dumps(data)
+    elif callback_context == "confirm-irrelevant-button.n_clicks" and relevant:
+        results["status"] = "Non-relevant"
+        results["last_updated"] = datetime.now().strftime("%Y-%m-%d")
+        gddid = results["gddid"]
+        data = json.dumps(results)
         with open(f"data/data-review-tool/completed/{gddid}.json", "w") as f:
             f.write(data)
         return  dmc.Notification(
@@ -762,10 +775,10 @@ def save_submit(submit, save, relevant, data):
                     message="Proceed to home page",
                     icon=DashIconify(icon="dashicons-remove"),
                 )#, None, "/"
-    elif callback_context == "save-button.n_clicks":
-        data["status"] = "In Progress"
-        gddid = data["gddid"]
-        data = json.dumps(data)
+    elif callback_context == "save-button.n_clicks" and save:
+        results["status"] = "In Progress"
+        gddid = results["gddid"]
+        data = json.dumps(results)
         with open(f"data/data-review-tool/completed/{gddid}.json", "w") as f:
             f.write(data)
         return  dmc.Notification(
@@ -810,7 +823,10 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
     for entity, values in results["entities"][accordian].items():
         if entity in [site, region, taxa, geog, alti, age, email]:
             sentences = values["sentence"]
-            highlight = entity
+            if values['corrected_name'] != None:
+                highlight = values['corrected_name']
+            else:
+                highlight = entity
             for sentence in sentences:
                 section_name = sentence["section_name"]
                 #TODO: get text using `sentid` attribute
@@ -853,6 +869,12 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
                             sx={"width": 17, "height": 17, "pointerEvents": "none"}))
                 for tab_name in tabs.keys()]
 
+    # Get the first tab component
+    try:
+        first_tab = list(tabs.keys())[0]
+    except IndexError:
+        # Error if the corrected spelling doesn't occur in any sentence
+        first_tab = None
     tab_component = dmc.Tabs(
         children=[
             dmc.TabsList(
@@ -862,7 +884,7 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
         ],
         variant='outline',
         orientation="horizontal",
-        value=list(tabs.keys())[0]
+        value=first_tab
     )
     tab_component.children.extend(dmc_tabs_content)
 

@@ -5,13 +5,12 @@ import copy
 import numpy as np
 from collections import defaultdict
 from datetime import datetime
-import plotly.express as px
 
 import dash
-from dash import Dash, dcc, html, Input, Output, callback, State
+from dash import dcc, html, Input, Output, callback, State
 import dash_mantine_components as dmc
 import dash_bootstrap_components as dbc
-from pages.navbar import df_denormalize, find_start_end_char
+from pages.navbar import find_start_end_char
 from dash_iconify import DashIconify
 from pages.config import *
 import seaborn as sns
@@ -333,6 +332,14 @@ def layout(gddid=None):
     Input("toggle-switch", "checked"),
 )
 def collapse(checked):
+    """Return the value of the accordion to collapse it when toggling between deleted and extracted entities
+
+    Args:
+        checked (bool): Whether the toggle switch is checked (True) or not (False
+
+    Returns:
+        bool: Whether the accordion is collapsed (True) or not (False)
+    """
     return None
 
 # Populate accordian
@@ -343,7 +350,15 @@ def collapse(checked):
     prevent_initial_call=True,
 )
 def get_accordion_items(checked, data):
-
+    """Return the children of the accordion to populate it with the extracted entities
+    
+    Args:
+        checked (bool): Whether the toggle switch is checked (True) or not (False)
+        data (dict): The data from the previous page
+    
+    Returns:
+        list: The children of the accordion
+    """
     children = []
 
     for label, name in entity_name_mapping.items():
@@ -445,6 +460,14 @@ def get_accordion_items(checked, data):
     prevent_initial_call=True,
 )
 def update_button(checked):
+    """Return the children of the button group to update the button to either delete or restore entities
+    
+    Args:
+        checked (bool): Whether the toggle switch is checked (True) or not (False)
+    
+    Returns:
+        list: The children of the button group
+    """
     if checked:
         return [
             dmc.Button(
@@ -473,6 +496,14 @@ def update_button(checked):
     prevent_initial_call=True,
 )
 def cell_clicked(n_clicks):
+    """Return the href of the home button to redirect to the home page
+    
+    Args:
+        n_clicks (int): The number of times the home button has been clicked
+    
+    Returns:
+        str: The href of the home button
+    """
     if n_clicks:
         return f"http://127.0.0.1:8050/"
     else:
@@ -491,7 +522,14 @@ def cell_clicked(n_clicks):
     Input('results', 'data')
 )
 def update_chips(checked, data):
-
+    """Return the children of the chips to update the chips on screen load
+    
+    Args:
+        checked (bool): Whether the toggle switch is checked (True) or not (False)
+        data (dict): The data from the previous page
+    Returns:
+        list: The children of the chips
+    """
     chips = {"SITE": [], "REGION": [], "TAXA": [],
              "GEOG": [], "ALTI": [], "AGE": [], "EMAIL": []}
 
@@ -544,6 +582,14 @@ def update_chips(checked, data):
     prevent_initial_call=True,
 )
 def unselect_chips(accordian):
+    """Return the values of the chips to unselect all chips when the accordian value changes
+    
+    Args:
+        accordian (str): The value of the accordian
+    
+    Returns:
+        list: The values of the chips
+    """
     return None, None, None, None, None, None, None
 
 # Populate entity text with the selected chip
@@ -569,6 +615,21 @@ def chips_values(site,
                  age,
                  email,
                  accordian):
+    """Return the children of the entity text to populate the entity text with the selected chip
+    
+    Args:
+        site (str): The value of the site chip
+        region (str): The value of the region chip
+        taxa (str): The value of the taxa chip
+        geog (str): The value of the geog chip
+        alti (str): The value of the alti chip
+        age (str): The value of the age chip
+        email (str): The value of the email chip
+        accordian (str): The value of the accordian
+    
+    Returns:
+        list: The children of the entity text
+    """
 
     if accordian == None:
         return "No entity selected", True, True, ""
@@ -628,6 +689,17 @@ def chips_values(site,
     prevent_initial_call=True,
 )
 def toggle_modal(n_clicks, close, opened, accordian):
+    """Return the state of the modal and the title of the modal
+    
+    Args:
+        n_clicks (int): The number of times the add-new-entity button has been clicked
+        close (int): The number of times the close button has been clicked
+        opened (bool): The state of the modal
+        accordian (str): The value of the accordian
+    Returns:
+        bool: The state of the modal
+        str: The title of the modal
+    """
     return not opened, f"Please add information for a new {accordian} entity below:"
 
 # Update the results store when entity text is changed or it needs to be deleted
@@ -654,6 +726,28 @@ def update_entity(
     correct, delete, submit, entity, site, region, 
     taxa, geog, alti, age, email, accordian, 
     new_entity_text, new_entity_sentence, new_entity_section):
+    """Update the results store when entity text is changed or it needs to be deleted
+    
+    Args:
+        correct (int): The number of times the correct button has been clicked
+        delete (int): The number of times the delete button has been clicked
+        submit (int): The number of times the submit button has been clicked
+        entity (str): The corrected entity text
+        site (str): The value of the site chip
+        region (str): The value of the region chip
+        taxa (str): The value of the taxa chip
+        geog (str): The value of the geog chip
+        alti (str): The value of the alti chip
+        age (str): The value of the age chip
+        email (str): The value of the email chip
+        accordian (str): The value of the accordian
+        new_entity_text (str): The value of the new entity text
+        new_entity_sentence (str): The value of the new entity sentence
+        new_entity_section (str): The value of the new entity section
+    
+    Returns:
+        dict: The updated results store
+    """
     
     callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
     original_text, _, _, _ = chips_values(site, region, taxa, geog, alti, age, email, accordian)
@@ -733,16 +827,24 @@ def update_entity(
 # Save the results to the appropriate folder
 @callback(
     Output("clicked-output", "children"),
-    # Output("location-submit", "href"),
-    # Output("location-irrelevant", "href"),
     Input("confirm-submit-button", "n_clicks"),
     Input("save-button", "n_clicks"),
     Input("confirm-irrelevant-button", "n_clicks"),
-    # Input("relevant-output", "children"),
     State('results', 'data'),
     prevent_initial_call=True,
 )
 def save_submit(submit, save, relevant, data):
+    """Save the results to the appropriate folder
+    
+    Args:
+        submit (int): The number of times the submit button has been clicked
+        save (int): The number of times the save button has been clicked
+        relevant (int): The number of times the irrelevant button has been clicked
+        data (dict): The results store
+    
+    Returns:
+        str: The notification to display
+    """
     callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
     
     if callback_context == "confirm-submit-button.n_clicks" and submit:
@@ -759,7 +861,7 @@ def save_submit(submit, save, relevant, data):
                     color="green",
                     message="Proceed to home page",
                     icon=DashIconify(icon="ic:round-celebration"),
-                )#, "/", None
+                )
     elif callback_context == "confirm-irrelevant-button.n_clicks" and relevant:
         results["status"] = "Non-relevant"
         results["last_updated"] = datetime.now().strftime("%Y-%m-%d")
@@ -774,7 +876,7 @@ def save_submit(submit, save, relevant, data):
                     color="red",
                     message="Proceed to home page",
                     icon=DashIconify(icon="dashicons-remove"),
-                )#, None, "/"
+                )
     elif callback_context == "save-button.n_clicks" and save:
         results["status"] = "In Progress"
         gddid = results["gddid"]
@@ -788,9 +890,9 @@ def save_submit(submit, save, relevant, data):
                     color="yellow",
                     message="Don't forget to comeback and finish the review",
                     icon=DashIconify(icon="dashicons-saved"), 
-                )#, None, None
+                )
     else:
-        return None#, None, None
+        return None
 
 # Populate tabs with sentences under corresponding sections
 @callback(
@@ -807,6 +909,21 @@ def save_submit(submit, save, relevant, data):
     prevent_initial_call=True,
 )
 def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian):
+    """Populate tabs with sentences under corresponding sections
+    
+    Args:
+        n_clicks (int): The number of times the delete/restore button has been clicked
+        site (str): The site name
+        region (str): The region name
+        taxa (str): The taxa name
+        geog (str): The geography name
+        alti (str): The altitude name
+        age (str): The age name
+        email (str): The email name
+        accordian (str): The current accordian
+    Returns:
+        list: The list of tabs
+    """
     callback_context = [p["prop_id"]
                         for p in dash.callback_context.triggered][0]
 
@@ -896,6 +1013,13 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
     Input("corrected-text", "value"),
 )
 def enable_correct_button(corrected_text):
+    """Enable correct button when corrected text is entered
+    
+    Args:
+        corrected_text (str): The corrected text
+    Returns:
+        bool: Whether the correct button is enabled
+    """
     if corrected_text:
         return False
     else:
@@ -906,12 +1030,31 @@ def enable_correct_button(corrected_text):
     Input("article-button", "n_clicks"),
 )
 def open_article(n_clicks):
+    """Open the article in a new tab
+    
+    Args:
+        n_clicks (int): The number of times the article button has been clicked
+        
+    Returns:
+        str: The article link
+    """
     if n_clicks:
         return "http://doi.org/" + original["doi"][0]
     else:
         return None
     
 def toggle_confirmation_modal(n_clicks_close, n_clicks, submit, opened):
+    """Toggle the confirmation modal
+    
+    args:
+        n_clicks_close (int): The number of times the close button has been clicked
+        n_clicks (int): The number of times the confirm button has been clicked
+        submit (int): The number of times the submit button has been clicked
+        opened (bool): Whether the modal is opened
+    
+    Return:
+        bool: Whether the modal is opened
+    """
     return not opened
 
 for overflow in ["submit", "irrelevant"]:

@@ -762,7 +762,7 @@ def update_entity(
             
             try:
                 sentences = pd.DataFrame(results["relevant_sentences"])
-                sentid = sentences['sentid'].min() - 1
+                sentid = int(sentences['sentid'].min() - 1)
             except:
                 sentences = pd.DataFrame()
                 sentid = -1
@@ -846,7 +846,7 @@ def save_submit(submit, save, relevant, data):
         str: The notification to display
     """
     callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
-    
+
     if callback_context == "confirm-submit-button.n_clicks" and submit:
         results["status"] = "Completed"
         results["last_updated"] = datetime.now().strftime("%Y-%m-%d")

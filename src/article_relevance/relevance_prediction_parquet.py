@@ -210,11 +210,13 @@ def data_preprocessing(metadata_df):
     
     # invalid when required input field is Null
     mask = metadata_df[['text_with_abstract', 'subject_clean', 'is-referenced-by-count', 'has_abstract']].isnull().any(axis=1)
-
     metadata_df.loc[mask, 'valid_for_prediction'] = 0
 
+    mask_text = (metadata_df['text_with_abstract'].str.strip() == '')
+    metadata_df.loc[mask_text, 'valid_for_prediction'] = 0
+
+
     with_missing_df = metadata_df.loc[mask, :]
-    
     logger.info(f'{with_missing_df.shape[0]} articles has missing feature and its relevance cannot be predicted.')
     logger.info(f'Data preprocessing completed.')
 
@@ -293,7 +295,7 @@ def relevance_prediction(input_df, model_path, predict_thld = 0.5):
     valid_df.loc[:, 'predict_proba'] = model_object.predict_proba(valid_df)[:, 1]
     valid_df.loc[:, 'prediction'] = valid_df.loc[:,'predict_proba'].apply(lambda x: 1 if x >= predict_thld else 0)
 
-    # Filter results, store key information that could possibly be useful for downstream
+    # Filter results, store key information that could possibly be useful downstream
     keyinfo_col = ['DOI', 'URL', 'gddid', 'valid_for_prediction',
                     'prediction', 'predict_proba', 'title', 'subtitle', 'abstract',
                 'subject_clean', 'journal', 'author', 'text_with_abstract',
@@ -307,8 +309,9 @@ def relevance_prediction(input_df, model_path, predict_thld = 0.5):
     # Join it with invalid df to get back to the full dataframe
     result = pd.concat([keyinfo_df, invalid_df.loc[:, invalid_col]])
 
-    result = result.rename(columns={'subject_clean': 'subject'})
-    logger.info(f"columns: {result.columns}")
+    # Change col name on the final result to make it more readable
+    result = result.rename(columns={'subject_clean': 'subject',
+                                    'text_with_abstract': 'title_with_abstract'})
 
     logger.info(f'Prediction completed.')
 
@@ -351,13 +354,10 @@ def prediction_export(input_df, output_path):
     with open(output_path + '/relevance_prediction_output.json', "w") as file:
         json.dump(result_dict, file)
 
-    # ===== log important information ======
-    # Set up logging configuration
-    logging.basicConfig(filename='prediction_pipeline.log', level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s',
-                    filemode='w')
-    # Create a logger
+    # Write the Parquet file
+    input_df_filled.to_parquet(output_path + '/relevance_prediction_single_run.parquet')
 
+    # ===== log important information ======
     logger.info(f'Total number of DOI processed: {input_df.shape[0]}')
     logger.info(f"Number of valid articles: {input_df.query('valid_for_prediction == 1').shape[0]}")
     logger.info(f"Number of invalid articles: {input_df.query('valid_for_prediction != 1').shape[0]}")

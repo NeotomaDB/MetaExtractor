@@ -134,10 +134,7 @@ def en_only_helper(value):
         detect_lang = "error"
         logger.info("This text throws an error:", value)
      
-    if 'en' in detect_lang:
-        return 'en'
-    else:
-        return 'non-en'
+    return detect_lang
      
 
 def data_preprocessing(metadata_df):
@@ -379,16 +376,6 @@ def main():
     predicted = relevance_prediction(embedded, model_path, predict_thld = 0.5)
     prediction_export(predicted, output_path)
 
-    # Export Parquet
-    # The parquet contains: parameters used when queried, 
-    # Create a PyArrow table from the DataFrame
-    table = pa.Table.from_pandas(df)
-
-# Specify the Parquet file path
-parquet_file = 'path/to/your/file.parquet'
-
-# Write the table to a Parquet file
-pq.write_table(table, parquet_file)
 
 
 if __name__ == "__main__":

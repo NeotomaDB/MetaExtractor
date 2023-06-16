@@ -28,6 +28,7 @@ import logging
 import sys
 import pyarrow as pa
 import pyarrow.parquet as pq
+import datetime
 
 
 # Locate src module
@@ -95,7 +96,7 @@ def get_new_gdd_articles(output_path,
             
     # ========== Query API ==========
     if n_recent_articles is not None:
-        api_call = "https://geodeepdive.org/api/articles?recent" + f"&max={n_recent_articles}" + "&full_results=true"
+        api_call = "https://geodeepdive.org/api/articles?recent" + f"&max={n_recent_articles}"
 
     # Query API by date range
     elif (min_date is not None) and (max_date is not None):
@@ -119,8 +120,10 @@ def get_new_gdd_articles(output_path,
     session = requests.Session()
     response = session.get(api_call)
 
-    while response.status_code != 200:
+    n_refresh = 0
+    while response.status_code != 200 and n_refresh < 10:
         response = requests.get(api_call)
+        n_refresh += 1
     
     response_dict = response.json()
     data = response_dict['success']['data']
@@ -128,21 +131,26 @@ def get_new_gdd_articles(output_path,
     i = 1
     logger.info(f'{len(data)} articles queried from GeoDeepDive (page {i}).')
 
-    next_page = response_dict['success']['next_page']
-    while (next_page != ''):
-        i += 1
-        logger.info(f"going to the next page: page{i}")
+    if 'next_page' in response_dict['success'].keys():
 
-        next_response = session.get(next_page)
-        while next_response.status_code != 200:
+        next_page = response_dict['success']['next_page']
+        n_refresh = 0
+
+        while (next_page != '') :
+            i += 1
+            logger.info(f"going to the next page: page{i}")
+
             next_response = session.get(next_page)
+            while next_response.status_code != 200:
+                next_response = session.get(next_page)
 
-        next_response_dict = next_response.json()
-        new_data = next_response_dict['success']['data']
-        logger.info(f'{len(new_data)} articles queried from GeoDeepDive (page {i}).')
-        data.extend(new_data)
-        
-        next_page = next_response_dict['success']['next_page']
+            next_response_dict = next_response.json()
+            new_data = next_response_dict['success']['data']
+            logger.info(f'{len(new_data)} articles queried from GeoDeepDive (page {i}).')
+            data.extend(new_data)
+            
+            next_page = next_response_dict['success']['next_page']
+            n_refresh += 1
 
     logger.info(f'GeoDeepDive query completed. Converting to JSON output.')
 
@@ -185,9 +193,16 @@ def get_new_gdd_articles(output_path,
 
     # Export Parquet
     # The parquet contains: parameters used when queried, predicted(gddid, DOI, metadata & prediction results)
-    gdd_df['min_date'] = n_recent_articles
-    gdd_df['max_date'] = min_date
-    gdd_df['max_date'] = max_date
+    gdd_df['n_recent'] = n_recent_articles
+    gdd_df['min_date'] = min_date
+
+    if max_date is None:
+         current_date = datetime.date.today()
+         formatted_date = current_date.strftime("%Y-%m-%d")
+         gdd_df['max_date'] = formatted_date
+    else:
+        gdd_df['max_date'] = max_date
+
     gdd_df['term'] = term
 
      # Create a PyArrow table from the DataFrame

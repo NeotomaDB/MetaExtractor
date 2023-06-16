@@ -165,7 +165,6 @@ def data_preprocessing(metadata_df):
 
     # Add has_abstract indicator for valid articles
     valid_condition = (metadata_df['valid_for_prediction'] == 1)
-
     metadata_df.loc[valid_condition, 'has_abstract'] = metadata_df.loc[valid_condition, "abstract"].isnull()
 
     # Remove tags from abstract
@@ -181,21 +180,24 @@ def data_preprocessing(metadata_df):
 
     metadata_df['language'] = metadata_df['language'].fillna(value = '')
     metadata_df['text_with_abstract'] = metadata_df['text_with_abstract'].fillna(value = '')
-    
+
+
     # impute only when there are > 5 characters for langdetect to impute accurately
-    ok_condition_row = (metadata_df['language'].str.len() == 0) & (metadata_df['text_with_abstract'].str.contains('[a-zA-Z]', regex=True)) & (metadata_df['text_with_abstract'].str.len() >= 5)
+    need_impute_condition = (metadata_df['language'].str.len() == 0) & (metadata_df['text_with_abstract'].str.contains('[a-zA-Z]', regex=True)) & (metadata_df['text_with_abstract'].str.len() >= 5)
     cannot_impute_condition = (metadata_df['language'].str.len() == 0) & ~((metadata_df['text_with_abstract'].str.contains('[a-zA-Z]', regex=True)) & (metadata_df['text_with_abstract'].str.len() >= 5))
 
-    metadata_df.loc[ok_condition_row,'language'] = metadata_df.loc[ok_condition_row, 'language'].apply(lambda x: en_only_helper(x))
-    metadata_df.loc[cannot_impute_condition, 'valid_for_prediction'] = 0
-    
+    # Record info
     n_missing_lang = sum(metadata_df['language'].str.len() == 0)
-    n_cannot_impute = sum(cannot_impute_condition)
     logger.info(f'{n_missing_lang} articles require language imputation')
+    n_cannot_impute = sum(cannot_impute_condition)
     logger.info(f'{n_cannot_impute} cannot be imputed due to too short text metadata(title, subtitle and abstract less than 5 character).')
 
-    # Set valid_for_prediction col to 0 if detected language is not English
-    en_condition = metadata_df['language'] != 'en' 
+    # Apply imputation
+    metadata_df.loc[need_impute_condition,'language'] = metadata_df.loc[need_impute_condition, 'text_with_abstract'].apply(lambda x: en_only_helper(x))
+
+    # Set valid_for_prediction col to 0 if cannot be imputed or detected language is not English
+    metadata_df.loc[cannot_impute_condition, 'valid_for_prediction'] = 0
+    en_condition = (metadata_df['language'] != 'en')
     metadata_df.loc[en_condition, 'valid_for_prediction'] = 0
 
     keep_col = ['DOI', 'URL', 'gddid', 'valid_for_prediction', 'title_clean', 'subtitle_clean', 'abstract_clean',
@@ -211,6 +213,8 @@ def data_preprocessing(metadata_df):
     # invalid when required input field is Null
     mask = metadata_df[['text_with_abstract', 'subject_clean', 'is-referenced-by-count', 'has_abstract']].isnull().any(axis=1)
     metadata_df.loc[mask, 'valid_for_prediction'] = 0
+    logger.info(f'{n_missing_lang} articles require language imputation')
+
 
     mask_text = (metadata_df['text_with_abstract'].str.strip() == '')
     metadata_df.loc[mask_text, 'valid_for_prediction'] = 0
@@ -292,8 +296,8 @@ def relevance_prediction(input_df, model_path, predict_thld = 0.5):
     logger.info(f"{df_nan_exist.shape[0]} articles's input feature contains NaN value.")
 
     # Use the loaded model for prediction on a new dataset
-    valid_df.loc[:, 'predict_proba'] = model_object.predict_proba(valid_df)[:, 1]
-    valid_df.loc[:, 'prediction'] = valid_df.loc[:,'predict_proba'].apply(lambda x: 1 if x >= predict_thld else 0)
+    valid_df['predict_proba'] = model_object.predict_proba(valid_df)[:, 1]
+    valid_df['prediction'] = valid_df.loc[:,'predict_proba'].apply(lambda x: 1 if x >= predict_thld else 0)
 
     # Filter results, store key information that could possibly be useful downstream
     keyinfo_col = ['DOI', 'URL', 'gddid', 'valid_for_prediction',
@@ -304,6 +308,7 @@ def relevance_prediction(input_df, model_path, predict_thld = 0.5):
                  'title', 'subtitle', 'abstract',
                 'subject_clean', 'journal', 'author', 'text_with_abstract',
                 'is-referenced-by-count', 'has_abstract', 'language', 'published', 'publisher']
+    
     keyinfo_df = valid_df.loc[:, keyinfo_col]
 
     # Join it with invalid df to get back to the full dataframe
@@ -339,8 +344,8 @@ def prediction_export(input_df, output_path):
     if not os.path.exists(df_directory):
         os.makedirs(df_directory)
         
-    input_df_filled = input_df.fillna('null')
-    df_json = input_df_filled.to_dict()
+    # input_df_filled = input_df.fillna('null')
+    df_json = input_df.to_dict()
 
     # ==== Add other info in the json file ===
     result_dict = {}
@@ -355,7 +360,7 @@ def prediction_export(input_df, output_path):
         json.dump(result_dict, file)
 
     # Write the Parquet file
-    input_df_filled.to_parquet(output_path + '/relevance_prediction_single_run.parquet')
+    input_df.to_parquet(output_path + '/relevance_prediction_single_run.parquet')
 
     # ===== log important information ======
     logger.info(f'Total number of DOI processed: {input_df.shape[0]}')

@@ -358,7 +358,8 @@ def extract_entities(
         )
 
     elif model_type == "spacy":
-
+        spacy.require_cpu()
+        logger.info(f"Loading model from {model_path}")
         spacy_model = spacy.load(model_path)
 
         start_time = pd.Timestamp.now()
@@ -555,14 +556,18 @@ def main():
 
         article_text = article_text_data[article_text_data["gddid"] == article_gdd]
 
-        try:
-            extracted_entities = extract_entities(article_text)
+        # try:
+        extracted_entities = extract_entities(
+            article_text,
+            model_type="spacy",
+            model_path=os.path.join("models", "ner", "spacy-transformer-v3"),
+        )
 
-        except Exception as e:
-            logger.error(
-                f"Error extracting entities for GDD ID: {article_gdd}, skipping article. Error: {e}"
-            )
-            continue
+        # except Exception as e:
+        #     logger.error(
+        #         f"Error extracting entities for GDD ID: {article_gdd}, skipping article. Error: {e}"
+        #     )
+        #     continue
 
         try:
             pprocessed_entities = post_process_extracted_entities(extracted_entities)

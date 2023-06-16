@@ -18,6 +18,7 @@ import json
 from docopt import docopt
 import spacy
 from tqdm import tqdm
+from dotenv import load_dotenv, find_dotenv
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -29,6 +30,13 @@ from src.entity_extraction.hf_entity_extraction import (
 from src.entity_extraction.spacy_entity_extraction import (
     spacy_extract_all,
 )
+
+load_dotenv(find_dotenv())
+
+# get the MODEL_NAME from environment variables
+HF_NER_MODEL_NAME = os.getenv("HF_NER_MODEL_NAME")
+SPACY_NER_MODEL_NAME = os.getenv("SPACY_NER_MODEL_NAME")
+USE_NER_MODEL_TYPE = os.getenv("USE_NER_MODEL_TYPE")
 
 logger = get_logger(__name__)
 
@@ -556,18 +564,28 @@ def main():
 
         article_text = article_text_data[article_text_data["gddid"] == article_gdd]
 
-        # try:
-        extracted_entities = extract_entities(
-            article_text,
-            model_type="spacy",
-            model_path=os.path.join("models", "ner", "spacy-transformer-v3"),
-        )
+        if USE_NER_MODEL_TYPE == "huggingface":
+            logger.info(f"Using HuggingFace model {HF_NER_MODEL_NAME}")
+            model_path = os.path.join("models", "ner", HF_NER_MODEL_NAME)
+        elif USE_NER_MODEL_TYPE == "spacy":
+            logger.info(f"Using Spacy model {SPACY_NER_MODEL_NAME}")
+            model_path = os.path.join("models", "ner", SPACY_NER_MODEL_NAME)
+        else:
+            raise ValueError(
+                f"Model type {USE_NER_MODEL_TYPE} not supported. Please set MODEL_TYPE to either 'huggingface' or 'spacy'."
+            )
+        try:
+            extracted_entities = extract_entities(
+                article_text,
+                model_type=USE_NER_MODEL_TYPE,
+                model_path=model_path,
+            )
 
-        # except Exception as e:
-        #     logger.error(
-        #         f"Error extracting entities for GDD ID: {article_gdd}, skipping article. Error: {e}"
-        #     )
-        #     continue
+        except Exception as e:
+            logger.error(
+                f"Error extracting entities for GDD ID: {article_gdd}, skipping article. Error: {e}"
+            )
+            continue
 
         try:
             pprocessed_entities = post_process_extracted_entities(extracted_entities)

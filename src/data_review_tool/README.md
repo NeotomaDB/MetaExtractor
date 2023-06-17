@@ -10,7 +10,7 @@ To be completed
 
 ### App Demo
 
-[![App Demo](assets/about_assets/data_review_tool_demo.png)](assets/about_assets/data_review_tool_demo.png)
+![App Demo](assets/about_assets/data_review_tool_demo.mp4)
 
 ### Home Page
 
@@ -20,7 +20,7 @@ The next tab are Completed Articles are those that have reviews completed and ha
 
 The third tab are Irrelevant Articles. These articles are not relevant to the Neotoma Database and have been extracted accidentally. These articles will be used to retrain the article relevance model for greater accuracy.
 
-![Home Page](../assets/about_assets/home.png)
+![Home Page](assets/about_assets/home.png)
 
 ### Article Review
 
@@ -30,29 +30,29 @@ Once an articles has been selected from the Home Page, you will be brought to th
 
 On the left hand side of the article, there are accordions for each entity type found in the article. The number displayed beside the entity type indicates how many different entities are found in the article. Clicking on the accordion will open the list of entities. Clicking on the entity will open the entity review page. 
 
-![Accordions](../assets/about_assets/accordions.png)
+![Accordions](assets/about_assets/accordions.png)
 
 ### Entity Review
 
 On the entity review page, you will see the Original Text which will display the label that the Entity Extraction model has extracted. Below this will be tabs of each of the sections of the journal article that this entity has been found. Under each tab will be the sentences in which the entity has been found. The entity has been highlighted in blue. As a result of the scanning of articles from PDFs through Optical Character Recognition there could be issues with the text. If you see any issues with the text, you can edit the text in the text box below the sentence. Once you have made your changes, you can click the "Correct" button to save your changes. If you would like to delete the entity, you can click the "Delete" button. This will remove the entity from the accordion and will be reflected in the entity count on the left hand side of the article review page. If the entity is correct, simply move on to the next entity.
 
-![Entity Review](../assets/about_assets/entity_review.png)
+![Entity Review](assets/about_assets/entity_review.png)
 
 ##3 Adding a new entity
 
 If through the process of reviewing the article you come across an entity that was not extracted by the Entity Extraction model, you can add a new entity. To do this, click the "Add New Entity" button. This will open a popup in which you can add the entity you have found. The information that you need to include here is the Entity Name, the Sentence that you found this entity in, as well as the Section Name of the article it was found in. Once you have added the necessary information, click the "Add" button. This will add the entity to the entity list on the left hand side of the article review page. You can then click on the entity to open the entity review page and make any changes to the entity that you would like.
 
-![Add New Entity](../assets/about_assets/new_entity.png)
+![Add New Entity](assets/about_assets/new_entity.png)
 
 ### Restoring an entity
 
 If you have deleted an entity by accident, you can restore the entity. To do this, select the "Show deleted entity button on the below the accordions.
 
-![Show Deleted Entity](../assets/about_assets/deleted_toggle.png)
+![Show Deleted Entity](assets/about_assets/deleted_toggle.png)
 
 From there, select the entity and click the "Restore" button on the entity review page. This will restore the entity to the entity list on the left hand side of the article review page.
 
-![Restore Entity](../assets/about_assets/restore.png)
+![Restore Entity](assets/about_assets/restore.png)
 
 ### Submitting the Article
 

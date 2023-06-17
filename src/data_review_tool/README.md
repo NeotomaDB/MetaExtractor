@@ -10,7 +10,7 @@ To be completed
 
 ### App Demo
 
-![App Demo](assets/about_assets/data_review_tool_demo.mp4)
+https://github.com/NeotomaDB/MetaExtractor/assets/112443522/bfa966a7-8a6c-4cdc-b3d0-c1b5b0672a57
 
 ### Home Page
 

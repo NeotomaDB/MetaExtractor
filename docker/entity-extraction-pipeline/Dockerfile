@@ -15,13 +15,16 @@ RUN python -m nltk.downloader stopwords
 # Copy the entire repository folder into the container
 COPY src ./src
 
+# Build args
 ARG HF_NER_MODEL_NAME
 ARG SPACY_NER_MODEL_NAME
+
+# Set env variables for when running the container
 ENV HF_NER_MODEL_NAME=${HF_NER_MODEL_NAME}
 ENV SPACY_NER_MODEL_NAME=${SPACY_NER_MODEL_NAME}
 ENV USE_NER_MODEL_TYPE=huggingface
 
-# copy in the model defined by the env variable NER_MODEL_NAME from models folder
+# Copy in the model defined by the env variable NER_MODEL_NAME from models folder
 COPY models/ner/${HF_NER_MODEL_NAME} ./models/ner/${HF_NER_MODEL_NAME} 
 
 COPY models/ner/${SPACY_NER_MODEL_NAME} ./models/ner/${SPACY_NER_MODEL_NAME}

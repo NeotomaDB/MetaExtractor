@@ -34,9 +34,9 @@ from src.entity_extraction.spacy_entity_extraction import (
 load_dotenv(find_dotenv())
 
 # get the MODEL_NAME from environment variables
-HF_NER_MODEL_NAME = os.getenv("HF_NER_MODEL_NAME")
-SPACY_NER_MODEL_NAME = os.getenv("SPACY_NER_MODEL_NAME")
-USE_NER_MODEL_TYPE = os.getenv("USE_NER_MODEL_TYPE")
+HF_NER_MODEL_NAME = os.getenv("HF_NER_MODEL_NAME", "roberta-finetuned-v3")
+SPACY_NER_MODEL_NAME = os.getenv("SPACY_NER_MODEL_NAME", "spacy-transformer-v3")
+USE_NER_MODEL_TYPE = os.getenv("USE_NER_MODEL_TYPE", "huggingface")
 
 logger = get_logger(__name__)
 
@@ -546,65 +546,75 @@ def main():
 
     logger.debug(f"Running entity extraction pipeline with options:\n{opt}")
 
-    article_text_data = load_article_text_data(opt["--article_text_path"])
+    for f in os.listdir(opt["--article_text_path"]):
+        logger.info(f"Processing file: {f}")
 
-    if opt["--max_articles"] is not None and int(opt["--max_articles"]) != -1:
-        article_text_data = article_text_data[
-            article_text_data["gddid"].isin(
-                article_text_data["gddid"].unique()[7 : 7 + int(opt["--max_articles"])]
-            )
-        ]
+        file_path = os.path.join(opt["--article_text_path"], f)
 
-    # if max_sentences is not -1 then only use the first max_sentences sentences
-    if opt["--max_sentences"] is not None and int(opt["--max_sentences"]) != -1:
-        article_text_data = article_text_data.head(int(opt["--max_sentences"]))
+        article_text_data = load_article_text_data(file_path)
 
-    for article_gdd in article_text_data["gddid"].unique():
-        logger.info(f"Processing GDD ID: {article_gdd}")
+        if opt["--max_articles"] is not None and int(opt["--max_articles"]) != -1:
+            article_text_data = article_text_data[
+                # 7 index used for testing with entities in first couple sentences of article 7
+                article_text_data["gddid"].isin(
+                    article_text_data["gddid"].unique()[
+                        0 : 0 + int(opt["--max_articles"])
+                    ]
+                )
+            ]
 
-        article_text = article_text_data[article_text_data["gddid"] == article_gdd]
+        # if max_sentences is not -1 then only use the first max_sentences sentences
+        if opt["--max_sentences"] is not None and int(opt["--max_sentences"]) != -1:
+            article_text_data = article_text_data.head(int(opt["--max_sentences"]))
 
-        if USE_NER_MODEL_TYPE == "huggingface":
-            logger.info(f"Using HuggingFace model {HF_NER_MODEL_NAME}")
-            model_path = os.path.join("models", "ner", HF_NER_MODEL_NAME)
-        elif USE_NER_MODEL_TYPE == "spacy":
-            logger.info(f"Using Spacy model {SPACY_NER_MODEL_NAME}")
-            model_path = os.path.join("models", "ner", SPACY_NER_MODEL_NAME)
-        else:
-            raise ValueError(
-                f"Model type {USE_NER_MODEL_TYPE} not supported. Please set MODEL_TYPE to either 'huggingface' or 'spacy'."
-            )
-        try:
-            extracted_entities = extract_entities(
-                article_text,
-                model_type=USE_NER_MODEL_TYPE,
-                model_path=model_path,
-            )
+        for article_gdd in article_text_data["gddid"].unique():
+            logger.info(f"Processing GDD ID: {article_gdd}")
 
-        except Exception as e:
-            logger.error(
-                f"Error extracting entities for GDD ID: {article_gdd}, skipping article. Error: {e}"
-            )
-            continue
+            article_text = article_text_data[article_text_data["gddid"] == article_gdd]
 
-        try:
-            pprocessed_entities = post_process_extracted_entities(extracted_entities)
+            if USE_NER_MODEL_TYPE == "huggingface":
+                logger.info(f"Using HuggingFace model {HF_NER_MODEL_NAME}")
+                model_path = os.path.join("models", "ner", HF_NER_MODEL_NAME)
+            elif USE_NER_MODEL_TYPE == "spacy":
+                logger.info(f"Using Spacy model {SPACY_NER_MODEL_NAME}")
+                model_path = os.path.join("models", "ner", SPACY_NER_MODEL_NAME)
+            else:
+                raise ValueError(
+                    f"Model type {USE_NER_MODEL_TYPE} not supported. Please set MODEL_TYPE to either 'huggingface' or 'spacy'."
+                )
+            try:
+                extracted_entities = extract_entities(
+                    article_text,
+                    model_type=USE_NER_MODEL_TYPE,
+                    model_path=model_path,
+                )
 
-            if len(pprocessed_entities) == 0:
-                logger.warning(
-                    f"No entities extracted for GDD ID: {article_gdd}, skipping article."
+            except Exception as e:
+                logger.error(
+                    f"Error extracting entities for GDD ID: {article_gdd}, skipping article. Error: {e}"
                 )
                 continue
-        except Exception as e:
-            logger.error(
-                f"Error post processing entities for GDD ID: {article_gdd}, no results output. Error: {e}"
-            )
-            continue
 
-        export_extracted_entities(
-            extracted_entities=pprocessed_entities,
-            output_path=opt["--output_path"],
-        )
+            try:
+                pprocessed_entities = post_process_extracted_entities(
+                    extracted_entities
+                )
+
+                if len(pprocessed_entities) == 0:
+                    logger.warning(
+                        f"No entities extracted for GDD ID: {article_gdd}, skipping article."
+                    )
+                    continue
+            except Exception as e:
+                logger.error(
+                    f"Error post processing entities for GDD ID: {article_gdd}, no results output. Error: {e}"
+                )
+                continue
+
+            export_extracted_entities(
+                extracted_entities=pprocessed_entities,
+                output_path=opt["--output_path"],
+            )
 
 
 if __name__ == "__main__":

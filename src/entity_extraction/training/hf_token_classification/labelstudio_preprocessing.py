@@ -5,9 +5,9 @@
 Usage: labelstudio_preprocessing.py --label_files=<label_files> [--max_seq_length=<max_seq_length>] [--stride=<stride>]
 
 Options:
-    --label_files=<label_files>             The path to where the label files are. [default: all]
+    --label_files=<label_files>         The path to where the label files are. [default: all]
     --max_seq_length=<max_seq_length>   How many tokens the text is split into per training example. [default: 256]
-    --stride=<stride>                     How many tokens to move the window by. [default: 128]
+    --stride=<stride>                   How many tokens to move the window by. [default: 192]
 """
 
 import os, sys
@@ -30,7 +30,7 @@ from src.entity_extraction.entity_extraction_evaluation import get_token_labels
 def convert_labelled_data_to_hf_format(
     labelled_file_path: str,
     max_seq_length: int = 256,
-    stride: int = 128,
+    stride: int = 192,
 ):
     """
     Processes train/val/test data from labelstudio into a format used by huggingface.

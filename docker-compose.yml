@@ -1,0 +1,23 @@
+version: "0.0.1"
+services:
+  entity-extraction-pipeline:
+    image: metaextractor-entity-extraction-pipeline:v0.0.2
+    build: 
+      dockerfile: ./docker/entity-extraction-pipeline/Dockerfile
+      context: .
+      args:
+        HF_NER_MODEL_NAME: "roberta-finetuned-v3"
+        SPACY_NER_MODEL_NAME: "spacy-transformer-v3"
+    ports:
+      - "5000:5000"
+    volumes:
+    - ./data/entity-extraction/raw/original_files/:/inputs/
+    - ./data/entity-extraction/processed/processed_articles/:/outputs/
+    environment:
+      - USE_NER_MODEL_TYPE=huggingface
+      - LOG_OUTPUT_DIR=/outputs/
+      - MAX_SENTENCES=20
+      - MAX_ARTICLES=1
+
+
+  

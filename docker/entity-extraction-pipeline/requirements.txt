@@ -1,0 +1,14 @@
+# python version 3.10
+pandas==2.0.1
+pytest~=7.3
+seaborn~=0.12
+seqeval==1.2.2
+nltk==3.8.1
+spacy==3.5.3
+docopt-ng~=0.8
+transformers~=4.24
+numpy~=1.23
+python-dotenv~=1.0
+tqdm~=4.65
+torch~=1.12
+spacy-transformers~=1.1

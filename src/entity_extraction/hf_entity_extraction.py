@@ -107,7 +107,7 @@ def get_hf_token_labels(labelled_entities, raw_text):
     return split_text, token_labels
 
 
-def get_predicted_labels(text, ner_pipe):
+def get_predicted_labels(df, ner_pipe):
     """
     Gets the predicted labels from the hugging face model.
 
@@ -125,7 +125,15 @@ def get_predicted_labels(text, ner_pipe):
     """
 
     # get the predicted labels
-    df["predicted_labels"] = df["text"].apply(lambda x: ner_pipe(" ".join(x)))
+    start_time = pd.Timestamp.now()
+    predicted_labels = ner_pipe(df["text"].tolist())
+    logger.info(
+        f"Finished entity extraction in {pd.Timestamp.now() - start_time} to process {len(df)} batches."
+    )
+
+    # get the predicted labels
+    # df["raw_labels"] = ner_pipe(df["text"].tolist())
+    df["predicted_labels"] = predicted_labels
 
     df[["split_text", "predicted_tokens"]] = df.apply(
         lambda row: get_hf_token_labels(row.predicted_labels, " ".join(row.text)),

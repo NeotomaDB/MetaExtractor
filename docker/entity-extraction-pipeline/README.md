@@ -15,7 +15,15 @@ The following environment variables can be set to change the behavior of the pip
 - `MAX_SENTENCES`: This variable can be set to a number to limit the number of sentences processed per article. This is useful for testing and debugging. The default is `-1` which means no limit.
 - `MAX_ARTICLES`: This variable can be set to a number to limit the number of articles processed. This is useful for testing and debugging. The default is `-1` which means no limit.
 
-## Sample Docker Compose Setup
+## Sample Docker Run & Compose Setup
+
+Below is a sample docker run command for running the image:
+- the `$(id -u)` is used to run the docker container as the current user so that the output files are not owned by root
+- the `LOG_OUTPUT_DIR="../outputs/"` is different from the docker compose as it is relative to the current directory which from Docker run starts in `app` folder
+- for git bash on windows the `/${PWD}` is used to get the current directory and the forward slash is important to get the correct path
+```bash
+docker run -u $(id -u) -p 5000:5000 -v /${PWD}/data/entity-extraction/raw/original_files/:/inputs/ -v /${PWD}/data/entity-extraction/processed/processed_articles/:/outputs/ --env LOG_OUTPUT_DIR="../outputs/" metaextractor-entity-extraction-pipeline:v0.0.2
+```
 
 Below is a sample docker compose configuration for running the image:
 ```yaml

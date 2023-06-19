@@ -692,16 +692,17 @@ def main():
                 method="tokens",
             )
 
-            # log the plots to mlflow
-            mlflow.log_figure(
-                # name plot with current time and seconds
-                token_classification_report,
-                f"token_classification_report_{time.strftime('%Y%m%d-%H%M%S')}.png",
-            )
-            mlflow.log_figure(
-                entity_classification_report,
-                f"entity_classification_report_{time.strftime('%Y%m%d-%H%M%S')}.png",
-            )
+            if USE_MLFLOW is True:
+                # log the plots to mlflow
+                mlflow.log_figure(
+                    # name plot with current time and seconds
+                    token_classification_report,
+                    f"token_classification_report_{time.strftime('%Y%m%d-%H%M%S')}.png",
+                )
+                mlflow.log_figure(
+                    entity_classification_report,
+                    f"entity_classification_report_{time.strftime('%Y%m%d-%H%M%S')}.png",
+                )
 
             return final_results
         else:

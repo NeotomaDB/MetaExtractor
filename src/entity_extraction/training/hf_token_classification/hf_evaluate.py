@@ -120,7 +120,7 @@ def load_ner_model_pipeline(model_path: str):
         "ner",
         model=model,
         tokenizer=tokenizer,
-        grouped_entities=True,
+        aggregation_strategy="simple",
     )
 
     return ner_pipe, model, tokenizer
@@ -215,7 +215,7 @@ def generate_classification_results(true_tokens, predicted_tokens):
         raise ValueError(
             "The true tokens and predicted tokens must be the same length."
         )
-    
+
     if len(true_tokens) == 0 or len(predicted_tokens) == 0:
         raise ValueError("The true tokens and predicted tokens must not be empty.")
 

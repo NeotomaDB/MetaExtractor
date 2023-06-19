@@ -751,7 +751,10 @@ def update_entity(
             
             try:
                 sentences = pd.DataFrame(results["relevant_sentences"])
-                sentid = int(sentences['sentid'].min() - 1)
+                min_sentid = int(sentences['sentid'].min() - 1)
+                if min_sentid >= 0:
+                    min_sentid = -1
+                sentid = min_sentid
             except:
                 sentences = pd.DataFrame()
                 sentid = -1

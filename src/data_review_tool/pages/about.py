@@ -1,32 +1,37 @@
 import dash
 import sys
 import os
+from pages.config import *
 
 dash.register_page(__name__)
 
-from dash import Dash, dcc, html, Input, Output, callback
-import plotly.express as px
+from dash import dash, dcc, html, Input, Output, callback
+import os
 
-
-
-df = px.data.tips()
-days = df.day.unique()
+with open('src/data_review_tool/assets/about.md', 'r') as file:
+    markdown_text = file.read()
 
 layout = html.Div(
     [
-        dcc.Dropdown(
-            id="dropdown",
-            options=[{"label": x, "value": x} for x in days],
-            value=days[0],
-            clearable=False,
+        html.Div(
+            [
+                html.H2("Finding Fossils Demo",
+                        style=h2_style),
+                html.Video(
+                    controls=True,
+                    src="assets/data_review_tool_demo.mp4",
+                    style={"width": "50%", "height": "auto"},
+                ),
+                dcc.Markdown(
+                    children=[
+                        markdown_text,
+                    ],
+                ),
+            ],
+            style={'text-align': 'center',
+                   "width": '75%',
+                   },
         ),
-        dcc.Graph(id="bar-chart"),
-    ]
+    ],
+    style={'display': 'flex', 'justify-content': 'center'}    
 )
-
-
-@callback(Output("bar-chart", "figure"), Input("dropdown", "value"))
-def update_bar_chart(day):
-    mask = df["day"] == day
-    fig = px.bar(df[mask], x="sex", y="total_bill", color="smoker", barmode="group")
-    return fig

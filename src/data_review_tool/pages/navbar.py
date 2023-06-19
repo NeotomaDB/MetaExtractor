@@ -22,7 +22,7 @@ def create_navbar():
                 dbc.Nav(
                     [
                         dbc.NavItem(
-                            dbc.NavLink("Article Review", 
+                            dbc.NavLink("Home", 
                                         href="/", 
                                         style={
                                             "color": "white",

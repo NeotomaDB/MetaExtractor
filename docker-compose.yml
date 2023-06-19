@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 version: "3.9"
-=======
-version: '3.9'
->>>>>>> ed39fb4 (Add readme for setting up docker)
 services:
   data-review-tool:
     image: metaextractor-data-review-tool:v0.0.1

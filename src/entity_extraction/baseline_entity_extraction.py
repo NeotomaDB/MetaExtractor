@@ -11,7 +11,7 @@ import nltk
 import spacy
 
 # ensure stopwords are downloaded
-nltk.download("stopwords", quiet=True)
+# nltk.download("stopwords", quiet=True)
 
 from nltk.corpus import stopwords
 

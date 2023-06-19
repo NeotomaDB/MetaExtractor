@@ -1,4 +1,4 @@
-version: '3.9'
+version: "3.9"
 services:
   data-review-tool:
     image: metaextractor-data-review-tool:v0.0.1
@@ -26,7 +26,4 @@ services:
       - USE_NER_MODEL_TYPE=huggingface
       - LOG_OUTPUT_DIR=/outputs/
       - MAX_SENTENCES=20
-      - MAX_ARTICLES=1
-
-
-  
+      - MAX_ARTICLES=1 

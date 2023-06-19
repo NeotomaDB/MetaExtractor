@@ -13,12 +13,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 from src.entity_extraction.baseline_entity_extraction import baseline_extract_all
 from src.entity_extraction.spacy_entity_extraction import spacy_extract_all
 
-nlp = spacy.load(os.path.join(os.pardir,
-                              os.pardir,
-                              "models", 
-                              "ner",
-                              "transformer-v3"))
-
 
 def clean_words(words: list):
     """Perform basic preprocessing on individual words
@@ -74,28 +68,30 @@ def get_journal_articles(sentences_path):
         usecols=["gddid", "sentid", "words"],
     )
 
-    journal_articles = (journal_articles.words.str.replace('"', '', regex = True)
-                                .replace(',--,', '-', regex = True)
-                                .replace('.,/,', '. / ', regex = True)
-                                .replace('\{', '', regex = True)
-                                .replace('}', '', regex = True)
-                                .replace(r'\W{4,}', '', regex=True)
-                                .replace(',,,', 'comma_sym', regex=True)
-                                .replace(',', ' ', regex=True)
-                                .replace('comma_sym', ', ', regex=True)
-                                .replace('-LRB-', '(', regex=True)
-                                .replace('-LSB-', '[', regex=True)
-                                .replace('LRB', '(', regex=True)
-                                .replace('LSB', '[', regex=True)
-                                .replace('-RRB-', ')', regex=True)
-                                .replace('-RSB-', ']', regex=True)
-                                .replace('RRB', ')', regex=True)
-                                .replace('RSB', ']', regex=True)
-                                .replace('-RRB', ')', regex=True)
-                                .replace('-RSB', ']', regex=True)
-                                .replace('-RCB-', '-', regex=True)
-                                .replace('-LCB-', '-', regex=True))
-    
+    journal_articles = (
+        journal_articles.words.str.replace('"', "", regex=True)
+        .replace(",--,", "-", regex=True)
+        .replace(".,/,", ". / ", regex=True)
+        .replace("\{", "", regex=True)
+        .replace("}", "", regex=True)
+        .replace(r"\W{4,}", "", regex=True)
+        .replace(",,,", "comma_sym", regex=True)
+        .replace(",", " ", regex=True)
+        .replace("comma_sym", ", ", regex=True)
+        .replace("-LRB-", "(", regex=True)
+        .replace("-LSB-", "[", regex=True)
+        .replace("LRB", "(", regex=True)
+        .replace("LSB", "[", regex=True)
+        .replace("-RRB-", ")", regex=True)
+        .replace("-RSB-", "]", regex=True)
+        .replace("RRB", ")", regex=True)
+        .replace("RSB", "]", regex=True)
+        .replace("-RRB", ")", regex=True)
+        .replace("-RSB", "]", regex=True)
+        .replace("-RCB-", "-", regex=True)
+        .replace("-LCB-", "-", regex=True)
+    )
+
     return journal_articles
 
 
@@ -145,14 +141,17 @@ def get_hash(text):
     """
     return hashlib.shake_128(text.encode("utf-8")).hexdigest(8)
 
-def return_json(chunk,
-                chunk_local,
-                chunk_global,
-                chunk_subsection,
-                gdd,
-                doi,
-                article_hash_code,
-                model_version):
+
+def return_json(
+    chunk,
+    chunk_local,
+    chunk_global,
+    chunk_subsection,
+    gdd,
+    doi,
+    article_hash_code,
+    model_version,
+):
     """
     Creates a JSON file for an article to upload to LabelStudio for labelling.
 
@@ -174,7 +173,7 @@ def return_json(chunk,
         Hash code generated using the full text article
     model_version: str
         Version of the model used to generate the labels
-        
+
     Returns
     -------
     training_json: dict
@@ -193,12 +192,13 @@ def return_json(chunk,
             "chunk_hash": get_hash(chunk),
             "article_hash": article_hash_code,
         },
-        "predictions": [{
-            "model_version": model_version,
-            "result": []
-        }]
+        "predictions": [{"model_version": model_version, "result": []}],
     }
-    
+
+    nlp = spacy.load(
+        os.path.join(os.pardir, os.pardir, "models", "ner", "transformer-v3")
+    )
+
     # labels = baseline_extract_all(chunk)
     labels = spacy_extract_all(chunk, nlp)
     entities = []
@@ -317,31 +317,32 @@ def chunk_text(article):
 
 
 if __name__ == "__main__":
-    
     model_version = "transformers-ner-0.0.3"
-    
+
     bib_df = preprocessed_bibliography(
-                os.path.join(
-                    os.pardir,
-                    os.pardir,
-                    "data",
-                    "entity-extraction",
-                    "raw",
-                    "original_files", 
-                    "bibjson"
-))
-    
+        os.path.join(
+            os.pardir,
+            os.pardir,
+            "data",
+            "entity-extraction",
+            "raw",
+            "original_files",
+            "bibjson",
+        )
+    )
+
     journal_articles = get_journal_articles(
-                            os.path.join(
-                                os.pardir,
-                                os.pardir,
-                                "data",
-                                "entity-extraction",
-                                "raw",
-                                "original_files",
-                                "sentences_nlp352"))
-    
-    
+        os.path.join(
+            os.pardir,
+            os.pardir,
+            "data",
+            "entity-extraction",
+            "raw",
+            "original_files",
+            "sentences_nlp352",
+        )
+    )
+
     # Minor preprocessing
     journal_articles["words"] = journal_articles["words"].str.split(" ")
     journal_articles["words"] = journal_articles["words"].apply(clean_words)
@@ -350,12 +351,14 @@ if __name__ == "__main__":
     )
 
     # Join sentences into full text articles
-    full_text = (journal_articles 
-                .groupby("gddid")["sentence"] 
-                .agg(lambda x: ' '.join(x)).reset_index())
-    
-    doi_gdd = full_text.merge(bib_df, on ="gddid")
-    
+    full_text = (
+        journal_articles.groupby("gddid")["sentence"]
+        .agg(lambda x: " ".join(x))
+        .reset_index()
+    )
+
+    doi_gdd = full_text.merge(bib_df, on="gddid")
+
     # Pass each raw text file to the chunking pipeline
     for row in full_text.iterrows():
         chunks, chunk_local, chunk_subsection = chunk_text(row[1]["sentence"])
@@ -367,23 +370,27 @@ if __name__ == "__main__":
 
         for i, chunk in enumerate(chunks):
             filename = get_hash(chunk)
-            with open(os.path.join(
-                        os.pardir,
-                        os.pardir,
-                        "data",
-                        "entity-extraction",
-                        "raw",
-                        "pre-labeling",
-                        f"{model_version}_labeling",
-                        f"{gdd}_{i}.json"),
-                      "w") as fout:
-                
-                json_chunk = return_json(chunk, 
-                                        chunk_local[i],
-                                        i,
-                                        chunk_subsection[i],
-                                        gdd,
-                                        doi,
-                                        article_hash,
-                                        model_version)
-                json.dump(json_chunk, fout)            
+            with open(
+                os.path.join(
+                    os.pardir,
+                    os.pardir,
+                    "data",
+                    "entity-extraction",
+                    "raw",
+                    "pre-labeling",
+                    f"{model_version}_labeling",
+                    f"{gdd}_{i}.json",
+                ),
+                "w",
+            ) as fout:
+                json_chunk = return_json(
+                    chunk,
+                    chunk_local[i],
+                    i,
+                    chunk_subsection[i],
+                    gdd,
+                    doi,
+                    article_hash,
+                    model_version,
+                )
+                json.dump(json_chunk, fout)

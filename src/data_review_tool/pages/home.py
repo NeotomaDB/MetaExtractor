@@ -13,28 +13,8 @@ from pages.config import *
 suppress_callback_exceptions = True
 
 def layout():
-
-    directories = [os.path.join("data", "data-review-tool", dir) for dir in ["completed", "raw"]]
-
-    # Initialize an empty dictionary to store the dataframes
-    dfs = {}
-
-    # Iterate through the directories
-    for directory in directories:
-        # List all files in the directory
-        files = os.listdir(directory)
-        # Filter JSON files
-        json_files = [file for file in files if file.endswith('.json')]
-        # Read each JSON file into a dataframe and store it in the dictionary
-        for file in json_files:
-            file_path = os.path.join(directory, file)
-            article = open(file_path, "r")
-            df = pd.json_normalize(json.loads(article.read()))
-            # Only keep the dataframe if the file is not already in the dictionary
-            if file not in dfs:
-                dfs[file] = df
-    # Combine all dataframes into a single dataframe
-    combined_df = pd.concat(list(dfs.values()), ignore_index=True)
+    
+    combined_df = read_articles("data/data-review-tool")
 
     combined_df = combined_df[["title", "doi", "gddid", "status", "date_processed", "last_updated"]].rename(
             columns={"title": "Article", 
@@ -173,3 +153,38 @@ def get_article_table(table_id, location_id, tab_header, data):
                 style=tab_body_style),
             value=tab_header
         )
+    
+def read_articles(directory):
+    """Read the articles from the specified directory
+
+    Args:
+        directory (str): dirtectory to read the articles from
+
+    Returns:
+        pandas.DataFrame: The articles in the directory
+    """
+    try:
+        directories = [os.path.join(directory, dir) for dir in ["completed", "raw"]]
+
+        # Initialize an empty dictionary to store the dataframes
+        dfs = {}
+
+        # Iterate through the directories
+        for directory in directories:
+            # List all files in the directory
+            files = os.listdir(directory)
+            # Filter JSON files
+            json_files = [file for file in files if file.endswith('.json')]
+            # Read each JSON file into a dataframe and store it in the dictionary
+            for file in json_files:
+                file_path = os.path.join(directory, file)
+                article = open(file_path, "r")
+                df = pd.json_normalize(json.loads(article.read()))
+                # Only keep the dataframe if the file is not already in the dictionary
+                if file not in dfs:
+                    dfs[file] = df
+        # Combine all dataframes into a single dataframe
+        combined_df = pd.concat(list(dfs.values()), ignore_index=True)
+    except ValueError:
+        combined_df = pd.DataFrame(columns=["title", "doi", "gddid", "status", "date_processed", "last_updated"])
+    return combined_df

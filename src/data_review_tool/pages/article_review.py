@@ -505,7 +505,7 @@ def cell_clicked(n_clicks):
         str: The href of the home button
     """
     if n_clicks:
-        return f"http://127.0.0.1:8050/"
+        return f"http://0.0.0.0:8050/"
     else:
         return dash.no_update
 
@@ -1069,3 +1069,5 @@ for overflow in ["submit", "irrelevant"]:
         State(f"modal-{overflow}", "opened"),
         prevent_initial_call=True,
     )(toggle_confirmation_modal)
+    
+    

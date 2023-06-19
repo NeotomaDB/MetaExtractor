@@ -112,7 +112,7 @@ def current_article_clicked(active_cell_current, current_data,
             col = active_cell["column_id"]
             if col == "Review":
                 selected = data[row]["gddid"]
-                return f"http://127.0.0.1:8050/article/{selected}"
+                return f"http://0.0.0.0:8050/article/{selected}"
             else:
                 return dash.no_update
         

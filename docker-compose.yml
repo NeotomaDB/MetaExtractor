@@ -1,12 +1,11 @@
-version: "0.0.1"
+version: '3.9'
 services:
   data-review-tool:
-    build: 
+    image: metaextractor-data-review-tool:v0.0.1
+    build:
       dockerfile: ./docker/data-review-tool/Dockerfile
       context: .
     ports:
       - "8050:8050"
     volumes:
-    - ./data/data-review-tool:/MetaExtractor/data/data-review-tool
-    # environment:
-    #   - USE_NER_MODEL_TYPE=spacy
+      - ./data/data-review-tool:/MetaExtractor/data/data-review-tool

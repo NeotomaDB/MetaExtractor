@@ -10,10 +10,6 @@ import pandas as pd
 import nltk
 import spacy
 
-# ensure stopwords are downloaded
-# nltk.download("stopwords", quiet=True)
-
-from nltk.corpus import stopwords
 
 # ensure that the parent directory is on the path for relative imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -53,6 +49,10 @@ def load_taxa_data(
     for word in taxa["first_word"].tolist():
         if len(word) > 2 and len(word) <= 25:
             all_taxa_words.append(word)
+
+    # ensure stopwords are downloaded
+    nltk.download("stopwords", quiet=True)
+    from nltk.corpus import stopwords
 
     stop = stopwords.words()
     all_taxa_words = list(set(all_taxa_words))

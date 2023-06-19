@@ -10,7 +10,7 @@ To be completed
 
 ### App Demo
 
-![App Demo](assets/about_assets/data_review_tool_demo.mp4)
+https://github.com/NeotomaDB/MetaExtractor/assets/112443522/bfa966a7-8a6c-4cdc-b3d0-c1b5b0672a57
 
 ### Home Page
 
@@ -38,7 +38,7 @@ On the entity review page, you will see the Original Text which will display the
 
 ![Entity Review](assets/about_assets/entity_review.png)
 
-##3 Adding a new entity
+### Adding a new entity
 
 If through the process of reviewing the article you come across an entity that was not extracted by the Entity Extraction model, you can add a new entity. To do this, click the "Add New Entity" button. This will open a popup in which you can add the entity you have found. The information that you need to include here is the Entity Name, the Sentence that you found this entity in, as well as the Section Name of the article it was found in. Once you have added the necessary information, click the "Add" button. This will add the entity to the entity list on the left hand side of the article review page. You can then click on the entity to open the entity review page and make any changes to the entity that you would like.
 

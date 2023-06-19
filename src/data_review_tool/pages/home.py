@@ -14,7 +14,9 @@ suppress_callback_exceptions = True
 
 def layout():
 
-    directories = [os.path.join("data", "data-review-tool", dir) for dir in ["completed", "raw"]]
+    # directories = [os.path.join("data", "data-review-tool", dir) for dir in ["completed", "raw"]]
+    directories = [os.path.join("data", "data-review-tool", dir) 
+                   for dir in os.listdir(os.path.join("data", "data-review-tool"))]
 
     # Initialize an empty dictionary to store the dataframes
     dfs = {}

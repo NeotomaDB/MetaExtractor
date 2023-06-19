@@ -8,7 +8,10 @@ dash.register_page(__name__)
 from dash import dash, dcc, html, Input, Output, callback
 import os
 
-with open('src/data_review_tool/assets/about.md', 'r') as file:
+with open(os.path.join("data",
+                        "data-review-tool",
+                        "assets",
+                        'about.md'), 'r') as file:
     markdown_text = file.read()
 
 layout = html.Div(
@@ -19,7 +22,9 @@ layout = html.Div(
                         style=h2_style),
                 html.Video(
                     controls=True,
-                    src="assets/data_review_tool_demo.mp4",
+                    src= os.path.join(\
+                        "assets",
+                        "data_review_tool_demo.mp4"),
                     style={"width": "50%", "height": "auto"},
                 ),
                 dcc.Markdown(

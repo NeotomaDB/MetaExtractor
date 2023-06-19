@@ -1,6 +1,7 @@
 version: "0.0.1"
 services:
   entity-extraction-pipeline:
+    image: metaextractor-entity-extraction-pipeline:v0.0.1
     build: 
       dockerfile: ./docker/entity-extraction-pipeline/Dockerfile
       context: .
@@ -10,12 +11,13 @@ services:
     ports:
       - "5000:5000"
     volumes:
-    - ./data/entity-extraction/raw/original_files/sentences_nlp352:/app/inputs/sentences_nlp352
+    - ./data/entity-extraction/raw/original_files/:/app/inputs/
     - ./data/entity-extraction/processed/processed_articles/:/app/outputs/
-    # load .env file from docker/entity-extraction-pipeline folder
     environment:
       - USE_NER_MODEL_TYPE=spacy
       - LOG_OUTPUT_DIR=/app/outputs/
+      - MAX_SENTENCES=20
+      - MAX_ARTICLES=1
 
 
   

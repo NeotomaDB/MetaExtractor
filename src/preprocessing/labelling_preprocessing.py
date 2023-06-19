@@ -68,7 +68,7 @@ def get_journal_articles(sentences_path):
         usecols=["gddid", "sentid", "words"],
     )
 
-    journal_articles = (
+    journal_articles["words"] = (
         journal_articles.words.str.replace('"', "", regex=True)
         .replace(",--,", "-", regex=True)
         .replace(".,/,", ". / ", regex=True)

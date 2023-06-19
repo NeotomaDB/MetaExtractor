@@ -24,10 +24,10 @@ import sys
 from langdetect import detect
 from sentence_transformers import SentenceTransformer
 import joblib
-import logging
 from docopt import docopt
 import pyarrow as pa
 import pyarrow.parquet as pq
+import datetime
 
 # Locate src module
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -199,6 +199,9 @@ def data_preprocessing(metadata_df):
     metadata_df.loc[cannot_impute_condition, 'valid_for_prediction'] = 0
     en_condition = (metadata_df['language'] != 'en')
     metadata_df.loc[en_condition, 'valid_for_prediction'] = 0
+    
+    logger.info("Missing language imputation completed")
+    logger.info(f"After imputation, there are {metadata_df.loc[en_condition, :].shape[0]} non-English articles in total excluded from the prediction pipeline.")
 
     keep_col = ['DOI', 'URL', 'gddid', 'valid_for_prediction', 'title_clean', 'subtitle_clean', 'abstract_clean',
                 'subject_clean', 'journal', 'author', 'text_with_abstract',
@@ -213,8 +216,6 @@ def data_preprocessing(metadata_df):
     # invalid when required input field is Null
     mask = metadata_df[['text_with_abstract', 'subject_clean', 'is-referenced-by-count', 'has_abstract']].isnull().any(axis=1)
     metadata_df.loc[mask, 'valid_for_prediction'] = 0
-    logger.info(f'{n_missing_lang} articles require language imputation')
-
 
     mask_text = (metadata_df['text_with_abstract'].str.strip() == '')
     metadata_df.loc[mask_text, 'valid_for_prediction'] = 0
@@ -320,7 +321,6 @@ def relevance_prediction(input_df, model_path, predict_thld = 0.5):
 
     logger.info(f'Prediction completed.')
 
-
     return result
 
 
@@ -340,34 +340,30 @@ def prediction_export(input_df, output_path):
     """
 
     # ==== Save result to output_path directory =====
-    df_directory = os.path.join(output_path)
-    if not os.path.exists(df_directory):
-        os.makedirs(df_directory)
-        
-    # input_df_filled = input_df.fillna('null')
-    df_json = input_df.to_dict()
+    parquet_folder = os.path.join(output_path, 'prediction_parquet')
+    if not os.path.exists(parquet_folder):
+        os.makedirs(parquet_folder)
+    
+    # Generate file name based on run date and batch
+    now = datetime.datetime.now()
+    formatted_date = now.strftime("%Y-%m-%d")
+    batch_number = 1
 
-    # ==== Add other info in the json file ===
-    result_dict = {}
-    result_dict['total_article'] = input_df.shape[0]
-    result_dict['valid_article'] = input_df.query('valid_for_prediction == 1').shape[0]
-    result_dict['num_relevant_article'] = input_df.query('prediction == 1').shape[0]
-    result_dict['pct_relevant_article'] = round(input_df.query('prediction == 1').shape[0]/input_df.shape[0] * 100, 3)
-    result_dict['results'] = df_json
-
-    # Write the JSON object to a file
-    with open(output_path + '/relevance_prediction_output.json', "w") as file:
-        json.dump(result_dict, file)
+    # Check if a file with the current batch number already exists
+    parquet_file_name = os.path.join(parquet_folder, f"prediction_output_{formatted_date}-batch{batch_number}.parquet")
+    while os.path.isfile(parquet_file_name):
+        # If the file exists, increment the batch number and try again
+        batch_number += 1
+        parquet_file_name = os.path.join(parquet_folder, f"prediction_output_{formatted_date}-batch{batch_number}.parquet")
 
     # Write the Parquet file
-    input_df.to_parquet(output_path + '/relevance_prediction_single_run.parquet')
+    input_df.to_parquet(parquet_file_name)
 
     # ===== log important information ======
     logger.info(f'Total number of DOI processed: {input_df.shape[0]}')
     logger.info(f"Number of valid articles: {input_df.query('valid_for_prediction == 1').shape[0]}")
     logger.info(f"Number of invalid articles: {input_df.query('valid_for_prediction != 1').shape[0]}")
     logger.info(f"Number of relevant articles: {input_df.query('prediction == 1').shape[0]}")
-
 
 
 def main():

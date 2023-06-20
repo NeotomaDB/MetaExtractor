@@ -48,7 +48,7 @@ def crossref_extract(doi_path):
     If certain DOI is not found on CrossRef, the DOI will be logged in the prediction_pipeline.log file. 
     
     Args:
-        doi_path (str): Path to the doi list csv file.
+        doi_path (str): Path to the doi list JSON file.
         doi_col (str): Column name of DOI.
     
     Return:
@@ -120,6 +120,12 @@ def crossref_extract(doi_path):
 
     # Add valid_for_prediction indicator
     result_df['valid_for_prediction'] = result_df['valid_for_prediction'].fillna(value=0).astype(int)
+
+    # Add metadata about article query info
+    result_df['queryinfo_min_date'] = data_dictionary['queryinfo_min_date']
+    result_df['queryinfo_max_date'] = data_dictionary['queryinfo_max_date']
+    result_df['queryinfo_n_recent'] = data_dictionary['queryinfo_n_recent']
+    result_df['queryinfo_term'] = data_dictionary['queryinfo_term']
 
     return result_df
 
@@ -205,7 +211,11 @@ def data_preprocessing(metadata_df):
 
     keep_col = ['DOI', 'URL', 'gddid', 'valid_for_prediction', 'title_clean', 'subtitle_clean', 'abstract_clean',
                 'subject_clean', 'journal', 'author', 'text_with_abstract',
-                'is-referenced-by-count', 'has_abstract', 'language', 'published', 'publisher']
+                'is-referenced-by-count', 'has_abstract', 'language', 'published', 'publisher',
+                'queryinfo_min_date',
+                'queryinfo_max_date',
+                'queryinfo_term',
+                'queryinfo_n_recent']
     
     metadata_df = metadata_df.loc[:, keep_col]
 
@@ -219,7 +229,6 @@ def data_preprocessing(metadata_df):
 
     mask_text = (metadata_df['text_with_abstract'].str.strip() == '')
     metadata_df.loc[mask_text, 'valid_for_prediction'] = 0
-
 
     with_missing_df = metadata_df.loc[mask, :]
     logger.info(f'{with_missing_df.shape[0]} articles has missing feature and its relevance cannot be predicted.')
@@ -297,18 +306,26 @@ def relevance_prediction(input_df, model_path, predict_thld = 0.5):
     logger.info(f"{df_nan_exist.shape[0]} articles's input feature contains NaN value.")
 
     # Use the loaded model for prediction on a new dataset
-    valid_df['predict_proba'] = model_object.predict_proba(valid_df)[:, 1]
+    valid_df.loc[:, 'predict_proba'] = model_object.predict_proba(valid_df)[:, 1]
     valid_df['prediction'] = valid_df.loc[:,'predict_proba'].apply(lambda x: 1 if x >= predict_thld else 0)
 
     # Filter results, store key information that could possibly be useful downstream
     keyinfo_col = ['DOI', 'URL', 'gddid', 'valid_for_prediction',
                     'prediction', 'predict_proba', 'title', 'subtitle', 'abstract',
                 'subject_clean', 'journal', 'author', 'text_with_abstract',
-                'is-referenced-by-count', 'has_abstract', 'language', 'published', 'publisher']
+                'is-referenced-by-count', 'has_abstract', 'language', 'published', 'publisher',
+                'queryinfo_min_date',
+                'queryinfo_max_date',
+                'queryinfo_term',
+                'queryinfo_n_recent']
     invalid_col = ['DOI', 'URL', 'gddid', 'valid_for_prediction',
                  'title', 'subtitle', 'abstract',
                 'subject_clean', 'journal', 'author', 'text_with_abstract',
-                'is-referenced-by-count', 'has_abstract', 'language', 'published', 'publisher']
+                'is-referenced-by-count', 'has_abstract', 'language', 'published', 'publisher',
+                'queryinfo_min_date',
+                'queryinfo_max_date',
+                'queryinfo_term',
+                'queryinfo_n_recent']
     
     keyinfo_df = valid_df.loc[:, keyinfo_col]
 
@@ -346,15 +363,13 @@ def prediction_export(input_df, output_path):
     
     # Generate file name based on run date and batch
     now = datetime.datetime.now()
-    formatted_date = now.strftime("%Y-%m-%d")
-    batch_number = 1
+    formatted_datetime = now.strftime("%Y-%m-%dT%H-%M-%S")
 
     # Check if a file with the current batch number already exists
-    parquet_file_name = os.path.join(parquet_folder, f"prediction_output_{formatted_date}-batch{batch_number}.parquet")
+    parquet_file_name = os.path.join(parquet_folder, f"article-relevance-prediction_{formatted_datetime}.parquet")
     while os.path.isfile(parquet_file_name):
         # If the file exists, increment the batch number and try again
-        batch_number += 1
-        parquet_file_name = os.path.join(parquet_folder, f"prediction_output_{formatted_date}-batch{batch_number}.parquet")
+        parquet_file_name = os.path.join(parquet_folder, f"article-relevance-prediction_{formatted_datetime}.parquet")
 
     # Write the Parquet file
     input_df.to_parquet(parquet_file_name)

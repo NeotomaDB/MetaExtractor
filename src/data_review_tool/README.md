@@ -10,7 +10,7 @@ To be completed
 ---
 ## **App Demo**
 ---
-<video src="../../assets/data-review-tool-walkthrough.mp4" controls title="Title"></video>
+<video src="assets/data-review-tool-walkthrough.mp4" controls title="Title"></video>
 
 ---
 

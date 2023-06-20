@@ -421,7 +421,7 @@ The final data review tool that was created was a multi-page Plotly Dash applica
 
 This web application enables users to review the extracted entities from articles, make changes, add additional missed entities and remove inaccurately extracted entities. The application includes a button to launch the article in an external browser tab so that the reviewer can verify beyond the current sentence and sentence preceding/following that was provided as output. The entire review process does not require any coding knowledge, and reviewers can navigate through the review workflow in three clicks or fewer from the Article Review page.
 
-The output of this data review tool is a JSON object that stores the originally extracted entities as well as the corrected entities. The Neotoma organization can utilize these entities to add new paleoecology articles to the database. In addition, the reviewed entities can be fed back to model using our model retraining pipeline, contributing to the continuous improvement of the quality of extraction of entities. 
+The output of this data review tool is a JSON object that stores the originally extracted entities as well as the corrected entities. The Neotoma organization can utilize these entities to add new paleoecology articles to the database. In addition, the reviewed entities can be fed back to model using our model retraining pipeline, contributing to the continuous improvement of the quality of extraction of entities.
 
 +---------------------------------------------------------+-----------------------------------------------+
 | **Requirement**                                         | **Results**                                   |
@@ -503,3 +503,15 @@ Due to time constraints, improvements were identified but could not be implement
 3.  There are likely many corrections that will be performed frequently on the data review tool by the Neotoma Data Stewards. Therefore, a model could be implemented to learn these corrections and preprocess these corrections in future improving efficiency and reducing time spent reviewing. 
 
 4.  **Computer Vision:** Using PDF images and OCR technology to extract figures and table data for richer information extraction and inclusion of higher quality data into the Neotoma database.
+
+\newpage
+
+# Acknowledgements
+
+Data were obtained from the Neotoma Paleoecology Database (http://www.neotomadb.org) and its constituent database(s). The work of data contributors, data stewards, and the Neotoma community is gratefully acknowledged.
+
+A huge thanks to Simon Goring & Socorro Dominguez from the Neotoma Database team for their support on this project.
+
+\newpage
+
+# References

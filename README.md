@@ -6,11 +6,31 @@
 
 # **MetaExtractor: Finding Fossils in the Literature**
 
-This project aims to identify research articles which are relevant to the [*Neotoma Paleoecological Database*](http://neotomadb.org) (Neotoma), extract data relevant to Neotoma from the article, and provide a mechanism for the data to be reviewed by Neotoma data stewards then submitted to Neotoma. It is being completed as part of the *University of British Columbia (UBC)* [*Masters of Data Science (MDS)*](https://masterdatascience.ubc.ca/)  program in partnership with the [*Neotoma Paleoecological Database*](http://neotomadb.org).
+This project aims to identify research articles which are relevant to the [_Neotoma Paleoecological Database_](http://neotomadb.org) (Neotoma), extract data relevant to Neotoma from the article, and provide a mechanism for the data to be reviewed by Neotoma data stewards then submitted to Neotoma. It is being completed as part of the _University of British Columbia (UBC)_ [_Masters of Data Science (MDS)_](https://masterdatascience.ubc.ca/) program in partnership with the [_Neotoma Paleoecological Database_](http://neotomadb.org).
+
+**Table of Contents**
+
+- [**MetaExtractor: Finding Fossils in the Literature**](#metaextractor-finding-fossils-in-the-literature)
+  - [**Article Relevance Prediction**](#article-relevance-prediction)
+  - [**Data Extraction Pipeline**](#data-extraction-pipeline)
+  - [**Data Review Tool**](#data-review-tool)
+  - [How to use this repository](#how-to-use-this-repository)
+    - [Entity Extraction Model Training](#entity-extraction-model-training)
+    - [Data Review Tool](#data-review-tool-1)
+    - [Data Requirements](#data-requirements)
+      - [Article Relevance Prediction](#article-relevance-prediction-1)
+      - [Data Extraction Pipeline](#data-extraction-pipeline-1)
+    - [Development Workflow Overview](#development-workflow-overview)
+    - [Analysis Workflow Overview](#analysis-workflow-overview)
+    - [System Requirements](#system-requirements)
+    - [**Directory Structure and Description**](#directory-structure-and-description)
+  - [**Contributors**](#contributors)
+    - [Tips for Contributing](#tips-for-contributing)
 
 There are 3 primary components to this project:
+
 1. **Article Relevance Prediction** - get the latest articles published, predict which ones are relevant to Neotoma and submit for processing.
-2. **MetaData Extraction Pipeline** - extract relevant entities from the article including geographic locations, taxa, etc. 
+2. **MetaData Extraction Pipeline** - extract relevant entities from the article including geographic locations, taxa, etc.
 3. **Data Review Tool** - this takes the extracted data and allows the user to review and correct it for submission to Neotoma.
 
 ![](assets/project-flow-diagram.png)
@@ -29,9 +49,10 @@ To run the Docker image for article relevance prediction pipeline, please refer 
 
 ## **Data Extraction Pipeline**
 
-The full text is provided by the xDD team for the articles that are deemed to be relevant and a custom trained **Named Entity Recognition (NER)** model is used to extract entities of interest from the article. 
+The full text is provided by the xDD team for the articles that are deemed to be relevant and a custom trained **Named Entity Recognition (NER)** model is used to extract entities of interest from the article.
 
 The entities extracted by this model are:
+
 - **SITE**: name of the excavation site
 - **REGION**: more general regions names to provide context for where sites are located
 - **TAXA**: plant or animal fossil names
@@ -53,8 +74,42 @@ Finally, the extracted data is loaded into the Data Review Tool where members of
 
 ## How to use this repository
 
-WIP
+First, begin by installing the requirements and Docker if not already installed ([Docker install instructions](https://docs.docker.com/get-docker/))
 
+```bash
+pip install -r requirements.txt
+```
+
+A conda environment file will be provided in the final release.
+
+### Entity Extraction Model Training
+
+The Entity Extraction Models can be trained using the HuggingFace API by following the instructions in the [Entity Extraction Training README](src/entity_extraction/training/hf_token_classification/README.md).
+
+The spaCy model training documentation is a WIP.
+
+### Data Review Tool
+
+The Data Review Tool can be launched by running the following command from the root directory of this repository:
+
+```bash
+docker-compose build
+docker-compose up data-review-tool
+```
+
+Once the image is built and the container is running, the Data Review Tool can be accessed at http://localhost:8050/. There is a sample "extracted entities" JSON file provided for demo purposes.
+
+### Data Requirements
+
+Each of the components of this project have different data requirements. The data requirements for each component are outlined below.
+
+#### Article Relevance Prediction
+
+The article relevance prediction component requires a list of journals that are relevant to Neotoma. This dataset used to train and develop the model is available for download HERE. TODO: Setup public link for data download from project GDrive.
+
+#### Data Extraction Pipeline
+
+As the full text articles provided by the xDD team are not publicly available we cannot create a public link to download the labelled training data. For access requests please contact Ty Andrews at ty.elgin.andrews@gmail.com.
 
 ### Development Workflow Overview
 
@@ -65,10 +120,6 @@ WIP
 WIP
 
 ### System Requirements
-
-WIP
-
-### Data Requirements
 
 WIP
 
@@ -102,15 +153,16 @@ WIP
 ├── src/                                <- Directory for source code
 │   ├── entity_extraction/              <- Directory for named entity recognition code
 │   ├── article_relevance/              <- Directory for article relevance prediction code
-│   └── data_review_tool/               <- Directory for data review tool code             
+│   └── data_review_tool/               <- Directory for data review tool code
 ├── reports/                            <- Directory for reports
 ├── tests/                              <- Directory for tests
 ├── Makefile                            <- Makefile with commands to perform analysis
 └── README.md                           <- The top-level README for developers using this project.
 ```
+
 ## **Contributors**
 
-This project is an open project, and contributions are welcome from any individual.  All contributors to this project are bound by a [code of conduct](https://github.com/NeotomaDB/MetaExtractor/blob/main/CODE_OF_CONDUCT.md). Please review and follow this code of conduct as part of your contribution.
+This project is an open project, and contributions are welcome from any individual. All contributors to this project are bound by a [code of conduct](https://github.com/NeotomaDB/MetaExtractor/blob/main/CODE_OF_CONDUCT.md). Please review and follow this code of conduct as part of your contribution.
 
 The UBC MDS project team consists of:
 
@@ -120,12 +172,13 @@ The UBC MDS project team consists of:
 - **Shaun Hutchinson**
 
 Sponsors from Neotoma supporting the project are:
-* [![ORCID](https://img.shields.io/badge/orcid-0000--0002--7926--4935-brightgreen.svg)](https://orcid.org/0000-0002-7926-4935) [Socorro Dominguez Vidana](https://ht-data.com/)
-* [![ORCID](https://img.shields.io/badge/orcid-0000--0002--2700--4605-brightgreen.svg)](https://orcid.org/0000-0002-2700-4605) [Simon Goring](http://www.goring.org)
+
+- [![ORCID](https://img.shields.io/badge/orcid-0000--0002--7926--4935-brightgreen.svg)](https://orcid.org/0000-0002-7926-4935) [Socorro Dominguez Vidana](https://ht-data.com/)
+- [![ORCID](https://img.shields.io/badge/orcid-0000--0002--2700--4605-brightgreen.svg)](https://orcid.org/0000-0002-2700-4605) [Simon Goring](http://www.goring.org)
 
 ### Tips for Contributing
 
-Issues and bug reports are always welcome.  Code clean-up, and feature additions can be done either through pull requests to [project forks](https://github.com/NeotomaDB/MetaExtractor/network/members) or [project branches](https://github.com/NeotomaDB/MetaExtractor/branches).
+Issues and bug reports are always welcome. Code clean-up, and feature additions can be done either through pull requests to [project forks](https://github.com/NeotomaDB/MetaExtractor/network/members) or [project branches](https://github.com/NeotomaDB/MetaExtractor/branches).
 
 All products of the Neotoma Paleoecology Database are licensed under an [MIT License](LICENSE) unless otherwise noted.
 

@@ -10,7 +10,8 @@ To be completed
 ---
 ## **App Demo**
 ---
-<video src="assets/data-review-tool-walkthrough.mp4" controls title="Title"></video>
+
+https://github.com/NeotomaDB/MetaExtractor/assets/112443522/7e986e55-3d04-4e2b-aa27-0188def89196
 
 ---
 

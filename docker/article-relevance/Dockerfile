@@ -20,7 +20,7 @@ COPY models/article-relevance ./models/article-relevance
 COPY docker/article-relevance/run-prediction.sh .
 
 # Make the shell script executable
-RUN chmod +x run_scripts.sh
+RUN chmod +x run-prediction.sh
 
 # Set the entry point for the Docker container
-ENTRYPOINT ["./run_scripts.sh"]
+ENTRYPOINT ["./run-prediction.sh"]

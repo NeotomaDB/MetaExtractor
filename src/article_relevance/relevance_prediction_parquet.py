@@ -7,10 +7,10 @@
 
 """This script takes a list of DOI as input and output a dataframe containing all metadata, predicted relevance, predict_proba of each article.
 
-Usage: relevance_prediction.py --doi_path=<doi_path> --model_path=<model_path> --output_path=<output_path> --send_xdd=<send_xdd>
+Usage: relevance_prediction.py --doi_file_path=<doi_path> --model_path=<model_path> --output_path=<output_path> --send_xdd=<send_xdd>
 
 Options:
-    --doi_path=<doi_path>                   The path to where the list of DOI is.
+    --doi_file_path=<doi_file_path>                   The path to where the list of DOI is.
     --model_path=<model_path>               The path to where the model object is stored.
     --output_path=<output_path>             The path to where the output files will be saved.
     --send_xdd=<send_xdd>                   When True, relevant articles will be sent to xDD through API query. Default is False.
@@ -414,7 +414,7 @@ def prediction_export(input_df, output_path):
 def main():
     opt = docopt(__doc__)
 
-    doi_list_file_path = opt["--doi_path"]
+    doi_list_file_path = opt["--doi_file_path"]
     model_path = opt['--model_path']
     output_path = opt['--output_path']
     send_xdd = opt['--send_xdd']

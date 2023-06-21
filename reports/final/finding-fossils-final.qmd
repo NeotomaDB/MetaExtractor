@@ -243,9 +243,89 @@ For the development of the NER models a sample of 39 articles relevant to Neotom
 
 The labelled articles were split into train/validation/test sets by full article with splits of 0.7/0.15/0.15 respectively. The data splitting was done based upon whole articles to prevent data leakage into the model learning certain articles patterns before evaluation. This resulted in the final dataset with the following statistics.
 
-\[Add in Entity Distribution for Test Set Here\]
+```{python}
+def plot_distribution_of_entities(
+    results_df: pd.DataFrame, model: str, title: str = None
+):
+    entity_columns = [c for c in results_df if "count" in c and c != "O_count"]
 
-\[Add in Entity Distribution for Validation Set Here\]
+    flat_df = (
+        results_df.query("model == @model")
+        .melt(
+            # id_vars=["model"],
+            value_vars=entity_columns,
+            value_name="count",
+            var_name="entity",
+        )
+        .sort_values(["count"], ascending=False)
+    )
+
+    flat_df["entity"] = flat_df.entity.str.replace("_count", "")
+
+    fig, ax = plt.subplots(figsize=(8, 4))
+    ax = sns.barplot(x="entity", y="count", data=flat_df, ax=ax)
+
+    # set suptitle for plot
+    fig.suptitle(
+        title,
+        fontsize=16,
+        fontweight="bold",
+    )
+
+    # use title for token count info
+    ax.set_title(
+        f"Total Token Count: {results_df.query('model == @model').iloc[0].num_tokens}\nNo. of Entities: {flat_df['count'].sum()}",
+        fontsize=12,
+        fontweight="bold",
+    )
+
+    # fix cut off of left/right of plot
+    fig.subplots_adjust(top=0.80)
+
+    ax.bar_label(ax.containers[0], fmt="%.0f")
+    ax.set_xlabel("Entity Type")
+    ax.set_ylabel("Number of Occurences")
+    plt.show()
+
+
+```
+
+```{python}
+# | warning: false
+# | echo: false
+# | layout-ncol: 1
+# | fig-cap:
+# | - "Entity Distribution for Test set"
+# | - "Entity Distribution for Validation set"
+sns.set_style(
+    "whitegrid",
+    rc={
+        "grid.color": ".85",
+    },
+)
+
+test_results_df = load_model_evaluation_results(
+    results_path=os.path.join(os.pardir, os.pardir, "results", "ner"),
+    results_type="test",
+)
+# print(model_results_df.columns)
+sns.set_context("notebook")
+plot_distribution_of_entities(
+    test_results_df, "Spacy Transformer V3", title="Entity Distribution for Test Set"
+)
+val_results_df = load_model_evaluation_results(
+    results_path=os.path.join(os.pardir, os.pardir, "results", "ner"),
+    results_type="val",
+)
+plot_distribution_of_entities(
+    val_results_df,
+    "Spacy Transformer V3",
+    title="Entity Distribution for Validation Set",
+)
+
+
+```
+
 
 ### Approach
 

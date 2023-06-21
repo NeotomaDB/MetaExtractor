@@ -622,9 +622,69 @@ plot_model_metric_comparison(
 )
 ```
 
-The token based recall for each model on the test set.
+The token based recall for each model on the test set by entity type are shown below:
+```{python}
+# | label: tbl-ohe_example
+# | tbl-cap: 'Entity extraction model results for token based recall, overall and by entity type'
+# | tbl-cap-location: bottom
+# | tbl-colwidths: [0.2,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]
+# | tbl-column: body
+# | output: markdown
+# render the token_recall, token_precision, and token_f1 scores for each model and each entity type
+render_columns = [
+    "model",
+    "token_recall",
+    "token_AGE_recall",
+    "token_SITE_recall",
+    "token_TAXA_recall",
+    "token_REGION_recall",
+    "token_GEOG_recall",
+    "token_EMAIL_recall",
+    "token_ALTI_recall",
+]
 
-\[Insert token based recall for each model on the test set Here\]
+render_df = test_results_df[render_columns].copy()
+render_df.columns = render_df.columns.str.replace("_", " ").str.title()
+render_df = render_df.melt(id_vars=["Model"], var_name="Metric", value_name="Score")
+render_df["Metric"] = (
+    render_df.Metric.str.replace("Token ", "")
+    .str.replace(" Recall", " (%)", regex=True)
+    .str.replace("Recall", "Recall (%)")
+)
+render_df["Model"] = (
+    render_df.Model.str.replace("Finetuned", "")
+    .str.replace("Spacy", "SpaCy")
+    .str.replace("Finetune", "")
+    .str.replace("V\d", "", regex=True)
+    .str.replace("Transformer", "Transf.")
+    .str.replace("Multilanguage", "Multi-lang.")
+    .str.replace("Ner", "NER")
+    .str.replace("bert", "BERT")
+    .str.replace("Bert", "BERT")
+)
+render_df["Score"] = render_df.Score * 100
+render_df = (
+    render_df.reset_index(drop=True)
+    .round(1)
+    .pivot(index="Model", columns="Metric", values="Score")
+    .sort_values(["Recall (%)"], ascending=False)
+)
+
+render_df = render_df[
+    [
+        "Recall (%)",
+        "Age (%)",
+        "Site (%)",
+        "Taxa (%)",
+        "Region (%)",
+        "Geog (%)",
+        "Email (%)",
+        "Alti (%)",
+    ]
+]
+
+Markdown(render_df.to_markdown())
+```
 
 An important observation to make here is that even the top models have a lower precision score for the SITE names and REGION names. The models gets confused when deciding whether an entity should be classified as a SITE or a REGION. This is partially due to quality of labeling entities as well as the fact that both these types correspond to the name of a place or a wider area. The following confusion matrix generated using the test set assets highlights the same:
 

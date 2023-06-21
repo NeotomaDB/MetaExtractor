@@ -59,7 +59,7 @@ TO run full evaluation of the trained model to get detailed metrics and plots, f
 
 ## Overall Process Diagram
 
-```{mermaid}
+```mermaid
 %%| label: training_pipeline
 %%| fig-cap: "This is how the Entity Extraction model training process runs with intermediate files and processes."
 %%| fig-height: 6

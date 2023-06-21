@@ -771,39 +771,51 @@ As the table above shows, all of the requirements that were originally laid out 
 THe end goal of this project is to have each data product running in a semi/un-supervised fashion. The article relevance prediction pipeline is containerized using Docker. It will be scheduled to run daily or weekly by the Neotoma and gets the latest published articles from the public xDD API, runs the article relevance prediction, and finally submits relevant articles to xDD to have their full text processed. The Article Data Extraction pipeline is containerized using Docker and contains the entity extraction model within it. It is run on the xDD servers as xDD is not legally allowed to send full text articles off their servers. The container accepts full text articles, extracts the entities, and outputs a single JSON object for each article which is then exported by xDD back to the Neotoma team. The extracted entity JSON objects are combined with the article relevance prediction results and this is what is loaded by the Data Review Tool. The following diagram depicts the work flow.
 
 ```{mermaid}
-
+%%| label: deployment_pipeline
+%%| fig-cap: "This is how the MetaExtractor pipeline flows between the different components."
+%%| fig-height: 6
 graph TD
-subgraph Neotoma Servers
-  A(fa:fa-clock Get New Article DOI Since Last Run)
-  B(Predict Article Relevance)
-end
-
-subgraph xDD Servers
-  C(To Be Processed Stack)
-    subgraph Docker Image
-        D(fa:fa-file-lines xDD Inputs Full Text Articles)
-        E(fa:fa-atom Entity Extraction Pipeline)
+subgraph neotoma [Neotoma Servers]
+    direction TB
+    L(CRON Job Starts Pipeline)
+    subgraph relevance_docker [Docker Image &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp]
+      A(Get New Article DOIs<br> Since Last Run)
+      B(Predict Article Relevance)
     end
 end
+subgraph xdd [xDD Servers &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp]
+    direction TB
+  C(To Be Processed Stack)
+    subgraph entity_docker [Docker Image &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp]
+        D(xDD Inputs Full Text Articles)
+        E(Entity Extraction Pipeline)
+    end
+end
+G(Article Relevance Predictions)
+H(Extracted Entities per Article)
+I(Combine Article Relevance <br>& Extracted Entities)
+J(Data Review Tool)
+L --> A
+A --> B
+B -----> |Parquet File| G
+B --> |API Put Request| C
+C --> D
+D --> E
+E --> |JSON Per Article,\nLog File| H
+G --> I
+H --> I
+I --> |Parquet| J
 
-  F(Predict Article Relevance)
-  G(fa:fa-copy Article Relevance Predictions)
-  H(fa:fa-copy Extracted Entities per Article)
-  I(fa:fa-copy Combine Article Relevance \n& Extracted Entities)
-  J(fa:fa-paste Data Review Tool)
-  
-  A --> B
-  B --> F
-  F -----> |Parquet| G
-  F --> |API Put Request| C
-  
-  C --> D
-  D --> E
-  E --> |JSON Per Article\nLog FIle| H
-  G --> I
-  H --> I
-  I --> |Parquet| J
-
+%% create a class for styling subgraphs
+classDef subg fill:#fbfbfb,stroke:#333,stroke-width:4px,font-weight:bold;
+classDef docker fill:#cef1fc,stroke:#0db7ed,stroke-width:4px,font-weight:bold,align:left;
+%% create a class for styling the nodes
+classDef nodes fill:#D1E5F4,stroke:#333,stroke-width:2px;
+%% style each node
+class A,B,C,D,E,F,G,H,I,J,K,L nodes;
+%% style each subgraph
+class neotoma,xdd subg;
+class entity_docker,relevance_docker docker;
 ```
 
 

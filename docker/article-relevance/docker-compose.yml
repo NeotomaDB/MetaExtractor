@@ -1,0 +1,13 @@
+version: "0.0.1"
+services:
+  article-relevance-prediction:
+    image: metaextractor-article-relevance-prediction:v0.0.1
+    environment:
+      - DOI_PATH=data/article-relevance/raw
+      - PARQUET_PATH=data/article-relevance/processed/prediction_parquet
+      - N_RECENT=10
+      - AUTO_MIN_DATE=False
+      - AUTO_CHECK_DUP=False
+      - DOI_PATH2=data/article-relevance/raw/gdd_api_return.json
+      - MODEL_PATH=data/article-relevance/processed/logistic_regression_model.joblib
+      - OUTPUT_PATH=data/article-relevance/processed

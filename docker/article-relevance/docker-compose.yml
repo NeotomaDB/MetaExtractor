@@ -9,6 +9,7 @@ services:
       - N_RECENT=10
       - MIN_DATE=
       - MAX_DATE=
+      - TERM=
       - AUTO_MIN_DATE=False
       - AUTO_CHECK_DUP=False
 

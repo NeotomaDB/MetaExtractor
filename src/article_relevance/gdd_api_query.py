@@ -110,24 +110,29 @@ def get_new_gdd_articles(output_path,
             
     # ========== Query API ==========
     if n_recent_articles is not None:
+        logger.info(f'Querying by n_recent = {n_recent_articles}')
         api_call = "https://geodeepdive.org/api/articles?recent" + f"&max={n_recent_articles}"
 
     # Query API by date range
     elif (min_date is not None) and (max_date is not None):
+        logger.info(f'Querying by min_date = {min_date} and max_date = {max_date}')
         api_call = f"https://xdd.wisc.edu/api/articles?min_acquired={min_date}&max_acquired={max_date}&full_results=true"
     
     elif (min_date is not None) and (max_date is None):
+        logger.info(f'Querying by min_date = {min_date}.')
         api_call = f"https://xdd.wisc.edu/api/articles?min_acquired={min_date}&full_results=true"
 
     elif (min_date is None) and (max_date is not None):
+        logger.info(f'Querying by max_date = {max_date}.')
         api_call = f"https://xdd.wisc.edu/api/articles?max_acquired={max_date}&full_results=true"
     
     else:
         raise ValueError("Please check input parameter values.")
     
     if term is not None:
-         api_extend = f"&term={term}"
-         api_call += api_extend
+        logger.info(f'Search term = {term}.')
+        api_extend = f"&term={term}"
+        api_call += api_extend
 
 
     # =========== Query xDD API to get data ==========
@@ -193,7 +198,7 @@ def get_new_gdd_articles(output_path,
 
 
     # ========== Get list of existing gddids from the parquet files =========
-    if auto_check_dup == "True":
+    if auto_check_dup.lower() == "true":
         # Get the list of existing IDs from the Parquet files
         logger.info(f'auto_check_dup is True. Removing duplicates.')
 
@@ -281,14 +286,17 @@ def main():
     parquet_file_path = opt["--parquet_path"]
     param_n_recent = opt["--n_recent"]
 
+    if param_n_recent == '': # case when n_recent is left empty in the ENV variable
+         param_n_recent = None
+
     if param_n_recent is not None:
-        param_n_recent = int(opt["--n_recent"])
+        param_n_recent = int(param_n_recent)
 
     param_min_date = opt["--min_date"]
 
     param_auto_min_date = opt['--auto_min_date']
     
-    if param_auto_min_date == 'True':
+    if param_auto_min_date.lower() == 'true':
         file_list = os.listdir(parquet_file_path)
         if len(file_list) == 0:
              logger.warning(f'auto_min_date is True, but no existing parquet file found. All queried articles up to max_date will be returned.')

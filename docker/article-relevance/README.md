@@ -28,6 +28,7 @@ Arguments for controlling the xDD API Query:
 - `N_RECENT`: This variable can be set to a number to retrieve the n most recently added articles. When this variable is set, no MIN_DATE or MAX_DATE should be set.
 - `MIN_DATE`: This variable can be set to establish a earliest date for the range of articles to be included. The date should follow format yyyy-mm-dd.
 - `MAX_DATE`: This variable can be set to establish a latest date for the range of articles to be included. The date should follow format yyyy-mm-dd.
+- `TERM`: This variable can be set to a word to search for in the article.
 - `AUTO_MIN_DATE`: This variable can be set to True or False. If set to True, the pipeline will screen through the date of existing processed parquet files and use the latest date as the earliest date for this run.
 - `AUTO_CHECK_DUP`:  This variable can be set to True or False. If set to True, the pipeline will screen through the date of existing processed parquet files and exclude the already-processed articles from the list.
 
@@ -39,7 +40,9 @@ Arguments for controlling the relevance prediction:
 
 ## Sample Docker Compose Setup
 
-Below is a sample docker compose configuration for running the image:
+Below is a sample docker compose configuration for running the image。
+
+Sample 1: Query by number of most recently added articles
 ```yaml
 version: "0.0.1"
 services:
@@ -52,6 +55,31 @@ services:
       - N_RECENT=10
       - MIN_DATE=
       - MAX_DATE=
+      - TERM=
+      - AUTO_MIN_DATE=False
+      - AUTO_CHECK_DUP=False
+
+      # Arguments for relevance prediction script
+      - DOI_FILE_PATH=data/article-relevance/raw/gdd_api_return.json
+      - MODEL_PATH=models/article-relevance/logistic_regression_model.joblib
+      - OUTPUT_PATH=data/article-relevance/processed
+      - SEND_XDD=False
+```
+
+Sample 2: Query by date range
+```yaml
+version: "0.0.1"
+services:
+  article-relevance-prediction:
+    image: metaextractor-article-relevance-prediction:v0.0.1
+    environment:
+      # Arguments for xDD API Query
+      - DOI_PATH=data/article-relevance/raw
+      - PARQUET_PATH=data/article-relevance/processed/prediction_parquet
+      - N_RECENT=
+      - MIN_DATE=2023-06-04
+      - MAX_DATE=2023-06-05
+      - TERM=
       - AUTO_MIN_DATE=False
       - AUTO_CHECK_DUP=False
 

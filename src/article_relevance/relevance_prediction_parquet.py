@@ -7,7 +7,7 @@
 
 """This script takes a list of DOI as input and output a dataframe containing all metadata, predicted relevance, predict_proba of each article.
 
-Usage: relevance_prediction.py --doi_file_path=<doi_path> --model_path=<model_path> --output_path=<output_path> --send_xdd=<send_xdd>
+Usage: relevance_prediction_parquet.py --doi_file_path=<doi_path> --model_path=<model_path> --output_path=<output_path> --send_xdd=<send_xdd>
 
 Options:
     --doi_file_path=<doi_file_path>         The path to where the list of DOI is.
@@ -63,6 +63,12 @@ def crossref_extract(doi_path):
         data_dictionary = json.load(json_file)
 
     df = pd.DataFrame(data_dictionary['data'])
+
+    if df.shape[0] == 0:
+        logger.warning(f'Last xDD API query did not retrieve any article. Please verify the arguments.')
+        raise ValueError("No article to process. Script terminated.")
+
+
     doi_col = 'DOI'
 
     # a list of doi

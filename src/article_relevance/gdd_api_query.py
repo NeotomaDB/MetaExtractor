@@ -72,6 +72,16 @@ def get_new_gdd_articles(output_path,
         get_new_gdd_articles(n_recent_articles = 1000)
     """
 
+    # ======== To handle placeholder for arguments in the docker compose, convert empty str to None ===
+    if n_recent_articles == '':
+         n_recent_articles = None
+    if min_date == '':
+         min_date = None
+    if max_date == '':
+         max_date = None
+    if term == '':
+         term = None
+        
     # ======== Tests for input data type ==========
     if (n_recent_articles is None) and (min_date is None and max_date is None):
             raise ValueError("Either n_recent_articles or a date range should be specified.")

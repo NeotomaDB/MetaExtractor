@@ -10,7 +10,7 @@
 Usage: relevance_prediction.py --doi_file_path=<doi_path> --model_path=<model_path> --output_path=<output_path> --send_xdd=<send_xdd>
 
 Options:
-    --doi_file_path=<doi_file_path>                   The path to where the list of DOI is.
+    --doi_file_path=<doi_file_path>         The path to where the list of DOI is.
     --model_path=<model_path>               The path to where the model object is stored.
     --output_path=<output_path>             The path to where the output files will be saved.
     --send_xdd=<send_xdd>                   When True, relevant articles will be sent to xDD through API query. Default is False.

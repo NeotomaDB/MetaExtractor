@@ -122,6 +122,107 @@ Another key consideration is model interpretation. The positive examples were ga
 
 ## Article Data Extraction
 
+```{python}
+# | warning: false
+import pandas as pd
+import os
+import json
+import seaborn as sns
+import matplotlib.pyplot as plt
+from IPython.display import Markdown
+
+FFOSSILS_PALETTE = sns.color_palette(
+    ["#677e52", "#8fbed5", "#1f3a5f", "#005a3c", "#4c2f27", "#b8864b"]
+)
+
+
+def load_model_evaluation_results(results_path: str, results_type: str = "val"):
+    results_df = pd.DataFrame()
+
+    for model in os.listdir(results_path):
+        if os.path.isdir(os.path.join(results_path, model)):
+            model_path = os.path.join(results_path, model)
+            for file in os.listdir(model_path):
+                if (file.endswith("classification_results.json")) & (
+                    results_type in file
+                ):
+                    results_dict = json.load(open(os.path.join(model_path, file), "r"))
+
+                    parsed_dict = {}
+
+                    for key, value in results_dict.items():
+                        # original entity and token based results
+                        if (key == "token") | (key == "entity"):
+                            for k, v in value.items():
+                                # print(f"key: {key} k: {k} v: {v}")
+                                if k == "classification_report":
+                                    for kk, vv in v.items():
+                                        # print(f"\tkk: {kk} vv: {vv}")
+                                        for kkk, vvv in vv.items():
+                                            # print(f"\t\tkkk: {kkk} vvv: {vvv}")
+                                            parsed_dict[
+                                                f"{key}_{kk}_{kkk}".replace(" ", "-")
+                                            ] = [vvv]
+                                else:
+                                    parsed_dict[f"{key}_{k}"] = [v]
+                        # overall model results with new metrics
+                        elif key == "overall_results":
+                            for k, v in value.items():
+                                # print(f"key: {key} k: {k} v: {v}")
+                                for kk, vv in v.items():
+                                    # print(f"\tkk: {kk}, vv: {vv}")
+                                    if kk in [
+                                        "precision",
+                                        "recall",
+                                        "actual",
+                                        "possible",
+                                    ]:
+                                        parsed_dict[
+                                            f"overall_{k.replace('_', '-')}_{kk}"
+                                        ] = [vv]
+                                    else:
+                                        parsed_dict[
+                                            f"overall_{k.replace('_', '-')}_percent-{kk}"
+                                        ] = [vv / v["possible"]]
+                        # overall results by each tag group
+                        elif key == "overall_results_by_tag":
+                            for label, v in value.items():
+                                # print(f"key: {key} label: {label} v: {v}")
+                                for eval_type, vv in v.items():
+                                    # print(f"\teval_type: {eval_type} vv: {vv}")
+                                    for result, vvv in vv.items():
+                                        # print(f"\t\tresult: {result}, vvv: {vvv}")
+                                        if result in [
+                                            "precision",
+                                            "recall",
+                                            "actual",
+                                            "possible",
+                                        ]:
+                                            parsed_dict[
+                                                f"{label}_{eval_type.replace('_', '-')}_{result}"
+                                            ] = [vvv]
+                                        else:
+                                            parsed_dict[
+                                                f"{label}_{eval_type.replace('_', '-')}_percent-{result}"
+                                            ] = [vvv / vv["possible"]]
+                        # add in the counts of each entity type
+                        elif key == "entity_counts":
+                            for k, v in value.items():
+                                # print(f"key: {key} k: {k} v: {v}")
+                                parsed_dict[f"{k}_count"] = [v]
+                        elif key == "num_tokens":
+                            parsed_dict[f"{key}"] = [value]
+
+                    model_results = pd.DataFrame(parsed_dict)
+
+                    model_results["model"] = model.replace("-", " ").title()
+                    results_df = pd.concat([results_df, model_results])
+
+    return results_df
+
+
+```
+
 The article data extraction is posed as a Named Entity Recognition (NER) problem. The NER tasks teaches the model to predict the correct label for each word where each word is assigned a label.
 
 ### Data Description

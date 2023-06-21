@@ -447,40 +447,15 @@ Final hyper parameters used to train the models were as follows:
 
 Interesting difference to note here are the architectures of the NER models. Both the models use a base model to tokenize the input sentence and generate word embeddings, but the HuggingFace NER model fine-tunes a token classification head to it, which consists of a set of linear layer and soft max, whereas, the spaCy NER model chunks and labels a sequence of inputs using an algorithm similar to transition-based dependency parsing using Stack-LSTMs.
 
-The following workflow shows the primary steps for training with the HugginFace API:
+The following workflow shows the primary steps for training with the Entity Extraction models with intermediate files and processes.
 
 ```{mermaid}
-%%{init: {
-    'theme':'base',
-    'themeVariables': {
-        'fontFamily': 'arial',
-        'primaryColor': '#BFDFFF',
-        'primaryTextColor': '#000',
-        'primaryBorderColor': '#4C75A3',
-        'lineColor': '#000',
-        'secondaryColor': '#006100',
-        'tertiaryColor': '#fff'
-    }
-  }
-}%%
+%%| label: training_pipeline
+%%| fig-cap: "This is how the Entity Extraction model training process runs with intermediate files and processes."
+%%| fig-height: 6
+%%{init: {'theme':'base','themeVariables': {'fontFamily': 'arial','primaryColor': '#BFDFFF','primaryTextColor': '#000','primaryBorderColor': '#4C75A3','lineColor': '#000','secondaryColor': '#006100','tertiaryColor': '#fff'}, 'flowchart' : {'curve':'monotoneY'}}}%%
 flowchart TD
-
-%% Computation steps
-style C2 fill:#BFDFFF, stroke:#4C75A3
-style C3 fill:#BFDFFF, stroke:#4C75A3
-style C4 fill:#BFDFFF, stroke:#4C75A3 
-style C5 fill:#BFDFFF, stroke:#4C75A3
-
-%% File outputs
-style F1 fill:#d3d3d3, stroke:#808080
-style F2 fill:#d3d3d3, stroke:#808080
-style F3 fill:#d3d3d3, stroke:#808080
-style F4 fill:#d3d3d3, stroke:#808080
-style F5 fill:#d3d3d3, stroke:#808080
-style F6 fill:#d3d3d3, stroke:#808080
-style F7 fill:#d3d3d3, stroke:#808080
-style F8 fill:#d3d3d3, stroke:#808080
-F8(Labelled JSON files\nfrom LabelStudio) --> C2(Split into Train/Val/Test\nSets by xDD ID)
+F8(Labelled JSON files<br>from LabelStudio) --> C2(Split into Train/Val/Test<br>Sets by xDD ID)
 C2 --> C5(Convert to JSON for\nHF Training)
 C5 --> F1(test.json)
 C5 --> F3(val.json)
@@ -494,7 +469,19 @@ C4 --> F4(Log Final\nTrained Model)
 F4 --> C3
 C3 --> F6(Evaluation Plots)
 C3 --> F5(Evaluation results\nJSON)
+subgraph Legend
+    computation[Computation] 
+    fileOutput[File Input/Output]
+    style computation fill:#BFDFFF, stroke:#4C75A3
+    style fileOutput fill:#d3d3d3, stroke:#808080
+end
 
+%% create a class for styling the nodes
+classDef compute_nodes fill:#BFDFFF, stroke:#4C75A3,stroke-width:2px;
+classDef file_nodes fill:#d3d3d3, stroke:#808080,stroke-width:2px;
+
+class F1,F2,F3,F4,F5,F6,F7,F8 file_nodes;
+class C2,C3,C4,C5 compute_nodes;
 ```
 
 

@@ -1,0 +1,9 @@
+dash==2.9.3
+dash_bootstrap_components==1.4.1
+dash_iconify==0.1.2
+dash_mantine_components==0.12.1
+numpy==1.24.3
+pandas==1.5.3
+plotly==5.14.1
+seaborn==0.12.2
+dash-player==1.1.0

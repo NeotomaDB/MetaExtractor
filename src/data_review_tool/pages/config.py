@@ -1,14 +1,115 @@
+# Tab header on home page
+tab_header_style = {
+    "font-weight": "bold",
+    "font-size": "25px",
+    "font-family": "Lato",
+    "padding-top": "20px",
+    "padding-bottom": "10px"
+}
+
+#Home page badge style
+badge_style = {
+    "background-color": "#b8864b",
+    "font-size": "15px",
+    "color": "white",
+    "font-weight": "bold"
+}
+
+nav_button_style = {
+    "font-weight": "bold",
+    "border-radius": "3px",
+    "background-color": "#1F3A5F",
+    "padding-left": "1rem"
+}
+
+nav_text_style = {
+    "display": "inline-block",
+    "font-size": "0.9rem",
+    "font-weight": "bold",
+}
+
+progress_ring_style = {
+    "position": "relative",
+    "margin-bottom": "-20px",
+    "bottom": "10px",
+    "display": "inline-block",
+}
+relevance_score_style = {
+    "display": "inline-block",
+    "padding-right": "0px",
+    "position": "relative",
+    "font-weight": "bold",
+    "bottom": "10px",
+}
+toggle_style = {
+    "label": {
+        "display": "inline-flex",
+        "justifyContent": "space-between",
+        "&[data-checked]":{
+            "borderColor": "#b8864b",
+            "fontWeight": "bold",                                                    
+        }
+    }
+}
+
+review_badge_style = {
+    "color": "white",
+    "font-size": "12px",
+    "font-weight": "bold"
+}
+
+# Data table conditional style
+table_conditional_style = [
+    {'if': {'column_id': 'Review'}, 
+        'backgroundColor': '#1F3A5F', 
+        'text_align':'center',
+        'color': 'white',
+        "fontWeight": "1000",
+        'font-family': 'montserrat',},
+    {'if': {'column_id': 'Article'}, 
+        'text_align':'left',
+        'font-family': 'montserrat',},
+    {'if': {'column_id': 'Status'},
+        'fontWeight': 'bold'},
+]
+
+# Data table data style
+table_data_style = {
+    'whiteSpace': 'normal',
+    'height': 'auto',
+    'lineHeight': '15px',
+    'font-family': 'montserrat',
+}
+
+# Data table cell style
+table_cell_style = {
+    'textAlign': 'center',
+    'font-family': 'montserrat',
+    "background-color": "#fffff0",
+}
+
+# Data table header style
+table_header_style = {
+    "text-align": "center",
+    'font-family': 'montserrat',
+    "font-weight": "bold"
+}
 # Describe the configuration and the HTML styles for the review page
 chip_style={"scrollbar-width": "none", 
         "overflow": "auto",
         "height": "auto",
-        "max-height": "200px"}
+        "max-height": "200px",
+        "padding-bottom": "10px",}
 
 tab_body_style = {
     "scrollbar-width": "none", 
     "overflow": "auto",
     "height": "auto",
-    "max-height": "500px"
+    "max-height": "800px",
+    "border": "1px outset #000000",
+    "border-radius": "5px",
+    "border-color": "lightgrey",
+    "border-shadow": "15px 15px 10px grey",
 }
 # styling the sidebar
 SIDEBAR_STYLE = {
@@ -17,8 +118,8 @@ SIDEBAR_STYLE = {
     "left": 0,
     "bottom": 0,
     # "width": "16rem",
-    "padding": "2rem 1rem",
-    "background-color": "#f8f9fa",
+    "padding": "0.3rem 1rem",
+    "background-color": "#fffff0",
 }
 
 # padding for the page content
@@ -41,6 +142,19 @@ h2_style = {
     "padding-left": "20px",
     "padding-right": "20px",
     "text-overflow": "inherit"
+}
+
+h3_style = {
+    "color": "white",
+    "textAlign": "right",
+    "font-size": "45px",
+    "font-weight": "bold",
+    "font-family": "Futura",
+    "margin-bottom": "10px",
+    "padding-left": "100px",
+    "text-overflow": "inherit",
+    "background-color": "#b8864b",
+    "text-shadow": "1px 1px #000000"
 }
 
 h4_style = {

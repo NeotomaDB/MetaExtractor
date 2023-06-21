@@ -186,7 +186,6 @@ def load_json_label_files(labelled_file_path: str):
 
             all_labelled_entities += labelled_entities
 
-
             # add the current text to the combined text with space in between
             combined_text += raw_text + " "
 

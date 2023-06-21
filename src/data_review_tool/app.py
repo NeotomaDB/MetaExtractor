@@ -9,8 +9,8 @@ from pages.navbar import create_navbar
 
 app = dash.Dash(__name__, 
                 use_pages=True, 
-                external_stylesheets=[dbc.themes.BOOTSTRAP], 
-                title="MetaExtractor",
+                external_stylesheets=[dbc.themes.BOOTSTRAP, "src/data_review_tool/assets/styles.css"], 
+                title="Finding Fossils",
                 suppress_callback_exceptions=True,)
 
 server = app.server
@@ -24,8 +24,12 @@ app.layout = html.Div(
         navbar,
         dash.page_container
         ],
+    style={
+        "width": "100%",
+        "height": "100%",
+        "overflow": "hidden",}
     )
-
+app._favicon = "finding-fossils.ico"
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server("0.0.0.0", debug=True)

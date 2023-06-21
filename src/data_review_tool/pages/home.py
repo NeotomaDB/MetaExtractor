@@ -13,8 +13,8 @@ from pages.config import *
 suppress_callback_exceptions = True
 
 def layout():
-    
     combined_df = read_articles("data/data-review-tool")
+
 
     combined_df = combined_df[["title", "doi", "gddid", "status", "date_processed", "last_updated"]].rename(
             columns={"title": "Article", 
@@ -92,7 +92,7 @@ def current_article_clicked(active_cell_current, current_data,
             col = active_cell["column_id"]
             if col == "Review":
                 selected = data[row]["gddid"]
-                return f"http://127.0.0.1:8050/article/{selected}"
+                return f"http://0.0.0.0:8050/article/{selected}"
             else:
                 return dash.no_update
         

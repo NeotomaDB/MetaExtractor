@@ -8,7 +8,7 @@ echo python.__version__ = $(python -c 'import sys; print(sys.version)')
 echo "Current working directory: $(pwd)"
 
 # set the location of the labelled data, ideally this is run from root of repo
-export DATA_DIR="$(pwd)/data/labelled/2023-05-29_label-export/hf_processed/"
+export DATA_DIR="$(pwd)/data/entity-extraction/processed/2023-05-31_label-export_39-articles/"
 export MODEL_PATH="$(pwd)/models/ner/roberta-finetuned/checkpoint-750"
 export OUTPUT_DIR="$(pwd)/results/ner/test-results/"
 export MODEL_NAME="roberta-finetuned"
@@ -19,6 +19,7 @@ python src/entity_extraction/training/hf_token_classification/hf_evaluate.py \
     --model_path "$MODEL_PATH" \
     --output_path "$OUTPUT_DIR" \
     --model_name "$MODEL_NAME" \
+    --max_samples 1
 
 # use this for local cpu testing
     # --max_samples 1

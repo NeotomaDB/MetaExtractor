@@ -8,16 +8,16 @@ echo python.__version__ = $(python -c 'import sys; print(sys.version)')
 echo "Current working directory: $(pwd)"
 
 # set the location of the labelled data, ideally this is run from root of repo
-DATA_DIR="/home/jenit/Desktop/Capstone/MetaExtractor/data/entity-extraction/processed/sample_folder"
+DATA_DIR="sample_folder"
 TRAIN_SPLIT=0.7
 VAL_SPLIT=0.15
 TEST_SPLIT=0.15
-MODEL_PATH="/home/jenit/Desktop/Capstone/MetaExtractor/models/ner/spacy-transformer-v3"
-VERSION="test"
+MODEL_PATH=""
+VERSION="v1"
 
 rm -f spacy_transformer_$VERSION.cfg
 
-python3 spacy_train.py \
+python3 spacy_preprocess.py \
         --data_path $DATA_DIR \
         --train_split 0.7 \
         --val_split 0.15 \

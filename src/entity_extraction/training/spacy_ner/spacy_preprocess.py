@@ -31,7 +31,12 @@ opt = docopt(__doc__)
 def preprocess_data():
     # If the data_path consists of JSON, load all the files in the directory
     nlp = spacy.blank("en")
+    # Creating artifacts for only train and val sets
     train_doc_bin, val_doc_bin = DocBin(), DocBin()
+    
+    # Segragating all files for evaluation purposes
+    train_data = {}
+    val_data = {}
     test_data = {}
     
     train_path = os.path.join(opt['--data_path'], "train")
@@ -76,8 +81,10 @@ def preprocess_data():
         
         if gdd_id in train_ids:
             train_doc_bin.add(doc)
+            train_data[f'{labelled_file.split("/")[-1]}'] = article_data
         elif gdd_id in val_ids:
             val_doc_bin.add(doc)
+            val_data[f'{labelled_file.split("/")[-1]}'] = article_data
         else:
             test_data[f'{labelled_file.split("/")[-1]}'] = article_data
     
@@ -90,9 +97,18 @@ def preprocess_data():
 
     train_doc_bin.to_disk(os.path.join(train_path, "train.spacy"))
     val_doc_bin.to_disk(os.path.join(val_path, "val.spacy"))
+    
+    for train_file_name, train_file_data in train_data.items():
+        with open(os.path.join(train_path, train_file_name), 'w') as fout:
+            json.dump(train_file_data, fout)
+    
+    for val_file_name, val_file_data in val_data.items():
+        with open(os.path.join(val_path, val_file_name), 'w') as fout:
+            json.dump(val_file_data, fout)
+            
     for test_file_name, test_file_data in test_data.items():
         with open(os.path.join(test_path, test_file_name), 'w') as fout:
-            json.dump(article_data, fout)
+            json.dump(test_file_data, fout)
     
     # TODO: Else If the data_path consists of parquet files, load JSON files from all parquet files in the directory
     

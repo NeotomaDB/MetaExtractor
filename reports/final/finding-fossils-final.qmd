@@ -526,7 +526,101 @@ Reference: <https://aclanthology.org/M93-1007/>
 
 The following plot shows the primary candidate models token and entity based recall.
 
-\[Insert Entity Extraction Model Performance Comparison Here\]
+```{python}
+def plot_model_metric_comparison(
+    results_df: pd.DataFrame,
+    metrics: list,
+    fig_height: int = 6,
+    fig_width: int = 5,
+    sort_ascending: bool = False,
+):
+    metrics_formatted = [metric.replace("_", " ").title() for metric in metrics]
+
+    # flatten the results_df
+    flat_df = results_df.melt(
+        id_vars=["model"], value_vars=metrics, value_name="score", var_name="metric"
+    )
+
+    # multiply scores by 100
+    flat_df.loc[:, "score"] = flat_df.score * 100
+
+    # format the metric names
+    flat_df.loc[:, "metric"] = flat_df.metric.str.replace("_", " ").str.title()
+
+    # plot token level recall by model using seaborn
+    fig, ax = plt.subplots(figsize=(fig_width, fig_height))
+    # sns.set_theme(style="whitegrid")
+    ax = sns.barplot(
+        y="model",
+        x="score",
+        hue="metric",
+        data=flat_df,
+        order=flat_df.iloc[
+            flat_df[flat_df["metric"] == metrics_formatted[0]]["score"]
+            .sort_values(ascending=sort_ascending)
+            .index
+        ]["model"],
+        palette=FFOSSILS_PALETTE,
+        ax=ax,
+    )
+    ax.set_title(
+        f"Entity Extraction Model Performance Comparison\n",  # \nMetrics: {', '.join(metrics_formatted)}",
+        fontsize=12,
+        fontweight="bold",
+    )
+    # fix cut off of left/right of plot
+    fig.subplots_adjust(left=0.35, right=0.90, top=0.80)
+    for i in range(0, len(metrics)):
+        ax.bar_label(ax.containers[i], fmt="%.1f%%", fontsize=10, padding=2)
+    ax.set_xlabel(None)
+    # set x tick locations
+    ax.set_xticks([0, 20, 40, 60, 80, 100])
+    # format xtick labels to have % symbols
+    xtick_labels = [f"{int(x)}%" for x in ax.get_xticks()]
+    ax.set_xticklabels(xtick_labels)
+
+    ax.set_ylabel(None)
+    ax.set_xlim(0.0, max(100, flat_df.score.max()))
+    # plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left', borderaxespad=0, fontsize=12) #bbox_to_anchor=(1.02, 0.5),
+    ax.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, 1.1),
+        ncol=3,
+        fancybox=True,
+        shadow=True,
+    )
+    sns.despine(bottom=True)
+    plt.show()
+
+
+```
+
+```{python}
+# | label: extraction_recall_results
+# | warning: false
+# | echo: false
+# | layout-ncol: 1
+# | fig-cap: "The entity and token based recall for each model on the test set."
+model_results_df = load_model_evaluation_results(
+    results_path=os.path.join(os.pardir, os.pardir, "results", "ner"),
+    results_type="test",
+)
+
+sns.set_style(
+    "whitegrid",
+    rc={
+        "grid.color": ".85",
+    },
+)
+sns.set_context("paper")
+
+plot_model_metric_comparison(
+    model_results_df,
+    ["entity_recall", "token_recall"],
+    fig_height=4,
+    fig_width=6,
+)
+```
 
 The token based recall for each model on the test set.
 

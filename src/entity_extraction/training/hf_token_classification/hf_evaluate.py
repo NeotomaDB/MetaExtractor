@@ -2,7 +2,7 @@
 # Date: 2023-05-30
 """This script manages custom evaluation of the fine tuned hugging face models.
 
-Usage: evaluate.py --data_path=<data_path> --model_path=<model_path> --output_path=<output_path> --model_name=<model_name> [--max_samples=<max_samples>]
+Usage: hf_evaluate.py --data_path=<data_path> --model_path=<model_path> --output_path=<output_path> --model_name=<model_name> [--max_samples=<max_samples>]
 
 Options:
     --data_path=<data_path>         The path to the evaluation data in json format.
@@ -38,8 +38,6 @@ from src.entity_extraction.entity_extraction_evaluation import (
 from src.logs import get_logger
 
 logger = get_logger(__name__)
-
-opt = docopt(__doc__)
 
 
 def get_hf_token_labels(labelled_entities, raw_text):
@@ -200,7 +198,7 @@ def get_predicted_labels(ner_pipe, df):
 
     return df
 
-  
+
 def generate_classification_results(true_tokens, predicted_tokens):
     """
     Summarizes the classification results by both entity and token based methods.

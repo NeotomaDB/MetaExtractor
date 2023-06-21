@@ -427,7 +427,7 @@ Final hyper parameters used to train the models were as follows:
 
 +-----------------------------+----------------------------------------------------------------------------------------------------------------------------+
 | **Parameters**              | **Notes**                                                                                                                  |
-+-----------------------------+----------------------------------------------------------------------------------------------------------------------------+
++=============================+============================================================================================================================+
 | **Batch size**              | -   Maximized to utilize all available GPU memory, 128 for transformer based model and 512 for word vector based model     |
 +-----------------------------+----------------------------------------------------------------------------------------------------------------------------+
 | **Epochs**                  | -   Initial runs with 15 epochs, observed evaluation loss minima occurring in first 7-13 depending on learning rate        |
@@ -485,7 +485,6 @@ class C2,C3,C4,C5 compute_nodes;
 ```
 
 
-
 ### Model Evaluation
 
 The target of extracting an article's data is to make that data discoverable within Neotoma. The target for the data extraction is to maximize extracted data recall as the cost of a data reviewer deleting a piece of data is much lower than having to go and read the article to add missed entities. Similarly, token based recall is chosen as the target metric which measures partial matches of data extracted. Entity based recall which measures exact matches of all parts of a word is considered as it reduces data reviewers time to review articles but the emphasis is placed on token recall for evaluating models.
@@ -494,7 +493,7 @@ For more in depth analysis of results the following methods are used to evaluate
 
 +-------------+------------------------------------------------------------------------------------------------------+
 | **Method**  | **Description**                                                                                      |
-+-------------+------------------------------------------------------------------------------------------------------+
++=============+======================================================================================================+
 | **Strict**  | Exact boundary of extracted string and entity type matches the annotation.                           |
 +-------------+------------------------------------------------------------------------------------------------------+
 | **Exact**   | Exact boundary of extracted string matches but does not discriminate by correct entity label         |
@@ -511,7 +510,7 @@ Reference: <https://aclanthology.org/M93-1007/>
 
 +---------------------+-----------------------------------------------------------------------+
 | **Metric**          | **Description**                                                       |
-+---------------------+-----------------------------------------------------------------------+
++=====================+=======================================================================+
 | **Correct (COR)**   | Both the labelled entity and predicted entity are the same            |
 +---------------------+-----------------------------------------------------------------------+
 | **Incorrect (INC)** | The labelled entity and predicted entity do not match                 |
@@ -688,7 +687,7 @@ Markdown(render_df.to_markdown())
 
 An important observation to make here is that even the top models have a lower precision score for the SITE names and REGION names. The models gets confused when deciding whether an entity should be classified as a SITE or a REGION. This is partially due to quality of labeling entities as well as the fact that both these types correspond to the name of a place or a wider area. The following confusion matrix generated using the test set assets highlights the same:
 
-\[Insert Confusion Matrix here\]
+![Confusion Matrix for RoBERTa Model](../../results/ner/roberta-finetuned-v3/roberta-finetuned-v3_test_confusion_matrix.png)
 
 ## Data Review Tool
 
@@ -704,7 +703,7 @@ In order to create an interactive tool that would be appropriate and efficient f
 
 +-------------------------------------------------------+--------------------------------------------------+
 | **Requirement**                                       | **Target**                                       |
-+-------------------------------------------------------+--------------------------------------------------+
++=======================================================+==================================================+
 | Options for reviewing extracted data                  | Accept, Reject, Edit then Accept                 |
 +-------------------------------------------------------+--------------------------------------------------+
 | Other data made available to the user                 | Article DOI, Journal Name, Hyperlink to Article  |
@@ -747,7 +746,7 @@ The output of this data review tool is a JSON object that stores the originally 
 
 +---------------------------------------------------------+-----------------------------------------------+
 | **Requirement**                                         | **Results**                                   |
-+---------------------------------------------------------+-----------------------------------------------+
++=========================================================+===============================================+
 | Options for reviewing extracted data                    | Accept, Reject, Edit, Add then Accept         |
 +---------------------------------------------------------+-----------------------------------------------+
 | Other data made available to the user                   | Article DOI, Hyperlink to Article             |

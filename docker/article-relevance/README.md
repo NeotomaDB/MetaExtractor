@@ -37,15 +37,6 @@ Arguments for controlling the relevance prediction:
 - `OUTPUT_PATH`: This is the path to save the parquet files (contain article metadata and prediction results)
 - `SEND_XDD`: This variable can be set to True or False. If set to True, the articles that predicted to be relevant will be sent to xDD API and go through the name entity extraction (NER) process. 
 
-
-
-## Additional Options Enabled by Environment Variables
-
-The following environment variables can be set to change the behavior of the pipeline:
-- `USE_NER_MODEL_TYPE`: This variable can be set to `spacy` or `huggingface` to change the NER model used. The default is `huggingface`. This will be used to run batches with each model to evaluate final performance.
-- `MAX_SENTENCES`: This variable can be set to a number to limit the number of sentences processed per article. This is useful for testing and debugging. The default is `-1` which means no limit.
-- `MAX_ARTICLES`: This variable can be set to a number to limit the number of articles processed. This is useful for testing and debugging. The default is `-1` which means no limit.
-
 ## Sample Docker Compose Setup
 
 Below is a sample docker compose configuration for running the image:

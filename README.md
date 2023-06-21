@@ -45,7 +45,7 @@ Articles predicted to be relevant will then be submitted to the Data Extraction 
 
 ![](assets/article_prediction_flow.png)
 
-To run the Docker image for article relevance prediction pipeline, please refer to the instruction [here](https://github.com/NeotomaDB/MetaExtractor/tree/main/docker/article-relevance)
+To run the Docker image for article relevance prediction pipeline, please refer to the instruction [here](docker/article-relevance/README.md)
 
 ## **Data Extraction Pipeline**
 

@@ -129,6 +129,10 @@ WIP
 ├── .github/                            <- Directory for GitHub files
 │   ├── workflows/                      <- Directory for workflows
 ├── assets/                             <- Directory for assets
+├── docker/                             <- Directory for docker files
+│   ├── article-relevance/              <- Directory for docker files related to article relevance prediction
+│   ├── data-review-tool/               <- Directory for docker files related to data review tool
+│   ├── entity-extraction/              <- Directory for docker files related to named entity recognition
 ├── data/                               <- Directory for data
 │   ├── entity-extraction/              <- Directory for named entity extraction data
 │   │   ├── raw/                        <- Raw unprocessed data

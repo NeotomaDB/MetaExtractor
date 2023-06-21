@@ -164,7 +164,7 @@ def read_articles(directory):
         pandas.DataFrame: The articles in the directory
     """
     try:
-        directories = [os.path.join(directory, dir) for dir in ["completed", "raw"]]
+        directories = [os.path.join(directory, dir) for dir in ["processed", "raw"]]
 
         # Initialize an empty dictionary to store the dataframes
         dfs = {}

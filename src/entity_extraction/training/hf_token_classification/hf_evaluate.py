@@ -16,9 +16,10 @@ import os, sys
 
 import pandas as pd
 import numpy as np
+
 import time
 import json
-import logging
+from tqdm import tqdm
 from docopt import docopt
 from transformers import AutoTokenizer, AutoModelForTokenClassification, pipeline
 
@@ -29,10 +30,16 @@ sys.path.append(
 from src.entity_extraction.entity_extraction_evaluation import (
     calculate_entity_classification_metrics,
     plot_token_classification_report,
+    generate_classification_results,
+    generate_confusion_matrix,
+    export_classification_results,
+    export_classification_report_plots,
 )
+from src.logs import get_logger
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
+
+opt = docopt(__doc__)
 
 
 def get_hf_token_labels(labelled_entities, raw_text):
@@ -193,7 +200,7 @@ def get_predicted_labels(ner_pipe, df):
 
     return df
 
-
+  
 def generate_classification_results(true_tokens, predicted_tokens):
     """
     Summarizes the classification results by both entity and token based methods.
@@ -383,6 +390,13 @@ def main():
         # export the classification report plots
         export_classification_report_plots(
             true_tokens=df.ner_tags.tolist(),
+            predicted_tokens=df.predicted_tokens.tolist(),
+            output_path=opt["--output_path"],
+            model_name=opt["--model_name"] + "_" + file_name,
+        )
+
+        generate_confusion_matrix(
+            labelled_tokens=df.ner_tags.tolist(),
             predicted_tokens=df.predicted_tokens.tolist(),
             output_path=opt["--output_path"],
             model_name=opt["--model_name"] + "_" + file_name,

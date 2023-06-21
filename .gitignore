@@ -1,3 +1,8 @@
+# ignore files in models folder but keep .gitkeep
+models/ner/*
+results/ner/*
+!.gitkeep
+
 # exclude all txt files in data
 data/**/*.txt
 # include all json files in data

@@ -11,6 +11,8 @@ scikit-learn~=1.2
 pytest-cov~=4.0
 flake8~=6.0
 docopt-ng~=0.8
-transformers~=4.29
+python-dotenv~=1.0
+transformers~=4.24
+torch~=1.12
 # to use the spacy model for baseline NER
 https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.5.0/en_core_web_lg-3.5.0-py3-none-any.whl

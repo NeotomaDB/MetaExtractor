@@ -3,6 +3,33 @@
 *Finding Fossils* is data review tool created using Plotly Dash as part of the project and provides a mechanism for the data to be reviewed by Neotoma data stewards then submitted to Neotoma. It is being completed as part of the *University of British Columbia (UBC)* [*Masters of Data Science (MDS)*](https://masterdatascience.ubc.ca/) program in partnership with the [*Neotoma Paleoecological Database*](http://neotomadb.org).
 
 ---
+
+### **Directory Structure**
+  
+```
+├── README.md
+├── app.py
+├── assets
+│   ├── about_assets
+│   │   ├── accordions.png
+│   │   ├── deleted_toggle.png
+│   │   ├── entity_review.png
+│   │   ├── home.png
+│   │   ├── new_entity.png
+│   │   └── restore.png
+│   ├── finding-fossils-logo-symbol_highres.png
+│   ├── finding-fossils.ico
+│   └── styles.css
+└── pages
+    ├── __init__.py
+    ├── about.py
+    ├── article_review.py
+    ├── config.py
+    ├── home.py
+    ├── navbar.py
+    └── not_found_404.py
+```
+---
 ## **Dashboard Deployment**
 ---
 To be completed
@@ -76,3 +103,4 @@ If you have deleted an entity by accident, you can restore the entity. To do thi
   <img src="assets/about_assets/restore.png" alt="Restore Entity">
 </div>
 <br/>
+

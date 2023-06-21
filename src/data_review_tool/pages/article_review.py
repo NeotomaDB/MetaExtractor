@@ -203,8 +203,6 @@ def layout(gddid=None):
                                     style=nav_button_style,
                                 ),
                                 dcc.Location(id='location_home', refresh=True),
-                                # dcc.Location(id='location-irrelevant', refresh=True),
-                                # dcc.Location(id='location-submit', refresh=True),
                             ],
                             align="left",
                             lg=1,
@@ -326,7 +324,6 @@ def layout(gddid=None):
 
     return layout
 
-# Collapse the accordian when toggling between deleted and extracted entities
 @callback(
     Output("accordion", "value"),
     Input("toggle-switch", "checked"),
@@ -342,7 +339,6 @@ def collapse(checked):
     """
     return None
 
-# Populate accordian
 @callback(
     Output("accordion", "children"),
     Input("toggle-switch", "checked"),
@@ -453,7 +449,6 @@ def get_accordion_items(checked, data):
 
     return children
 
-# Button group callback
 @callback(
     Output("button-group", "children"),
     Input("toggle-switch", "checked"),
@@ -489,7 +484,6 @@ def update_button(checked):
             ),
         ]
 
-# Add home button callback
 @callback(
     Output("location_home", "href"),
     Input("home-button", "n_clicks"),
@@ -505,11 +499,10 @@ def cell_clicked(n_clicks):
         str: The href of the home button
     """
     if n_clicks:
-        return f"http://127.0.0.1:8050/"
+        return f"http://0.0.0.0:8050/"
     else:
         return dash.no_update
 
-# update chip values on screen load
 @callback(
     Output("chips_site", "children"),
     Output("chips_region", "children"),
@@ -569,7 +562,6 @@ def update_chips(checked, data):
 
     return chips["SITE"], chips["REGION"], chips["TAXA"], chips["GEOG"], chips["ALTI"], chips["AGE"], chips["EMAIL"]
 
-# Update the chip selection when accordian value changes
 @callback(
     Output("chips_site", "value"),
     Output("chips_region", "value"),
@@ -592,7 +584,6 @@ def unselect_chips(accordian):
     """
     return None, None, None, None, None, None, None
 
-# Populate entity text with the selected chip
 @callback(
     Output("entity-text", "children"),
     Output("corrected-text", "disabled"),
@@ -678,7 +669,6 @@ def chips_values(site,
         else:
             return email, False, False, corrected_name
 
-# toggle through the modal whenever the add-new-entity / close button is clicked
 @callback(
     Output("new-entity-modal", "opened"),
     Output("new-entity-modal", "title"),
@@ -702,7 +692,6 @@ def toggle_modal(n_clicks, close, opened, accordian):
     """
     return not opened, f"Please add information for a new {accordian} entity below:"
 
-# Update the results store when entity text is changed or it needs to be deleted
 @callback(
     Output('results', 'data'),
     Input("correct-button", "n_clicks"),
@@ -827,7 +816,6 @@ def update_entity(
 
     return results
 
-# Save the results to the appropriate folder
 @callback(
     Output("clicked-output", "children"),
     Input("confirm-submit-button", "n_clicks"),
@@ -906,7 +894,6 @@ def save_submit(submit, save, relevant, data):
     else:
         return None
 
-# Populate tabs with sentences under corresponding sections
 @callback(
     Output("section-tabs", "children"),
     Input("delete-restore-button", "n_clicks"),
@@ -1019,7 +1006,6 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
 
     return tab_component
 
-# Enable correct button when corrected text is entered
 @callback(
     Output("correct-button", "disabled"),
     Input("corrected-text", "value"),
@@ -1078,3 +1064,5 @@ for overflow in ["submit", "irrelevant"]:
         State(f"modal-{overflow}", "opened"),
         prevent_initial_call=True,
     )(toggle_confirmation_modal)
+    
+    

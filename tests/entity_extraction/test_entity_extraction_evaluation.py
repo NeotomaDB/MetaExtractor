@@ -26,9 +26,33 @@ def sample_labelled_entities():
     test_labelled_entities = [
         {"start": 13, "end": 33, "labels": ["ALTI"], "text": "120m above sea level"},
         {"start": 38, "end": 45, "labels": ["AGE"], "text": "1234 BP"},
-        {"start": 56, "end": 66, "labels": ["TAXA"], "text": "Pediastrum"},
+        {"start": 56, "end": 65, "labels": ["TAXA"], "text": "Pediastrum"},
     ]
     return test_labelled_entities
+
+
+@pytest.fixture
+def example_correct_tokens():
+    true_tokens = [
+        ["B-TAXA", "I-TAXA", "O", "B-AGE"],
+    ]
+    predicted_tokens = [
+        ["B-TAXA", "I-TAXA", "O", "B-AGE"],
+    ]
+
+    return true_tokens, predicted_tokens
+
+
+@pytest.fixture
+def example_incorrect_tokens():
+    true_tokens = [
+        ["B-TAXA", "I-TAXA", "O", "B-AGE"],
+    ]
+    predicted_tokens = [
+        ["O", "B-TAXA", "O", "B-AGE"],
+    ]
+
+    return true_tokens, predicted_tokens
 
 
 # first test that the correct tokens are labelled as entities and not "O"
@@ -41,18 +65,61 @@ def test_get_token_labels(sample_text, sample_labelled_entities):
         assert token_labels[i] != "O"
 
 
-# test the ideal case of passing in the same labelled tokens and predicted tokens
-def test_calculate_entity_classification_metrics(sample_text, sample_labelled_entities):
-    split_text, sample_token_labels = get_token_labels(
-        sample_labelled_entities, sample_text
-    )
+def test_calculate_entity_classification_metrics_with_correct_input(
+    example_correct_tokens,
+):
+    true_tokens, predicted_tokens = example_correct_tokens
 
-    # test that the accuracy, f1, and recall scores are equal to 1
     accuracy, f1, recall, precision = calculate_entity_classification_metrics(
-        sample_token_labels, sample_token_labels, method="tokens"
+        true_tokens, predicted_tokens, method="tokens"
     )
 
-    assert accuracy == 1
-    assert f1 == 1
-    assert recall == 1
-    assert precision == 1
+    # ensure the f1, accuracy, recall and precision are correct to 2 decimal places
+    assert round(f1, 2) == 1.0
+    assert round(accuracy, 2) == 1.0
+    assert round(recall, 2) == 1.0
+    assert round(precision, 2) == 1.0
+
+    accuracy, f1, recall, precision = calculate_entity_classification_metrics(
+        true_tokens, predicted_tokens, method="entity"
+    )
+    # ensure the f1, accuracy, recall and precision are correct to 2 decimal places
+    assert round(f1, 2) == 1.0
+    assert round(accuracy, 2) == 1.0
+    assert round(recall, 2) == 1.0
+    assert round(precision, 2) == 1.0
+
+
+def test_calculate_entity_classification_metrics_with_incorrect_input(
+    example_incorrect_tokens,
+):
+    true_tokens, predicted_tokens = example_incorrect_tokens
+
+    accuracy, f1, recall, precision = calculate_entity_classification_metrics(
+        true_tokens, predicted_tokens, method="tokens"
+    )
+    # ensure the f1, accuracy, recall and precision are correct to 2 decimpal places
+    assert round(f1, 2) == 0.8
+    assert round(accuracy, 2) == 0.75
+    assert round(recall, 2) == 0.67
+    assert round(precision, 2) == 1.0
+
+    accuracy, f1, recall, precision = calculate_entity_classification_metrics(
+        true_tokens, predicted_tokens, method="entity"
+    )
+    # ensure the f1, accuracy, recall and precision are correct to 2 decimpal places
+    assert round(f1, 2) == 0.5
+    assert round(accuracy, 2) == 0.5
+    assert round(recall, 2) == 0.5
+    assert round(precision, 2) == 0.5
+
+
+def test_plot_classification_report(example_correct_tokens):
+    true_tokens, predicted_tokens = example_correct_tokens
+
+    plot = plot_token_classification_report(
+        true_tokens, predicted_tokens, title="Test Plot", method="tokens", display=False
+    )
+
+    assert plot is not None
+    assert plot.axes[0].get_title() == "Test Plot"

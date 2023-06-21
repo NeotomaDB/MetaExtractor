@@ -17,7 +17,15 @@ There are 3 primary components to this project:
 
 ## **Article Relevance Prediction**
 
-The goal of this component is to monitor and identify new articles that are relevant to Neotoma. This is done by using the public [xDD API](https://geodeepdive.org/) to regularly get recently published articles. Article metadata is queried from the [CrossRef API](https://www.crossref.org/documentation/retrieve-metadata/rest-api/) to obtain data such as journal name, title, abstract and more. The article metadata is then used to predict whether the article is relevant to Neotoma or not. The predicted articles are then submitted to the Data Extraction Pipeline for processing.
+The goal of this component is to monitor and identify new articles that are relevant to Neotoma. This is done by using the public [xDD API](https://geodeepdive.org/) to regularly get recently published articles. Article metadata is queried from the [CrossRef API](https://www.crossref.org/documentation/retrieve-metadata/rest-api/) to obtain data such as journal name, title, abstract and more. The article metadata is then used to predict whether the article is relevant to Neotoma or not.
+
+The model was trained on ~900 positive examples (a sample of articles currently contributing to Neotoma) and ~3500 negative examples (a sample of articles unrrelated or closely related to Neotoma). Logistic regression model was chosen for its outstanding performance and interpretability.
+
+Articles predicted to be relevant will then be submitted to the Data Extraction Pipeline for processing.
+
+![](assets/article_prediction_flow.png)
+
+To run the Docker image for article relevance prediction pipeline, please refer to the instruction [here](https://github.com/NeotomaDB/MetaExtractor/tree/main/docker/article-relevance)
 
 ## **Data Extraction Pipeline**
 

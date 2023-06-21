@@ -35,7 +35,7 @@ def sample_labelled_entities():
 def test_get_token_labels(sample_text, sample_labelled_entities):
     expected_non_null_labels = [3, 4, 5, 6, 8, 9, 12]
 
-    token_labels = get_token_labels(sample_labelled_entities, sample_text)
+    split_text, token_labels = get_token_labels(sample_labelled_entities, sample_text)
 
     for i in expected_non_null_labels:
         assert token_labels[i] != "O"
@@ -43,7 +43,9 @@ def test_get_token_labels(sample_text, sample_labelled_entities):
 
 # test the ideal case of passing in the same labelled tokens and predicted tokens
 def test_calculate_entity_classification_metrics(sample_text, sample_labelled_entities):
-    sample_token_labels = get_token_labels(sample_labelled_entities, sample_text)
+    split_text, sample_token_labels = get_token_labels(
+        sample_labelled_entities, sample_text
+    )
 
     # test that the accuracy, f1, and recall scores are equal to 1
     accuracy, f1, recall, precision = calculate_entity_classification_metrics(

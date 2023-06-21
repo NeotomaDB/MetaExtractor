@@ -7,12 +7,13 @@
 
 """This script takes a list of DOI as input and output a dataframe containing all metadata, predicted relevance, predict_proba of each article.
 
-Usage: relevance_prediction.py --doi_path=<doi_path> --model_path=<model_path> --output_path=<output_path>
+Usage: relevance_prediction.py --doi_path=<doi_path> --model_path=<model_path> --output_path=<output_path> --send_xdd=<send_xdd>
 
 Options:
     --doi_path=<doi_path>                   The path to where the list of DOI is.
     --model_path=<model_path>               The path to where the model object is stored.
     --output_path=<output_path>             The path to where the output files will be saved.
+    --send_xdd=<send_xdd>                   When True, relevant articles will be sent to xDD through API query. Default is False.
 """
 
 import pandas as pd
@@ -340,6 +341,35 @@ def relevance_prediction(input_df, model_path, predict_thld = 0.5):
 
     return result
 
+def xdd_put_request(row):
+    """
+    If the article is predicted to be relevant, query xDD for full text.
+    
+    Args:
+        row (a row in pd DataFrame) 
+
+    Returns:
+        'success' if the query was successful, otherwise 'failed'
+        """
+
+    if row['prediction'] == 1:
+
+        # ========= To Be Completed after figuring out the API call ========
+        # query xDD API
+        # gddid = row['gddid']
+        # api_call = f"API_CALL_for{gddid}"
+        # xdd_response = requests.get(api_call)
+        # status = xdd_response.status_code
+
+        # ========= Mock output ========
+        status = 200
+
+        # ===== 
+        if status == 200:
+            return "success"
+        else:
+            return "failed"
+
 
 def prediction_export(input_df, output_path):
     """
@@ -387,11 +417,17 @@ def main():
     doi_list_file_path = opt["--doi_path"]
     model_path = opt['--model_path']
     output_path = opt['--output_path']
+    send_xdd = opt['--send_xdd']
 
     metadata_df = crossref_extract(doi_list_file_path)
     preprocessed = data_preprocessing(metadata_df)
     embedded = add_embeddings(preprocessed, 'text_with_abstract', model = 'allenai/specter2')
     predicted = relevance_prediction(embedded, model_path, predict_thld = 0.5)
+
+    if send_xdd =="True":
+        # run xdd_put_request function, add the xddquery_status column to the parquet
+        predicted.loc[:, 'xdd_querystatus'] = predicted.apply(xdd_put_request, axis=1)
+    
     prediction_export(predicted, output_path)
 
 

@@ -58,13 +58,11 @@ The article relevance prediction is posed as a binary classification problem. Ba
 To train the supervised classification model, a sample of labelled articles has been compiled.
 
 | **Label** | **Sample Size** | **Description**                                                                                                                                                                                                                                      |
-|:---------:|:---------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|:--:|:--:|:---------|
 | Positive  |       911       | With the help from our partner Simon, a list of articles that currently contribute to Neotoma was provided as the positive cases. These articles cover various types of fossil data in the Neotoma database.                                        |
 | Negative  |      3523       | Articles from non-paleoecology-related subjects were queried to form a representative sample of non-relevant articles. Among these articles, there are articles that are closely related to paleoecology but do not contain fossil collection data. |
 
-: Labelled Article Sample
 
-In the modified table, I have adjusted the column widths by adding hyphens (`-`) between the colons in the header row. This will allocate sufficient space for each column, preventing them from overlapping. Feel free to adjust the hyphen count to achieve the desired column widths for your table.
 The labelled articles were split into train/validation/test sets with splits of 0.7/0.15/0.15, which correspond to 3103/665/666 articles. Due to the relatively small total sample size, 70% of the articles were included in the training set so that there are more examples provided during training.
 
 #### Preprocessing & Feature Selection
@@ -79,6 +77,8 @@ Article's metadata were retrieved from the CrossRef API. There were over 50 type
 | Subject                                    | Instead of using the name of the journal, the subject of the journal was used as a proxy of the journal.                                                                                                                                                                                                                                                                      |
 | Number of citation                         | Number of citations could potentially indicate if the article contains important data and is referred to in other articles.                                                                                                                                                                                                                                                   |
 | Feature related to the publication process | These features do not provide any contextual information about the article, thus they were removed from the feature list.                                                                                                                                                                                                                                                     |
+
+
 : Feature Selection Decisions
 
 The features selected include a descriptive text feature (concatenation of title, subtitle and abstract), subject of the journal, number of citations and a binary indicator for having an abstract available from CrossRef or not.
@@ -102,6 +102,7 @@ The descriptive text feature provides crucial contextual information for the mod
 +-----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | specter2                    | This model is pre-trained using over 6 million scientific articles, thus it could be better at understanding the language style and pattern in scientific articles.                      |
 +-----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
 : Sentence Embedding Models
 
 #### Model Selection
@@ -326,7 +327,6 @@ plot_distribution_of_entities(
 
 ```
 
-
 ### Approach
 
 The state of the art for NER tasks is currently dominated by transformer based models. The best performing non-transformer based models are a transition-based stack long-short term memory (S-LSTM) model used in the spaCy package.
@@ -357,30 +357,25 @@ For the transformer based models two approaches were used for training, spaCy CL
 |                          | -   Access to spaCy's unique transition-based NER model                                             |                                          |
 |                          |                                                                                                     |                                          |
 |                          | -   Ability to integrate multiple ML models in an ensemble -Integrates with visualization libraries |                                          |
-+==========================+=====================================================================================================+==========================================+
++--------------------------+-----------------------------------------------------------------------------------------------------+------------------------------------------+
 | Hugging Face Trainer API | -   able to use non-NER models and add classification head easily                                   | -   more code required                   |
 |                          |                                                                                                     |                                          |
 |                          | -   able to easily integrate custom tracking of metrics and external logging to MLflow              |                                          |
 +--------------------------+-----------------------------------------------------------------------------------------------------+------------------------------------------+
 
-:  spaCy CLI andHugging Face’s Training API Advantages and Disadvantages
+: spaCy CLI andHugging Face's Training API Advantages and Disadvantages
 
 Using the Hugging Face training API the following models were trained and evaluated along with the hypothesis behind their selection.
 
-+--------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Model              | Hypothesis                                                                                                                                                  |
-+====================+=============================================================================================================================================================+
-| RoBERTa-base       | Cited as one of the commonly best performing models for NER \[SOURCE\]                                                                                      |
-+====================+=============================================================================================================================================================+
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RoBERTa-base       | Cited as one of the commonly best performing models for NER [SOURCE]                                                                                        |
 | RoBERTa-large      | A larger model than the base version with potential to learn more complex relationships with the downside of larger compute times.                          |
-+====================+=============================================================================================================================================================+
 | BERT-multilanguage | The known OCR issues and scientific nature of the text may mean the larger vocabulary of this multi-language model may deal with issues better.             |
-+====================+=============================================================================================================================================================+
 | XLM-RoBERTa-base   | Another cross language model (XLM) but using the RoBERTa base architecture and pre-training.                                                                |
-+====================+=============================================================================================================================================================+
-| Specter2           | This model is BERT based and finetuned on 6M+ scientific articles with it's own scientific vocabulary making it well suited to analyzing research articles. |
-+--------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
-: Hugging Face Model Hypotheses 
+| Specter2           | This model is BERT based and finetuned on 6M+ scientific articles with it’s own scientific vocabulary making it well suited to analyzing research articles. |
+
+: Hugging Face Model Hypotheses
 
 Final hyper parameters used to train the models were as follows:
 
@@ -399,27 +394,28 @@ Final hyper parameters used to train the models were as follows:
 +-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Learning Rate Scheduler | -   All initial training has been done with a linear learning rate scheduler which linearly decreases learning rate across epochs                                                                                |
 +-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Warmup Ratio            | -   How many steps of training to increase LR from 0 to LR, shown to improve with Adam optimizer - [LINK](https://www.borealisai.com/research-blogs/tutorial-17-transformers-iii-training/) Set to 10% initially |
+| Warmup Ratio            | -   How many steps of training to increase LR from 0 to LR, shown to improve with Adam optimizer - [@borealisai2023tutorial] Set to 10% initially |
 +-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
 : Hugging Face Hyperparameters
 
 Using the spaCy CLI, the following models were trained and evaluated along with their pros and cons highlighted.
 
-+----------------+----------------------------------------------------------------------+------------------------------------------------------+
-| Model          | Advantages                                                           | Disadvantages                                        |
-+================+======================================================================+======================================================+
-| RoBERTa-base   | -   State-of-the-art pretrained transformer for NLP tasks in English | -   Computationally expensive to train and inference |
-|                |                                                                      |                                                      |
-|                | -   Context rich embeddings                                          | -   Cannot fine-tune                                 |
-|                |                                                                      |                                                      |
-|                |                                                                      | -   Slow processing                                  |
-+----------------+----------------------------------------------------------------------+------------------------------------------------------+
-| en_core_web_md | -   A smaller word vector model with static embeddings for words     | -   Static embeddings without context                |
-|                |                                                                      |                                                      |
-|                | -   Memory and speed efficient                                       | -   Cannot handle OOV words well                     |
-|                |                                                                      |                                                      |
-|                |                                                                      | -   Cannot fine-tune                                 |
-+----------------+----------------------------------------------------------------------+------------------------------------------------------+
++------------------+----------------------------------------------------------------------+------------------------------------------------------+
+| Model            | Advantages                                                           | Disadvantages                                        |
++==================+======================================================================+======================================================+
+| RoBERTa-base     | -   State-of-the-art pretrained transformer for NLP tasks in English | -   Computationally expensive to train and inference |
+|                  |                                                                      |                                                      |
+|                  | -   Context rich embeddings                                          | -   Cannot fine-tune                                 |
+|                  |                                                                      |                                                      |
+|                  |                                                                      | -   Slow processing                                  |
++------------------+----------------------------------------------------------------------+------------------------------------------------------+
+| en_core          | -   A smaller word vector model with static embeddings for words     | -   Static embeddings without context                |
+| _web_md          |                                                                      |                                                      |
+|                  | -   Memory and speed efficient                                       | -   Cannot handle OOV words well                     |
+|                  |                                                                      |                                                      |
+|                  |                                                                      | -   Cannot fine-tune                                 |
++------------------+----------------------------------------------------------------------+------------------------------------------------------+
 
 : spaCy CLI Model Advantages and Disadvantages
 
@@ -484,7 +480,6 @@ class F1,F2,F3,F4,F5,F6,F7,F8 file_nodes;
 class C2,C3,C4,C5 compute_nodes;
 ```
 
-
 ### Model Evaluation
 
 The target of extracting an article's data is to make that data discoverable within Neotoma. The target for the data extraction is to maximize extracted data recall as the cost of a data reviewer deleting a piece of data is much lower than having to go and read the article to add missed entities. Similarly, token based recall is chosen as the target metric which measures partial matches of data extracted. Entity based recall which measures exact matches of all parts of a word is considered as it reduces data reviewers time to review articles but the emphasis is placed on token recall for evaluating models.
@@ -502,11 +497,10 @@ For more in depth analysis of results the following methods are used to evaluate
 +-------------+------------------------------------------------------------------------------------------------------+
 | **Type**    | Any overlap of the correct entity type is considered correct.                                        |
 +-------------+------------------------------------------------------------------------------------------------------+
+
 : Model Evaluation Methods
 
-From the Message Understanding conference the following detailed metrics are used during evaluation for each of the above methods: 
-
-Reference: <https://aclanthology.org/M93-1007/>
+From the Message Understanding conference [@chinchor-sundheim-1993-muc] the following detailed metrics are used during evaluation for each of the above methods:
 
 +---------------------+-----------------------------------------------------------------------+
 | **Metric**          | **Description**                                                       |
@@ -521,6 +515,7 @@ Reference: <https://aclanthology.org/M93-1007/>
 +---------------------+-----------------------------------------------------------------------+
 | **Spurius (SPU)**   | The model predicts an entity where there is none in the labelled text |
 +---------------------+-----------------------------------------------------------------------+
+
 : Model Evaluation Metrics
 
 The following plot shows the primary candidate models token and entity based recall.
@@ -622,6 +617,7 @@ plot_model_metric_comparison(
 ```
 
 The token based recall for each model on the test set by entity type are shown below:
+
 ```{python}
 # | label: tbl-ohe_example
 # | tbl-cap: 'Entity extraction model results for token based recall, overall and by entity type'
@@ -695,7 +691,7 @@ In order to for the Neotoma data stewards to view the results of the Article Rel
 
 ### Approach
 
-As the goal of this project was to create a product with custom components that was open-source and free to create, it was decided that ultimately using R Shiny or Plotly Dash would meet the customization needs of the project better than a paid alternative like Tableau or Power BI. In the discussion with Neotoma, there was no impact on whether the team decided to implement either of these options. Ultimately, the team decided that as the rest of our project dashboard development would continue by using Plotly Dash in Python.
+As the goal of this project was to create a product with custom components that was open-source and free to create, it was decided that ultimately using R Shiny[@shiny] or Plotly Dash [@dash] would meet the customization needs of the project better than a paid alternative like Tableau or Power BI. In the discussion with Neotoma, there was no impact on whether the team decided to implement either of these options. Ultimately, the team decided that as the rest of our project dashboard development would continue by using Plotly Dash in Python.
 
 ### Evaluation
 
@@ -726,7 +722,6 @@ In order to create an interactive tool that would be appropriate and efficient f
 ## Article Relevance Prediction
 
 ![Model Performance Comparison using Cross-Validation Scores](assets/relevance-model-comparison.png)
-
 
 Among all the models trained, Naive Bayes has the highest recall score, but its precision score was low and will introduce false positives. Among all gradient boosted models, LGBM has the highest precision, but its recall score did not outperform logistic regression. Among the analogy-based models, SVM with RBF kernel achieve a performance that's comparable to logistic regression, and both are sufficiently high. The final decision was to use logistic regression with tuned hyperparameters for its good performance and better interpretability. On the test data set, the final model achieved a recall score of 96.5%, and a precision score of 85.2%. To put this into actual article counts, among the 666 articles in the test set, there are 5 false negatives and 24 false positives.
 
@@ -761,6 +756,7 @@ The output of this data review tool is a JSON object that stores the originally 
 +---------------------------------------------------------+-----------------------------------------------+
 | Output file format                                      | JSON                                          |
 +---------------------------------------------------------+-----------------------------------------------+
+
 : Data Review Tool Mertic Results
 
 As the table above shows, all of the requirements that were originally laid out in the proposal were implemented through this Dash application. However, there are further improvements that could be made if there was more time available. One crucial improvement would involve incorporating an additional page within the dashboard to enable users to review the results of the Article Relevance Prediction model. This page would present both positive predictions (articles relevant to Neotoma) and negative predictions (articles not relevant). By allowing Neotoma data stewards to review and correct these predictions, the accuracy of the Article Relevance model can be improved through retraining. At present, the data review tool includes a button in which the user can mark an article as irrelevant. This can then be used to retrain the model by labelling it as not relevant to Neotoma. However, there is no current method implemented to make corrections on negative predictions. If this was addressed in the future, the original bias from the sample of data that was used to train the Article relevance tool could be minimized which would lead to greater model performance.
@@ -816,8 +812,6 @@ class A,B,C,D,E,F,G,H,I,J,K,L nodes;
 class neotoma,xdd subg;
 class entity_docker,relevance_docker docker;
 ```
-
-
 
 # Conclusion and Recommendations
 

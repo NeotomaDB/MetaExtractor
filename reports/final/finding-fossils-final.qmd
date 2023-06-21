@@ -511,9 +511,59 @@ From the Message Understanding conference [@chinchor-sundheim-1993-muc] the foll
 
 : Model Evaluation Metrics
 
-The following plot shows the primary candidate models token and entity based recall.
+
+## Data Review Tool
+
+In order to for the Neotoma data stewards to view the results of the Article Relevance Prediction and the Article Data Extraction, the final data product required was an interactive dashboard. The goal of this data product is to manually review the output of the entire natural language processing pipeline. The users are able to make corrections to the extracted entities by comparing the extracted entity to the sentence or opening the full-text article. In addition, the user is able to delete incorrectly extracted entities or add additional entities that the extraction model missed. The output of the Data Review Tool is a JSON object that can then be used to retrain the Article Entity Extraction model and populate the Neotoma database. This will lead to more information sharing and better results in the future, which will decrease the time required by the data stewards while reviewing the extracted entities of an article.
+
+### Approach
+
+As the goal of this project was to create a product with custom components that was open-source and free to create, it was decided that ultimately using R Shiny[@shiny] or Plotly Dash [@dash] would meet the customization needs of the project better than a paid alternative like Tableau or Power BI. In the discussion with Neotoma, there was no impact on whether the team decided to implement either of these options. Ultimately, the team decided that as the rest of our project dashboard development would continue by using Plotly Dash in Python.
+
+### Evaluation
+
+In order to create an interactive tool that would be appropriate and efficient for the reviewers who are using this tool, the aim was to make it user-friendly and simple to use. To accomplish this success criteria, the following requirements were developed along with the targets to make these requirements successful for the data reviewers.
+
++-------------------------------------------------------+--------------------------------------------------+
+| **Requirement**                                       | **Target**                                       |
++=======================================================+==================================================+
+| Options for reviewing extracted data                  | Accept, Reject, Edit then Accept                 |
++-------------------------------------------------------+--------------------------------------------------+
+| Other data made available to the user                 | Article DOI, Journal Name, Hyperlink to Article  |
++-------------------------------------------------------+--------------------------------------------------+
+| Displaying text from where the data was extracted     | Current sentence and 1-2 sentences before/after. |
++-------------------------------------------------------+--------------------------------------------------+
+| User skill to run                                     | Non-Technical (e.g. no code/CLI)                 |
++-------------------------------------------------------+--------------------------------------------------+
+| Number of mouse clicks to review single piece of data | 1-2                                              |
++-------------------------------------------------------+--------------------------------------------------+
+| Reviewing workflow                                    | Able to save/resume progress.                    |
++-------------------------------------------------------+--------------------------------------------------+
+| Output file format                                    | JSON                                             |
++-------------------------------------------------------+--------------------------------------------------+
+
+: Data Review Tool Target Metrics
+
+# Data Products and Results
+
+## Article Relevance Prediction
+
+![Model Performance Comparison using Cross-Validation Scores](assets/relevance-model-comparison.png)
+
+Among all the models trained, Naive Bayes has the highest recall score, but its precision score was low and will introduce false positives. Among all gradient boosted models, LGBM has the highest precision, but its recall score did not outperform logistic regression. Among the analogy-based models, SVM with RBF kernel achieve a performance that's comparable to logistic regression, and both are sufficiently high. The final decision was to use logistic regression with tuned hyperparameters for its good performance and better interpretability. On the test data set, the final model achieved a recall score of 96.5%, and a precision score of 85.2%. To put this into actual article counts, among the 666 articles in the test set, there are 5 false negatives and 24 false positives.
+
+## Article Data Extraction
+
+Of the two approaches developed using the spaCy and Hugging Face model training systems there are two candidate models proposed to be used. The first is the Hugging Face finetuned RoBERTa based model which performed best of the Hugging Face models. The second is spaCy's transformer based model. The reason for proposing two models moving forward is the spaCy transformer model has better entity based recall along with better precision, meaning the extracted data is more often correctly extracted. Whereas the Hugging Face RoBERTa model achieves better token recall but has lower precision, meaning it detects more of the overall entities but contains more false detections which must be deleted by the reviewers. The slight differences in the accuracies and varying strengths can be attributed to the different NER models leveraging the RoBERTa-base transformer embeddings differently.
+
+@fig-extraction_recall_results shows the primary candidate models token and entity based recall.
 
 ```{python}
+# | label: fig-extraction_recall_results
+# | layout-ncol: 1
+# | fig-cap: "The entity and token based recall for each model on the test set."
+
+
 def plot_model_metric_comparison(
     results_df: pd.DataFrame,
     metrics: list,
@@ -580,14 +630,6 @@ def plot_model_metric_comparison(
     plt.show()
 
 
-```
-
-```{python}
-# | label: extraction_recall_results
-# | warning: false
-# | echo: false
-# | layout-ncol: 1
-# | fig-cap: "The entity and token based recall for each model on the test set."
 model_results_df = load_model_evaluation_results(
     results_path=os.path.join(os.pardir, os.pardir, "results", "ner"),
     results_type="test",
@@ -609,10 +651,11 @@ plot_model_metric_comparison(
 )
 ```
 
-The token based recall for each model on the test set by entity type are shown below:
+
+The token based recall for each model on the test set by entity type are shown in @tbl-token-recall.
 
 ```{python}
-# | label: tbl-ohe_example
+# | label: tbl-token-recall
 # | tbl-cap: 'Entity extraction model results for token based recall, overall and by entity type'
 # | tbl-cap-location: bottom
 # | tbl-colwidths: [0.2,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]
@@ -674,53 +717,9 @@ render_df = render_df[
 Markdown(render_df.to_markdown())
 ```
 
-An important observation to make here is that even the top models have a lower precision score for the SITE names and REGION names. The models gets confused when deciding whether an entity should be classified as a SITE or a REGION. This is partially due to quality of labeling entities as well as the fact that both these types correspond to the name of a place or a wider area. The following confusion matrix generated using the test set assets highlights the same:
+An important observation to make here is that even the top models have a lower precision score for the SITE names and REGION names. The models gets confused when deciding whether an entity should be classified as a SITE or a REGION. This is partially due to quality of labeling entities as well as the fact that both these types correspond to the name of a place or a wider area. See @fig-confusion_matrix for a confusion matrix generated using the test set assets highlights the issue.
 
-![Confusion Matrix for RoBERTa Model](../../results/ner/roberta-finetuned-v3/roberta-finetuned-v3_test_confusion_matrix.png)
-
-## Data Review Tool
-
-In order to for the Neotoma data stewards to view the results of the Article Relevance Prediction and the Article Data Extraction, the final data product required was an interactive dashboard. The goal of this data product is to manually review the output of the entire natural language processing pipeline. The users are able to make corrections to the extracted entities by comparing the extracted entity to the sentence or opening the full-text article. In addition, the user is able to delete incorrectly extracted entities or add additional entities that the extraction model missed. The output of the Data Review Tool is a JSON object that can then be used to retrain the Article Entity Extraction model and populate the Neotoma database. This will lead to more information sharing and better results in the future, which will decrease the time required by the data stewards while reviewing the extracted entities of an article.
-
-### Approach
-
-As the goal of this project was to create a product with custom components that was open-source and free to create, it was decided that ultimately using R Shiny[@shiny] or Plotly Dash [@dash] would meet the customization needs of the project better than a paid alternative like Tableau or Power BI. In the discussion with Neotoma, there was no impact on whether the team decided to implement either of these options. Ultimately, the team decided that as the rest of our project dashboard development would continue by using Plotly Dash in Python.
-
-### Evaluation
-
-In order to create an interactive tool that would be appropriate and efficient for the reviewers who are using this tool, the aim was to make it user-friendly and simple to use. To accomplish this success criteria, the following requirements were developed along with the targets to make these requirements successful for the data reviewers.
-
-+-------------------------------------------------------+--------------------------------------------------+
-| **Requirement**                                       | **Target**                                       |
-+=======================================================+==================================================+
-| Options for reviewing extracted data                  | Accept, Reject, Edit then Accept                 |
-+-------------------------------------------------------+--------------------------------------------------+
-| Other data made available to the user                 | Article DOI, Journal Name, Hyperlink to Article  |
-+-------------------------------------------------------+--------------------------------------------------+
-| Displaying text from where the data was extracted     | Current sentence and 1-2 sentences before/after. |
-+-------------------------------------------------------+--------------------------------------------------+
-| User skill to run                                     | Non-Technical (e.g. no code/CLI)                 |
-+-------------------------------------------------------+--------------------------------------------------+
-| Number of mouse clicks to review single piece of data | 1-2                                              |
-+-------------------------------------------------------+--------------------------------------------------+
-| Reviewing workflow                                    | Able to save/resume progress.                    |
-+-------------------------------------------------------+--------------------------------------------------+
-| Output file format                                    | JSON                                             |
-+-------------------------------------------------------+--------------------------------------------------+
-
-: Data Review Tool Target Metrics
-
-# Data Products and Results
-
-## Article Relevance Prediction
-
-![Model Performance Comparison using Cross-Validation Scores](assets/relevance-model-comparison.png)
-
-Among all the models trained, Naive Bayes has the highest recall score, but its precision score was low and will introduce false positives. Among all gradient boosted models, LGBM has the highest precision, but its recall score did not outperform logistic regression. Among the analogy-based models, SVM with RBF kernel achieve a performance that's comparable to logistic regression, and both are sufficiently high. The final decision was to use logistic regression with tuned hyperparameters for its good performance and better interpretability. On the test data set, the final model achieved a recall score of 96.5%, and a precision score of 85.2%. To put this into actual article counts, among the 666 articles in the test set, there are 5 false negatives and 24 false positives.
-
-## Article Data Extraction
-
-Of the two approaches developed using the spaCy and Hugging Face model training systems there are two candidate models proposed to be used. The first is the Hugging Face finetuned RoBERTa based model which performed best of the Hugging Face models. The second is spaCy's transformer based model. The reason for proposing two models moving forward is the spaCy transformer model has better entity based recall along with better precision, meaning the extracted data is more often correctly extracted. Whereas the Hugging Face RoBERTa model achieves better token recall but has lower precision, meaning it detects more of the overall entities but contains more false detections which must be deleted by the reviewers. The slight differences in the accuracies and varying strengths can be attributed to the different NER models leveraging the RoBERTa-base transformer embeddings differently.
+![Confusion Matrix for RoBERTa Model](../../results/ner/roberta-finetuned-v3/roberta-finetuned-v3_test_confusion_matrix.png){#fig-confusion_matrix}
 
 ## Data Review Tool
 

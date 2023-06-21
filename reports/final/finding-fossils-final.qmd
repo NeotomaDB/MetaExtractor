@@ -1,0 +1,836 @@
+---
+title: |
+  Final Report: \
+  Finding Fossils in the Literature \  
+  ![](assets/finding-fossils-logo-symbol_highres.png){width=1.5in} \
+subtitle: In partnership with the Neotoma Paleoecology Database.
+date: today
+author:   
+  - Ty Andrews  
+  - Jenit Jain
+  - Kelly Wu
+  - Shaun Hutchinson
+execute: 
+  echo: false
+bibliography: assets/references.bib
+format:
+  pdf:
+    toc: false
+    number-sections: true
+    colorlinks: true
+params: 
+  output_file: "reports"
+fig-cap-location: top
+---
+
+**Executive Summary**
+
+The project Finding Fossils in Literature is sponsored by the Neotoma database (Neotoma) which houses a paleoecology database. The challenges Neotoma faces are 1) researchers have to manually enter sample data into Neotoma, 2) researchers are not aware of Neotoma or that their research fits into it, and 3) there are too many articles published for the Neotoma team to monitor new research. This project has 3 primary deliverables to solve the challenges, first is an article relevance prediction model which predicts whether newly published articles are relevant to Neotoma. Second, is an article data extraction pipeline which identifies key entities such as taxa or geographic location. Last is a data review tool for Neotoma data stewards to review the extracted data before it is submitted to Neotoma. Once the extracted data has been reviewed, the corrections will be used to retrain the first two models of the pipeline.
+
+\newpage
+
+```{r}
+# custom table of contents location inspiration from here: https://stackoverflow.com/questions/61104292/how-can-i-separate-the-title-page-from-the-table-of-contents-in-a-rmarkdown-word
+```
+
+```{=latex}
+\setcounter{tocdepth}{4}
+\tableofcontents
+```
+\newpage
+
+# Introduction
+
+The Neotoma database (Neotoma) [@NeotomaDB] is used by researchers studying ecological changes over the past 5 million years. However, the data collection process relies heavily on manual submissions by researchers, leading to challenges in data entry and hindering collaborative efforts to comprehend ecological changes comprehensively. This project aims to automate the extraction of data from relevant journal articles which can be added to Neotoma. This will be done in three parts. First, article relevancy to Neotoma is predicted. Relevant articles are then parsed using natural language processing (NLP) techniques. Finally, an interactive data review tool was built to review and correct the extracted data before it is submitted to Neotoma. The outputs of this data review tool are then used to retrain the two data models in the future.
+
+\newpage
+
+# Data Science Methods
+
+## Article Relevance Prediction
+
+The article relevance prediction is posed as a binary classification problem. Based on the available article metadata, the model will predict how likely the article is relevant to the Neotoma paleoecology/paleoenvironment database. If the article is deemed likely relevant, the article will proceed to the next stage for article data extraction.
+
+### Approach
+
+#### Building the Training Data
+
+To train the supervised classification model, a sample of labelled articles has been compiled.
+
+| **Label** | **Sample Size** | **Description**                                                                                                                                                                                                                                      |
+|:--:|:--:|:---------|
+| Positive  |       911       | With the help from our partner Simon, a list of articles that currently contribute to Neotoma was provided as the positive cases. These articles cover various types of fossil data in the Neotoma database.                                        |
+| Negative  |      3523       | Articles from non-paleoecology-related subjects were queried to form a representative sample of non-relevant articles. Among these articles, there are articles that are closely related to paleoecology but do not contain fossil collection data. |
+
+
+The labelled articles were split into train/validation/test sets with splits of 0.7/0.15/0.15, which correspond to 3103/665/666 articles. Due to the relatively small total sample size, 70% of the articles were included in the training set so that there are more examples provided during training.
+
+#### Preprocessing & Feature Selection
+
+Article's metadata were retrieved from the CrossRef API. There were over 50 types of metadata provided by the CrossRef API. Since many of them are related to the publication aspect of the article, not the contextual aspect, feature selection was performed to reduce dimensionality. The summary table below explains the key decisions made during the feature selection step.
+
+| **Feature**                                | **Decision**                                                                                                                                                                                                                                                                                                                                                                  |
+|:------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Title & subtitle                           | Title and subtitle (if any) are concatenated as a descriptive text feature. Text representation techniques were then applied to this feature.                                                                                                                                                                                                                                 |
+| Abstract                                   | Due to copyright issues, less than half of the articles have an abstract available from the CrossRef API. However, the abstract contains valuable information about the article's content. Thus, to solve the missing data problem when the abstract is available, it is concatenated with the article title and subtitle. Altogether they formed a descriptive text feature. Considering that the availability of an abstract could affect model prediction, a binary feature was derived to indicate if the article's text feature has an abstract or not. |
+| Author & Journal                           | To prevent the model from being biased towards older and more famous authors and journals, these time-sensitive features were removed from the feature list.                                                                                                                                                                                                                  |
+| Subject                                    | Instead of using the name of the journal, the subject of the journal was used as a proxy of the journal.                                                                                                                                                                                                                                                                      |
+| Number of citation                         | Number of citations could potentially indicate if the article contains important data and is referred to in other articles.                                                                                                                                                                                                                                                   |
+| Feature related to the publication process | These features do not provide any contextual information about the article, thus they were removed from the feature list.                                                                                                                                                                                                                                                     |
+
+
+: Feature Selection Decisions
+
+The features selected include a descriptive text feature (concatenation of title, subtitle and abstract), subject of the journal, number of citations and a binary indicator for having an abstract available from CrossRef or not.
+
+#### Feature Engineering: Text representation
+
+The descriptive text feature provides crucial contextual information for the model to predict if the topic is related to paleoecology or not. Feature engineering was conducted to represent this descriptive text feature in numeric forms. Several text representations were experimented and the sentence transformer performed the best among all methods.
+
+**Bag of words representation:** word-frequency based method. While the model with bag of words feature achieved a decent performance, the limitation is that the semantic aspect of the text could not be well represented. This method was chosen to be used in the baseline model.
+
+**Adding term-association probability with zero-shot classification:** providing a candidate label, a transformer based model could predict the probability that the text is related to the candidate label. The idea was to let the pre-trained model add the text association probability for several paleoecology related terms. This method was not used eventually because not only the handcrafted list of terms could introduce subjective bias in the model, but also the added term-association feature did not show high feature importance in the trained models.
+
+**Sentence embedding:** Sentence embedding is the state-of-the-art approach for text representation. The following sentence embedding models were experimented and allenai/specter2 model resulted in the best overall performance.
+
++-----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Model                       | Result                                                                                                                                                                                   |
++=============================+==========================================================================================================================================================================================+
+| bert-tiny-finetuned-squadv2 | This model is of a small scale so that the embedding process will be quick.                                                                                                              |
++-----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Biobert                     | This model is pre-trained based on large-scale biomedical corpora, thus it could be better at understanding biology-related jargons that frequently appear in the field of paleoecology. |
++-----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| specter2                    | This model is pre-trained using over 6 million scientific articles, thus it could be better at understanding the language style and pattern in scientific articles.                      |
++-----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+: Sentence Embedding Models
+
+#### Model Selection
+
+A variety of supervised classification models were experimented.
+
+**Probability classifiers:** Traditional probability classifiers provide fast training and prediction time, which is a plus when processing and retraining hundreds and thousands of new articles. Its simplicity also provide good model transparency and interpretability for model evaluation. Logistic regression and naive Bayes were experimented during model selection.
+
+**Analogy-based models:** The nature of the article relevance prediction problem could be framed as looking for articles that are similar to the positive examples. Analogy-based models can be suitable for this problem. K-nearest neighbour and Support Vector Machine with RBF kernel were experimented.
+
+**Tree-based & Gradient-boosted models:** Tree-based classifiers could use different feature subsets at various steps during the prediction, which can be suitable for our relatively high dimensional data problem. Decision Tree, Random Forest Model, LightGBM, XGBoost and CatBoost were experimented. The choice of the final model was mainly based on model performance on recall score. The chosen model went through further hyperparameter tuning to optimise the performance.
+
+### Model Evaluation
+
+Recall score is the main metric to optimise. The main goal of article relevance prediction is to identify potentially as many useful articles as possible from the giant article repository so that valuable research data can be discovered. The cost of false negatives is high because if the model did not catch a relevant article, this article will unlikely to be discovered by the Neotoma community and its data will be missed. On the other hand, the cost of false positives is more manageable. During data validation, Data Stewards can easily mark an article as not relevant using our data review tool.
+
+Another key consideration is model interpretation. The positive examples were gathered using articles that currently exist in the Neotoma database, and it is difficult to tell if there are existing biases in the training data. A more interpretable model would help identify model biases and make corrections in the long run.
+
+## Article Data Extraction
+
+```{python}
+# | warning: false
+import pandas as pd
+import os
+import json
+import seaborn as sns
+import matplotlib.pyplot as plt
+from IPython.display import Markdown
+
+FFOSSILS_PALETTE = sns.color_palette(
+    ["#677e52", "#8fbed5", "#1f3a5f", "#005a3c", "#4c2f27", "#b8864b"]
+)
+
+
+def load_model_evaluation_results(results_path: str, results_type: str = "val"):
+    results_df = pd.DataFrame()
+
+    for model in os.listdir(results_path):
+        if os.path.isdir(os.path.join(results_path, model)):
+            model_path = os.path.join(results_path, model)
+            for file in os.listdir(model_path):
+                if (file.endswith("classification_results.json")) & (
+                    results_type in file
+                ):
+                    results_dict = json.load(open(os.path.join(model_path, file), "r"))
+
+                    parsed_dict = {}
+
+                    for key, value in results_dict.items():
+                        # original entity and token based results
+                        if (key == "token") | (key == "entity"):
+                            for k, v in value.items():
+                                # print(f"key: {key} k: {k} v: {v}")
+                                if k == "classification_report":
+                                    for kk, vv in v.items():
+                                        # print(f"\tkk: {kk} vv: {vv}")
+                                        for kkk, vvv in vv.items():
+                                            # print(f"\t\tkkk: {kkk} vvv: {vvv}")
+                                            parsed_dict[
+                                                f"{key}_{kk}_{kkk}".replace(" ", "-")
+                                            ] = [vvv]
+                                else:
+                                    parsed_dict[f"{key}_{k}"] = [v]
+                        # overall model results with new metrics
+                        elif key == "overall_results":
+                            for k, v in value.items():
+                                # print(f"key: {key} k: {k} v: {v}")
+                                for kk, vv in v.items():
+                                    # print(f"\tkk: {kk}, vv: {vv}")
+                                    if kk in [
+                                        "precision",
+                                        "recall",
+                                        "actual",
+                                        "possible",
+                                    ]:
+                                        parsed_dict[
+                                            f"overall_{k.replace('_', '-')}_{kk}"
+                                        ] = [vv]
+                                    else:
+                                        parsed_dict[
+                                            f"overall_{k.replace('_', '-')}_percent-{kk}"
+                                        ] = [vv / v["possible"]]
+                        # overall results by each tag group
+                        elif key == "overall_results_by_tag":
+                            for label, v in value.items():
+                                # print(f"key: {key} label: {label} v: {v}")
+                                for eval_type, vv in v.items():
+                                    # print(f"\teval_type: {eval_type} vv: {vv}")
+                                    for result, vvv in vv.items():
+                                        # print(f"\t\tresult: {result}, vvv: {vvv}")
+                                        if result in [
+                                            "precision",
+                                            "recall",
+                                            "actual",
+                                            "possible",
+                                        ]:
+                                            parsed_dict[
+                                                f"{label}_{eval_type.replace('_', '-')}_{result}"
+                                            ] = [vvv]
+                                        else:
+                                            parsed_dict[
+                                                f"{label}_{eval_type.replace('_', '-')}_percent-{result}"
+                                            ] = [vvv / vv["possible"]]
+                        # add in the counts of each entity type
+                        elif key == "entity_counts":
+                            for k, v in value.items():
+                                # print(f"key: {key} k: {k} v: {v}")
+                                parsed_dict[f"{k}_count"] = [v]
+                        elif key == "num_tokens":
+                            parsed_dict[f"{key}"] = [value]
+
+                    model_results = pd.DataFrame(parsed_dict)
+
+                    model_results["model"] = model.replace("-", " ").title()
+                    results_df = pd.concat([results_df, model_results])
+
+    return results_df
+
+
+```
+
+The article data extraction is posed as a Named Entity Recognition (NER) problem. The NER tasks teaches the model to predict the correct label for each word where each word is assigned a label.
+
+### Data Description
+
+An original sample of 300+ full text articles related to Neotoma was provided. Some articles were non-english and were removed from the dataset. The data of interest to be extracted and thus labelled in the articles using NER are as follows:
+
+-   **SITE**: the specific site name given to the items studied
+-   **REGION**: general geographic regions around the site to give general context to locations
+-   **GEOG**: geographic coordinates of sites or samples
+-   **TAXA**: the taxa uncovered and researched in the article
+-   **AGE**: any ages relevant to the samples
+-   **ALTI**: the altitude at which samples were studied
+-   **EMAIL**: any researchers emails for further follow up
+
+### Data Preprocessing and Labelling
+
+For the development of the NER models a sample of 39 articles relevant to Neotoma were preprocessed and labelled by the research team using LabelStudio. Preprocessing steps involved chunking the articles, varying in length drastically, into bite-sized pieces and replacing special tokens with their English equivalent symbol. Other text preprocessing techniques like stemming, lemmatization and converting text to lower case were not used for this project as the aim was to preserve the original text and ensure that the model understands contextual information. The Label Studio interface hosted on HuggingFace was used for labeling purposes as it provides an out-of-the-box collaborative environment for several ML tagging tasks, including named entity recognition. Input and output files were efficiently synced with buckets on the Azure cloud, with scope of onboarding a larger team in the future to carry on model development. The SITE entity proved difficult to label as differentiating between obscure location names or an acronym of a core sample was difficult for the team. Similarly, correctly identifying TAXA and where on TAXA label began and another ends proved challenging. A significant improvement in results is expected by improving the quality of labeling with the help of data stewards with subject matter expertise.
+
+The labelled articles were split into train/validation/test sets by full article with splits of 0.7/0.15/0.15 respectively. The data splitting was done based upon whole articles to prevent data leakage into the model learning certain articles patterns before evaluation. This resulted in the final dataset with the following statistics.
+
+```{python}
+def plot_distribution_of_entities(
+    results_df: pd.DataFrame, model: str, title: str = None
+):
+    entity_columns = [c for c in results_df if "count" in c and c != "O_count"]
+
+    flat_df = (
+        results_df.query("model == @model")
+        .melt(
+            # id_vars=["model"],
+            value_vars=entity_columns,
+            value_name="count",
+            var_name="entity",
+        )
+        .sort_values(["count"], ascending=False)
+    )
+
+    flat_df["entity"] = flat_df.entity.str.replace("_count", "")
+
+    fig, ax = plt.subplots(figsize=(8, 4))
+    ax = sns.barplot(x="entity", y="count", data=flat_df, ax=ax)
+
+    # set suptitle for plot
+    fig.suptitle(
+        title,
+        fontsize=16,
+        fontweight="bold",
+    )
+
+    # use title for token count info
+    ax.set_title(
+        f"Total Token Count: {results_df.query('model == @model').iloc[0].num_tokens}\nNo. of Entities: {flat_df['count'].sum()}",
+        fontsize=12,
+        fontweight="bold",
+    )
+
+    # fix cut off of left/right of plot
+    fig.subplots_adjust(top=0.80)
+
+    ax.bar_label(ax.containers[0], fmt="%.0f")
+    ax.set_xlabel("Entity Type")
+    ax.set_ylabel("Number of Occurences")
+    plt.show()
+
+
+```
+
+```{python}
+# | warning: false
+# | echo: false
+# | layout-ncol: 1
+# | fig-cap:
+# | - "Entity Distribution for Test set"
+# | - "Entity Distribution for Validation set"
+sns.set_style(
+    "whitegrid",
+    rc={
+        "grid.color": ".85",
+    },
+)
+
+test_results_df = load_model_evaluation_results(
+    results_path=os.path.join(os.pardir, os.pardir, "results", "ner"),
+    results_type="test",
+)
+# print(model_results_df.columns)
+sns.set_context("notebook")
+plot_distribution_of_entities(
+    test_results_df, "Spacy Transformer V3", title="Entity Distribution for Test Set"
+)
+val_results_df = load_model_evaluation_results(
+    results_path=os.path.join(os.pardir, os.pardir, "results", "ner"),
+    results_type="val",
+)
+plot_distribution_of_entities(
+    val_results_df,
+    "Spacy Transformer V3",
+    title="Entity Distribution for Validation Set",
+)
+
+
+```
+
+### Approach
+
+The state of the art for NER tasks is currently dominated by transformer based models. The best performing non-transformer based models are a transition-based stack long-short term memory (S-LSTM) model used in the spaCy package.
+
+The following approaches were considered along with the rationale for their inclusion/rejection from development.
+
++---------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Rule Based Models                     | This served as the baseline using regex to extract known entities but was not developed further due to the known issues with text quality due to OCR issues and infeasibility for entities like SITE. |
++---------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Transition Based Model                | Developed as a lower computational complexity solution with potential for low-compute resource deployment applications                                                                                |
++---------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| BERT Based Models                     | These are achieving state of the art results and have multiple base models pre-trained on different domains making them an attractive option.                                                         |
++---------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Text to Text Transfer Transformer(T5) | T5 models turn every problem into a text to text problem which for NER requires significant pre/post processing to work and was excluded for this reason.                                             |
++---------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+: NER Approaches
+
+For the transformer based models two approaches were used for training, spaCy CLI and Hugging Face's Training API. Both come with the following advantages and disadvantages:
+
++--------------------------+-----------------------------------------------------------------------------------------------------+------------------------------------------+
+|                          | Pro                                                                                                 | Con                                      |
++==========================+=====================================================================================================+==========================================+
+| spaCy Config Training    | -   can integrate with any transformer hosted on HuggingFace                                        | -   Knowledge of bash scripting required |
+|                          |                                                                                                     |                                          |
+|                          | -   Prebuilt config scripts that require minimal changes                                            | -   Limited configuration options        |
+|                          |                                                                                                     |                                          |
+|                          | -   Access to spaCy's unique transition-based NER model                                             |                                          |
+|                          |                                                                                                     |                                          |
+|                          | -   Ability to integrate multiple ML models in an ensemble -Integrates with visualization libraries |                                          |
++--------------------------+-----------------------------------------------------------------------------------------------------+------------------------------------------+
+| Hugging Face Trainer API | -   able to use non-NER models and add classification head easily                                   | -   more code required                   |
+|                          |                                                                                                     |                                          |
+|                          | -   able to easily integrate custom tracking of metrics and external logging to MLflow              |                                          |
++--------------------------+-----------------------------------------------------------------------------------------------------+------------------------------------------+
+
+: spaCy CLI andHugging Face's Training API Advantages and Disadvantages
+
+Using the Hugging Face training API the following models were trained and evaluated along with the hypothesis behind their selection.
+
+| Model              | Hypothesis                                                                                                                                                  |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RoBERTa-base       | Cited as one of the commonly best performing models for NER [SOURCE]                                                                                        |
+| RoBERTa-large      | A larger model than the base version with potential to learn more complex relationships with the downside of larger compute times.                          |
+| BERT-multilanguage | The known OCR issues and scientific nature of the text may mean the larger vocabulary of this multi-language model may deal with issues better.             |
+| XLM-RoBERTa-base   | Another cross language model (XLM) but using the RoBERTa base architecture and pre-training.                                                                |
+| Specter2           | This model is BERT based and finetuned on 6M+ scientific articles with it’s own scientific vocabulary making it well suited to analyzing research articles. |
+
+: Hugging Face Model Hypotheses
+
+Final hyper parameters used to train the models were as follows:
+
++-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Parameters              | Notes                                                                                                                                                                                                            |
++=========================+==================================================================================================================================================================================================================+
+| Batch size              | -   Maximized to utilize all available GPU memory, 8 for RoBERTa based models, 4 for large models                                                                                                                |
++-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Gradient Accumulation   | -   Used to mimic larger batch sizes, this value was chosen to achieve batch sizes of \~12k tokens based on existing research \[SOURCE\]                                                                         |
++-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Epochs                  | -   Initial runs with 10-20 epochs, observed evaluation loss minima occurring in first 2-8 depending on learning rate below                                                                                      |
++-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Learning Rate           | -   Initially 5e-5 was used and observed rapid over fitting with eval loss reaching a minimum around 2-4 epochs then increasing for the next 5-10                                                                |
+|                         |                                                                                                                                                                                                                  |
+|                         | -   Moved to 2e-5 as well as introducing gradient accumulation of 3 epochs to increase effective batch size, the eval loss didn't reach a minimum for a bit longer while recall continued to improve             |
++-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Learning Rate Scheduler | -   All initial training has been done with a linear learning rate scheduler which linearly decreases learning rate across epochs                                                                                |
++-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Warmup Ratio            | -   How many steps of training to increase LR from 0 to LR, shown to improve with Adam optimizer - [@borealisai2023tutorial] Set to 10% initially |
++-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+: Hugging Face Hyperparameters
+
+Using the spaCy CLI, the following models were trained and evaluated along with their pros and cons highlighted.
+
++------------------+----------------------------------------------------------------------+------------------------------------------------------+
+| Model            | Advantages                                                           | Disadvantages                                        |
++==================+======================================================================+======================================================+
+| RoBERTa-base     | -   State-of-the-art pretrained transformer for NLP tasks in English | -   Computationally expensive to train and inference |
+|                  |                                                                      |                                                      |
+|                  | -   Context rich embeddings                                          | -   Cannot fine-tune                                 |
+|                  |                                                                      |                                                      |
+|                  |                                                                      | -   Slow processing                                  |
++------------------+----------------------------------------------------------------------+------------------------------------------------------+
+| en_core          | -   A smaller word vector model with static embeddings for words     | -   Static embeddings without context                |
+| _web_md          |                                                                      |                                                      |
+|                  | -   Memory and speed efficient                                       | -   Cannot handle OOV words well                     |
+|                  |                                                                      |                                                      |
+|                  |                                                                      | -   Cannot fine-tune                                 |
++------------------+----------------------------------------------------------------------+------------------------------------------------------+
+
+: spaCy CLI Model Advantages and Disadvantages
+
+Final hyper parameters used to train the models were as follows:
+
++-----------------------------+----------------------------------------------------------------------------------------------------------------------------+
+| **Parameters**              | **Notes**                                                                                                                  |
++=============================+============================================================================================================================+
+| **Batch size**              | -   Maximized to utilize all available GPU memory, 128 for transformer based model and 512 for word vector based model     |
++-----------------------------+----------------------------------------------------------------------------------------------------------------------------+
+| **Epochs**                  | -   Initial runs with 15 epochs, observed evaluation loss minima occurring in first 7-13 depending on learning rate        |
++-----------------------------+----------------------------------------------------------------------------------------------------------------------------+
+| **Learning Rate**           | -   Initial learning rate of 5e-5                                                                                          |
++-----------------------------+----------------------------------------------------------------------------------------------------------------------------+
+| **Learning Rate Scheduler** | -   Warmup for 250 steps followed by a linear learning rate scheduler which linearly decreases learning rate across epochs |
++-----------------------------+----------------------------------------------------------------------------------------------------------------------------+
+| **Regularization**          | -   L2 (lambda = 0.01) with weight decay                                                                                   |
++-----------------------------+----------------------------------------------------------------------------------------------------------------------------+
+| **Optimizer**               | -   Adam (beta1 = 0.9, beta2=0.999)                                                                                        |
++-----------------------------+----------------------------------------------------------------------------------------------------------------------------+
+| **Early stopping**          | -   1600 steps                                                                                                             |
++-----------------------------+----------------------------------------------------------------------------------------------------------------------------+
+
+: spaCy CLI Final Hyperparameters
+
+Interesting difference to note here are the architectures of the NER models. Both the models use a base model to tokenize the input sentence and generate word embeddings, but the HuggingFace NER model fine-tunes a token classification head to it, which consists of a set of linear layer and soft max, whereas, the spaCy NER model chunks and labels a sequence of inputs using an algorithm similar to transition-based dependency parsing using Stack-LSTMs.
+
+The following workflow shows the primary steps for training with the Entity Extraction models with intermediate files and processes.
+
+```{mermaid}
+%%| label: training_pipeline
+%%| fig-cap: "This is how the Entity Extraction model training process runs with intermediate files and processes."
+%%| fig-height: 6
+%%{init: {'theme':'base','themeVariables': {'fontFamily': 'arial','primaryColor': '#BFDFFF','primaryTextColor': '#000','primaryBorderColor': '#4C75A3','lineColor': '#000','secondaryColor': '#006100','tertiaryColor': '#fff'}, 'flowchart' : {'curve':'monotoneY'}}}%%
+flowchart TD
+F8(Labelled JSON files\nfrom LabelStudio) --> C2(Split into Train/Val/Test\nSets by xDD ID)
+C2 --> C5(Convert to artifacts \nfor training)
+C5 --> F1(test)
+C5 --> F3(val artifact)
+C5 --> F2(train artifact)
+F3 --> C4
+F2 --> C4(Run Model Training \nw/ Validation)
+F1 ----> C3(Run Model Evaluation)
+F3 --> C3
+C4 --> F7(Log Metrics &\nCheckpoints)
+C4 --> F4(Log Final\nTrained Model)
+F4 --> C3
+C3 --> F6(Evaluation Plots)
+C3 --> F5(Evaluation results\nJSON)
+subgraph Legend
+    computation[Computation] 
+    fileOutput[File Input/Output]
+    style computation fill:#BFDFFF, stroke:#4C75A3
+    style fileOutput fill:#d3d3d3, stroke:#808080
+end
+```
+
+### Model Evaluation
+
+The target of extracting an article's data is to make that data discoverable within Neotoma. The target for the data extraction is to maximize extracted data recall as the cost of a data reviewer deleting a piece of data is much lower than having to go and read the article to add missed entities. Similarly, token based recall is chosen as the target metric which measures partial matches of data extracted. Entity based recall which measures exact matches of all parts of a word is considered as it reduces data reviewers time to review articles but the emphasis is placed on token recall for evaluating models.
+
+For more in depth analysis of results the following methods are used to evaluate each model.
+
++-------------+------------------------------------------------------------------------------------------------------+
+| **Method**  | **Description**                                                                                      |
++=============+======================================================================================================+
+| **Strict**  | Exact boundary of extracted string and entity type matches the annotation.                           |
++-------------+------------------------------------------------------------------------------------------------------+
+| **Exact**   | Exact boundary of extracted string matches but does not discriminate by correct entity label         |
++-------------+------------------------------------------------------------------------------------------------------+
+| **Partial** | A partial boundary overlap of the extracted string and does not discriminate by correct entity label |
++-------------+------------------------------------------------------------------------------------------------------+
+| **Type**    | Any overlap of the correct entity type is considered correct.                                        |
++-------------+------------------------------------------------------------------------------------------------------+
+
+: Model Evaluation Methods
+
+From the Message Understanding conference [@chinchor-sundheim-1993-muc] the following detailed metrics are used during evaluation for each of the above methods:
+
++---------------------+-----------------------------------------------------------------------+
+| **Metric**          | **Description**                                                       |
++=====================+=======================================================================+
+| **Correct (COR)**   | Both the labelled entity and predicted entity are the same            |
++---------------------+-----------------------------------------------------------------------+
+| **Incorrect (INC)** | The labelled entity and predicted entity do not match                 |
++---------------------+-----------------------------------------------------------------------+
+| **Partial (PAR)**   | The labelled entity and predicted entity are similar but not the same |
++---------------------+-----------------------------------------------------------------------+
+| **Missing (MIS)**   | A labelled entity is not captured by the model                        |
++---------------------+-----------------------------------------------------------------------+
+| **Spurius (SPU)**   | The model predicts an entity where there is none in the labelled text |
++---------------------+-----------------------------------------------------------------------+
+
+: Model Evaluation Metrics
+
+
+## Data Review Tool
+
+In order to for the Neotoma data stewards to view the results of the Article Relevance Prediction and the Article Data Extraction, the final data product required was an interactive dashboard. The goal of this data product is to manually review the output of the entire natural language processing pipeline. The users are able to make corrections to the extracted entities by comparing the extracted entity to the sentence or opening the full-text article. In addition, the user is able to delete incorrectly extracted entities or add additional entities that the extraction model missed. The output of the Data Review Tool is a JSON object that can then be used to retrain the Article Entity Extraction model and populate the Neotoma database. This will lead to more information sharing and better results in the future, which will decrease the time required by the data stewards while reviewing the extracted entities of an article.
+
+### Approach
+
+As the goal of this project was to create a product with custom components that was open-source and free to create, it was decided that ultimately using R Shiny[@shiny] or Plotly Dash [@dash] would meet the customization needs of the project better than a paid alternative like Tableau or Power BI. In the discussion with Neotoma, there was no impact on whether the team decided to implement either of these options. Ultimately, the team decided that as the rest of our project dashboard development would continue by using Plotly Dash in Python.
+
+### Evaluation
+
+In order to create an interactive tool that would be appropriate and efficient for the reviewers who are using this tool, the aim was to make it user-friendly and simple to use. To accomplish this success criteria, the following requirements were developed along with the targets to make these requirements successful for the data reviewers.
+
++-------------------------------------------------------+--------------------------------------------------+
+| **Requirement**                                       | **Target**                                       |
++=======================================================+==================================================+
+| Options for reviewing extracted data                  | Accept, Reject, Edit then Accept                 |
++-------------------------------------------------------+--------------------------------------------------+
+| Other data made available to the user                 | Article DOI, Journal Name, Hyperlink to Article  |
++-------------------------------------------------------+--------------------------------------------------+
+| Displaying text from where the data was extracted     | Current sentence and 1-2 sentences before/after. |
++-------------------------------------------------------+--------------------------------------------------+
+| User skill to run                                     | Non-Technical (e.g. no code/CLI)                 |
++-------------------------------------------------------+--------------------------------------------------+
+| Number of mouse clicks to review single piece of data | 1-2                                              |
++-------------------------------------------------------+--------------------------------------------------+
+| Reviewing workflow                                    | Able to save/resume progress.                    |
++-------------------------------------------------------+--------------------------------------------------+
+| Output file format                                    | JSON                                             |
++-------------------------------------------------------+--------------------------------------------------+
+
+: Data Review Tool Target Metrics
+
+# Data Products and Results
+
+## Article Relevance Prediction
+
+![Model Performance Comparison using Cross-Validation Scores](assets/relevance-model-comparison.png)
+
+Among all the models trained, Naive Bayes has the highest recall score, but its precision score was low and will introduce false positives. Among all gradient boosted models, LGBM has the highest precision, but its recall score did not outperform logistic regression. Among the analogy-based models, SVM with RBF kernel achieve a performance that's comparable to logistic regression, and both are sufficiently high. The final decision was to use logistic regression with tuned hyperparameters for its good performance and better interpretability. On the test data set, the final model achieved a recall score of 96.5%, and a precision score of 85.2%. To put this into actual article counts, among the 666 articles in the test set, there are 5 false negatives and 24 false positives.
+
+## Article Data Extraction
+
+Of the two approaches developed using the spaCy and Hugging Face model training systems there are two candidate models proposed to be used. The first is the Hugging Face finetuned RoBERTa based model which performed best of the Hugging Face models. The second is spaCy's transformer based model. The reason for proposing two models moving forward is the spaCy transformer model has better entity based recall along with better precision, meaning the extracted data is more often correctly extracted. Whereas the Hugging Face RoBERTa model achieves better token recall but has lower precision, meaning it detects more of the overall entities but contains more false detections which must be deleted by the reviewers. The slight differences in the accuracies and varying strengths can be attributed to the different NER models leveraging the RoBERTa-base transformer embeddings differently.
+
+@fig-extraction_recall_results shows the primary candidate models token and entity based recall.
+
+```{python}
+# | label: fig-extraction_recall_results
+# | layout-ncol: 1
+# | fig-cap: "The entity and token based recall for each model on the test set."
+
+
+def plot_model_metric_comparison(
+    results_df: pd.DataFrame,
+    metrics: list,
+    fig_height: int = 6,
+    fig_width: int = 5,
+    sort_ascending: bool = False,
+):
+    metrics_formatted = [metric.replace("_", " ").title() for metric in metrics]
+
+    # flatten the results_df
+    flat_df = results_df.melt(
+        id_vars=["model"], value_vars=metrics, value_name="score", var_name="metric"
+    )
+
+    # multiply scores by 100
+    flat_df.loc[:, "score"] = flat_df.score * 100
+
+    # format the metric names
+    flat_df.loc[:, "metric"] = flat_df.metric.str.replace("_", " ").str.title()
+
+    # plot token level recall by model using seaborn
+    fig, ax = plt.subplots(figsize=(fig_width, fig_height))
+    # sns.set_theme(style="whitegrid")
+    ax = sns.barplot(
+        y="model",
+        x="score",
+        hue="metric",
+        data=flat_df,
+        order=flat_df.iloc[
+            flat_df[flat_df["metric"] == metrics_formatted[0]]["score"]
+            .sort_values(ascending=sort_ascending)
+            .index
+        ]["model"],
+        palette=FFOSSILS_PALETTE,
+        ax=ax,
+    )
+    ax.set_title(
+        f"Entity Extraction Model Performance Comparison\n",  # \nMetrics: {', '.join(metrics_formatted)}",
+        fontsize=12,
+        fontweight="bold",
+    )
+    # fix cut off of left/right of plot
+    fig.subplots_adjust(left=0.35, right=0.90, top=0.80)
+    for i in range(0, len(metrics)):
+        ax.bar_label(ax.containers[i], fmt="%.1f%%", fontsize=10, padding=2)
+    ax.set_xlabel(None)
+    # set x tick locations
+    ax.set_xticks([0, 20, 40, 60, 80, 100])
+    # format xtick labels to have % symbols
+    xtick_labels = [f"{int(x)}%" for x in ax.get_xticks()]
+    ax.set_xticklabels(xtick_labels)
+
+    ax.set_ylabel(None)
+    ax.set_xlim(0.0, max(100, flat_df.score.max()))
+    # plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left', borderaxespad=0, fontsize=12) #bbox_to_anchor=(1.02, 0.5),
+    ax.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, 1.1),
+        ncol=3,
+        fancybox=True,
+        shadow=True,
+    )
+    sns.despine(bottom=True)
+    plt.show()
+
+
+model_results_df = load_model_evaluation_results(
+    results_path=os.path.join(os.pardir, os.pardir, "results", "ner"),
+    results_type="test",
+)
+
+sns.set_style(
+    "whitegrid",
+    rc={
+        "grid.color": ".85",
+    },
+)
+sns.set_context("paper")
+
+plot_model_metric_comparison(
+    model_results_df,
+    ["entity_recall", "token_recall"],
+    fig_height=4,
+    fig_width=6,
+)
+```
+
+
+The token based recall for each model on the test set by entity type are shown in @tbl-token-recall.
+
+```{python}
+# | label: tbl-token-recall
+# | tbl-cap: 'Entity extraction model results for token based recall, overall and by entity type'
+# | tbl-cap-location: bottom
+# | tbl-colwidths: [0.2,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]
+# | tbl-column: body
+# | output: markdown
+# render the token_recall, token_precision, and token_f1 scores for each model and each entity type
+render_columns = [
+    "model",
+    "token_recall",
+    "token_AGE_recall",
+    "token_SITE_recall",
+    "token_TAXA_recall",
+    "token_REGION_recall",
+    "token_GEOG_recall",
+    "token_EMAIL_recall",
+    "token_ALTI_recall",
+]
+
+render_df = test_results_df[render_columns].copy()
+render_df.columns = render_df.columns.str.replace("_", " ").str.title()
+render_df = render_df.melt(id_vars=["Model"], var_name="Metric", value_name="Score")
+render_df["Metric"] = (
+    render_df.Metric.str.replace("Token ", "")
+    .str.replace(" Recall", " (%)", regex=True)
+    .str.replace("Recall", "Recall (%)")
+)
+render_df["Model"] = (
+    render_df.Model.str.replace("Finetuned", "")
+    .str.replace("Spacy", "SpaCy")
+    .str.replace("Finetune", "")
+    .str.replace("V\d", "", regex=True)
+    .str.replace("Transformer", "Transf.")
+    .str.replace("Multilanguage", "Multi-lang.")
+    .str.replace("Ner", "NER")
+    .str.replace("bert", "BERT")
+    .str.replace("Bert", "BERT")
+)
+render_df["Score"] = render_df.Score * 100
+render_df = (
+    render_df.reset_index(drop=True)
+    .round(1)
+    .pivot(index="Model", columns="Metric", values="Score")
+    .sort_values(["Recall (%)"], ascending=False)
+)
+
+render_df = render_df[
+    [
+        "Recall (%)",
+        "Age (%)",
+        "Site (%)",
+        "Taxa (%)",
+        "Region (%)",
+        "Geog (%)",
+        "Email (%)",
+        "Alti (%)",
+    ]
+]
+
+Markdown(render_df.to_markdown())
+```
+
+An important observation to make here is that even the top models have a lower precision score for the SITE names and REGION names. The models gets confused when deciding whether an entity should be classified as a SITE or a REGION. This is partially due to quality of labeling entities as well as the fact that both these types correspond to the name of a place or a wider area. See @fig-confusion_matrix for a confusion matrix generated using the test set assets highlights the issue.
+
+![Confusion Matrix for RoBERTa Model](../../results/ner/roberta-finetuned-v3/roberta-finetuned-v3_test_confusion_matrix.png){#fig-confusion_matrix}
+
+## Data Review Tool
+
+The final data review tool that was created was a multi-page Plotly Dash application. The tool can be replicated by launching Docker containers, enabling anyone within the Neotoma community to easily launch and utilize the tool for reviewing outputs from the entity extraction pipeline. This approach ensures accessibility and convenience for users who wish to review the pipeline outputs within the Neotoma project.
+
+![Data Review Tool](assets/data_review.png)
+
+This web application enables users to review the extracted entities from articles, make changes, add additional missed entities and remove inaccurately extracted entities. The application includes a button to launch the article in an external browser tab so that the reviewer can verify beyond the current sentence and sentence preceding/following that was provided as output. The entire review process does not require any coding knowledge, and reviewers can navigate through the review workflow in three clicks or fewer from the Article Review page.
+
+The output of this data review tool is a JSON object that stores the originally extracted entities as well as the corrected entities. The Neotoma organization can utilize these entities to add new paleoecology articles to the database. In addition, the reviewed entities can be fed back to model using our model retraining pipeline, contributing to the continuous improvement of the quality of extraction of entities.
+
++---------------------------------------------------------+-----------------------------------------------+
+| **Requirement**                                         | **Results**                                   |
++=========================================================+===============================================+
+| Options for reviewing extracted data                    | Accept, Reject, Edit, Add then Accept         |
++---------------------------------------------------------+-----------------------------------------------+
+| Other data made available to the user                   | Article DOI, Hyperlink to Article             |
++---------------------------------------------------------+-----------------------------------------------+
+| Displaying text from where the data was extracted       | Current sentence and 1 sentence before/after. |
++---------------------------------------------------------+-----------------------------------------------+
+| User skill to run                                       | Non-Technical (e.g. no code/CLI)              |
++---------------------------------------------------------+-----------------------------------------------+
+| Number of mouse clicks to review a single piece of data | 3 clicks from launch                          |
++---------------------------------------------------------+-----------------------------------------------+
+| Reviewing workflow                                      | Able to save/resume progress.                 |
++---------------------------------------------------------+-----------------------------------------------+
+| Output file format                                      | JSON                                          |
++---------------------------------------------------------+-----------------------------------------------+
+
+: Data Review Tool Mertic Results
+
+As the table above shows, all of the requirements that were originally laid out in the proposal were implemented through this Dash application. However, there are further improvements that could be made if there was more time available. One crucial improvement would involve incorporating an additional page within the dashboard to enable users to review the results of the Article Relevance Prediction model. This page would present both positive predictions (articles relevant to Neotoma) and negative predictions (articles not relevant). By allowing Neotoma data stewards to review and correct these predictions, the accuracy of the Article Relevance model can be improved through retraining. At present, the data review tool includes a button in which the user can mark an article as irrelevant. This can then be used to retrain the model by labelling it as not relevant to Neotoma. However, there is no current method implemented to make corrections on negative predictions. If this was addressed in the future, the original bias from the sample of data that was used to train the Article relevance tool could be minimized which would lead to greater model performance.
+
+## Product Deployment
+
+THe end goal of this project is to have each data product running in a semi/un-supervised fashion. The article relevance prediction pipeline is containerized using Docker. It will be scheduled to run daily or weekly by the Neotoma and gets the latest published articles from the public xDD API, runs the article relevance prediction, and finally submits relevant articles to xDD to have their full text processed. The Article Data Extraction pipeline is containerized using Docker and contains the entity extraction model within it. It is run on the xDD servers as xDD is not legally allowed to send full text articles off their servers. The container accepts full text articles, extracts the entities, and outputs a single JSON object for each article which is then exported by xDD back to the Neotoma team. The extracted entity JSON objects are combined with the article relevance prediction results and this is what is loaded by the Data Review Tool. The following diagram depicts the work flow.
+
+```{mermaid}
+%%| label: deployment_pipeline
+%%| fig-cap: "This is how the MetaExtractor pipeline flows between the different components."
+%%| fig-height: 6
+graph TD
+subgraph neotoma [Neotoma Servers]
+    direction TB
+    L(CRON Job Starts Pipeline)
+    subgraph relevance_docker [Docker Image &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp]
+      A(Get New Article DOIs<br> Since Last Run)
+      B(Predict Article Relevance)
+    end
+end
+subgraph xdd [xDD Servers &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp]
+    direction TB
+  C(To Be Processed Stack)
+    subgraph entity_docker [Docker Image &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp]
+        D(xDD Inputs Full Text Articles)
+        E(Entity Extraction Pipeline)
+    end
+end
+G(Article Relevance Predictions)
+H(Extracted Entities per Article)
+I(Combine Article Relevance <br>& Extracted Entities)
+J(Data Review Tool)
+L --> A
+A --> B
+B -----> |Parquet File| G
+B --> |API Put Request| C
+C --> D
+D --> E
+E --> |JSON Per Article,\nLog File| H
+G --> I
+H --> I
+I --> |Parquet| J
+
+%% create a class for styling subgraphs
+classDef subg fill:#fbfbfb,stroke:#333,stroke-width:4px,font-weight:bold;
+classDef docker fill:#cef1fc,stroke:#0db7ed,stroke-width:4px,font-weight:bold,align:left;
+%% create a class for styling the nodes
+classDef nodes fill:#D1E5F4,stroke:#333,stroke-width:2px;
+%% style each node
+class A,B,C,D,E,F,G,H,I,J,K,L nodes;
+%% style each subgraph
+class neotoma,xdd subg;
+class entity_docker,relevance_docker docker;
+```
+
+# Conclusion and Recommendations
+
+## Conclusions
+
+The Neotoma database plays a crucial role in paleoecological research by providing data on ecological changes over the past 5 million years. However, the reliance on manual submissions by researchers has led to difficulties in data entry and possibly hindered collaborative efforts to fully understand these ecological changes. The implementation of our pipeline brings significant benefits to the Neotoma community and paleoecological research. Firstly, by automating the search for submissions of new research articles that are relevant to the Neotoma database through the Article Relevance Prediction this process will growth of the Neotoma community, attracting more researchers and fostering collaboration in ecological research. Secondly, researchers will experience reduced time and effort required for data uploads, as the manual submission process is replaced with automated data extraction and entry through both the Article Entity Extraction and Data Review Tool. Finally, with the addition of access to the data, researchers in the Neotoma community may be able to answer questions about ecological changes that were previously unknown
+
+## Recommendations
+
+Due to time constraints, improvements were identified but could not be implemented within the project's timeframe. To provide a concise summary for future project contributors, three essential features have been identified that would significantly enhance the overall pipeline.
+
+1.  **Relevance Review Page:** incorporating an article would help minimize the bias present in the original model and improve the overall accuracy. This additional step would allow for a thorough assessment of article relevance, reducing both false positives and false negatives in the predictions. It will also reduce the bias in the training dataset that currently exists due to our data collection strategy.
+
+2.  **Adding new entities:** Although the focus was primarily on accurately extracting the required entities, there are additional entities that are considered beneficial but not mandatory by the Neotoma team. To address this, the Label Studio setup that was created through the project enables future contributors to easily add these additional entities. By implementing these changes, the pipeline can be further refined and optimized to benefit the Neotoma community at large.
+
+3.  There are likely many corrections that will be performed frequently on the data review tool by the Neotoma Data Stewards. Therefore, a model could be implemented to learn these corrections and preprocess these corrections in future improving efficiency and reducing time spent reviewing. 
+
+4.  **Computer Vision:** Using PDF images and OCR technology to extract figures and table data for richer information extraction and inclusion of higher quality data into the Neotoma database.
+
+\newpage
+
+# Acknowledgements
+
+Data were obtained from the Neotoma Paleoecology Database (http://www.neotomadb.org) and its constituent database(s). The work of data contributors, data stewards, and the Neotoma community is gratefully acknowledged.
+
+A huge thanks to Simon Goring & Socorro Dominguez from the Neotoma Database team for their support on this project.
+
+\newpage
+
+# References

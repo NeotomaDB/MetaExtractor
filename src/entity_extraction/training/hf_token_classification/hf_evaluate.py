@@ -2,7 +2,7 @@
 # Date: 2023-05-30
 """This script manages custom evaluation of the fine tuned hugging face models.
 
-Usage: evaluate.py --data_path=<data_path> --model_path=<model_path> --output_path=<output_path> --model_name=<model_name> [--max_samples=<max_samples>]
+Usage: hf_evaluate.py --data_path=<data_path> --model_path=<model_path> --output_path=<output_path> --model_name=<model_name> [--max_samples=<max_samples>]
 
 Options:
     --data_path=<data_path>         The path to the evaluation data in json format.
@@ -16,6 +16,8 @@ import os, sys
 
 import pandas as pd
 import numpy as np
+
+import time
 import json
 from tqdm import tqdm
 from docopt import docopt
@@ -37,8 +39,6 @@ from src.logs import get_logger
 
 logger = get_logger(__name__)
 
-opt = docopt(__doc__)
-
 
 def get_hf_token_labels(labelled_entities, raw_text):
     """
@@ -58,6 +58,13 @@ def get_hf_token_labels(labelled_entities, raw_text):
     token_labels : list
         A list of labels per token in the raw text.
     """
+    # ensure raw_text is a string and labelled_entities is a list
+    if not isinstance(raw_text, str):
+        raise TypeError(f"raw_text must be a string. Got {type(raw_text)}")
+    elif not isinstance(labelled_entities, list):
+        raise TypeError(
+            f"labelled_entities must be a list. Got {type(labelled_entities)}"
+        )
 
     # split the text by whitespace
     split_text = raw_text.split()
@@ -115,7 +122,10 @@ def load_ner_model_pipeline(model_path: str):
     model = AutoModelForTokenClassification.from_pretrained(model_path)
     tokenizer = AutoTokenizer.from_pretrained(model_path, model_max_length=512)
     ner_pipe = pipeline(
-        "ner", model=model, tokenizer=tokenizer, aggregation_strategy="simple"
+        "ner",
+        model=model,
+        tokenizer=tokenizer,
+        aggregation_strategy="simple",
     )
 
     return ner_pipe, model, tokenizer
@@ -166,19 +176,22 @@ def get_predicted_labels(ner_pipe, df):
         The evaluation data with the predicted labels added.
     """
 
-    # create empty column to be filled with predicted labels
-    df["predicted_labels"] = len(df) * [None]
+    if len(df) == 0:
+        raise ValueError("The provided dataframe is empty.")
 
-    # use tqdm to showprogress in batches
-    batch_size = 32
-    for i in tqdm(range(0, len(df), batch_size)):
-        result = ner_pipe(
-            df.tokens.iloc[i : i + batch_size].apply(lambda x: " ".join(x)).tolist()
-        )
-        df.predicted_labels.iloc[i : i + batch_size] = result
+    # huggingface needs list of lists with strings for batch processing
+    df["joined_text"] = df["tokens"].apply(lambda x: " ".join(x))
+
+    # time the excution
+    start = time.time()
+    predicted_labels = ner_pipe(df.joined_text.to_list())
+    df["predicted_labels"] = pd.Series(predicted_labels)
+    logger.info(
+        f"Prediction time for {len(df)} chunks: {time.time() - start:.2f} seconds"
+    )
 
     df[["split_text", "predicted_tokens"]] = df.apply(
-        lambda row: get_hf_token_labels(row.predicted_labels, " ".join(row.tokens)),
+        lambda row: get_hf_token_labels(row.predicted_labels, row.joined_text),
         axis="columns",
         result_type="expand",
     )
@@ -186,15 +199,158 @@ def get_predicted_labels(ner_pipe, df):
     return df
 
 
+def generate_classification_results(true_tokens, predicted_tokens):
+    """
+    Summarizes the classification results by both entity and token based methods.
+
+    Parameters
+    ----------
+    true_tokens : list[list[str]]
+        The true labels per token.
+    predicted_tokens : list[list[str]]
+        The predicted labels per token.
+
+    Returns
+    -------
+    classification_results : dict
+        The classification results.
+    """
+
+    if len(true_tokens) != len(predicted_tokens):
+        raise ValueError(
+            "The true tokens and predicted tokens must be the same length."
+        )
+
+    if len(true_tokens) == 0 or len(predicted_tokens) == 0:
+        raise ValueError("The true tokens and predicted tokens must not be empty.")
+
+    (
+        token_accuracy,
+        token_f1,
+        token_recall,
+        token_precision,
+    ) = calculate_entity_classification_metrics(
+        predicted_tokens=predicted_tokens, labelled_tokens=true_tokens, method="tokens"
+    )
+    (
+        entity_accuracy,
+        entity_f1,
+        entity_recall,
+        entity_precision,
+    ) = calculate_entity_classification_metrics(
+        predicted_tokens=predicted_tokens,
+        labelled_tokens=true_tokens,
+        method="entities",
+    )
+
+    # make a dict of all the number of each label type
+    label_counts = {}
+    for document in true_tokens:
+        for label in document:
+            label = label.replace("B-", "").replace("I-", "")
+            if label not in label_counts.keys():
+                label_counts[label] = 1
+            else:
+                label_counts[label] += 1
+
+    # make the results into a dict
+    results_dict = {
+        "token": {
+            "accuracy": token_accuracy,
+            "f1": token_f1,
+            "recall": token_recall,
+            "precision": token_precision,
+        },
+        "entity": {
+            "accuracy": entity_accuracy,
+            "f1": entity_f1,
+            "recall": entity_recall,
+            "precision": entity_precision,
+        },
+        # calculate total tokens from the true tokens list of lists
+        "num_tokens": sum([len(document) for document in true_tokens]),
+        "entity_counts": label_counts,
+    }
+
+    return results_dict
+
+
+def export_classification_report_plots(
+    true_tokens, predicted_tokens, output_path: str, model_name: str
+):
+    """
+    Exports the classification report plots.
+
+    Parameters
+    ----------
+    true_tokens : list[list[str]]
+        The true labels per token.
+    predicted_tokens : list[list[str]]
+        The predicted labels per token.
+    output_path : str
+        The path to export the plots to.
+    model_name : str
+        The name of the model.
+    """
+
+    # plot the classification report
+    token_results_fig = plot_token_classification_report(
+        labelled_tokens=true_tokens,
+        predicted_tokens=predicted_tokens,
+        title=f"{model_name} Token Based Classification Report",
+        method="tokens",
+        display=False,
+    )
+
+    entity_results_fig = plot_token_classification_report(
+        labelled_tokens=true_tokens,
+        predicted_tokens=predicted_tokens,
+        title=f"{model_name} Entity Based Classification Report",
+        method="entities",
+        display=False,
+    )
+
+    # export the plots
+    token_results_fig.savefig(
+        os.path.join(output_path, f"{model_name}_token_classification_report.png")
+    )
+    entity_results_fig.savefig(
+        os.path.join(output_path, f"{model_name}_entity_classification_report.png")
+    )
+
+
+def export_classification_results(
+    classification_results: dict, output_path: str, model_name: str
+):
+    """
+    Exports the classification results.
+
+    Parameters
+    ----------
+    classification_results : dict
+        The classification results.
+    output_path : str
+        The path to export the plots to.
+    model_name : str
+        The name of the model.
+    """
+
+    # export the classification results
+    with open(
+        os.path.join(output_path, f"{model_name}_classification_results.json"), "w"
+    ) as f:
+        json.dump(classification_results, f, indent=4)
+
+
 def main():
+    opt = docopt(__doc__)
+
     # run evaluation for each json file in the data directory
     for file in os.listdir(opt["--data_path"]):
-        # skip non json files
-        if (not file.endswith(".json")) | (
-            "train" not in file and "test" not in file and "val" not in file
+        # skip non json files and only ones that contain the words train/val/test
+        if not file.endswith(".json") or (
+            "train" not in file and "val" not in file and "test" not in file
         ):
-            logger.info(f"Skipping {file}")
-
             continue
         logger.info(f"Evaluating {file}")
         file_name = file.split(".")[0]
@@ -206,7 +362,8 @@ def main():
             logger.info(
                 f"Using just a subsample of the data of size {opt['--max_samples']}"
             )
-            df = df.sample(int(opt["--max_samples"]))
+            # reset index and drop it
+            df = df.sample(int(opt["--max_samples"])).reset_index(drop=True)
 
         # load the model
         ner_pipe, model, tokenizer = load_ner_model_pipeline(opt["--model_path"])

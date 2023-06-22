@@ -21,7 +21,6 @@ from src.data_review_tool.pages.config import *
 dash.register_page(__name__,  path_template="/article/<gddid>")
 
 original = None
-results = None
 color_palette = sns.color_palette("RdYlGn", 100).as_hex()
 
 
@@ -29,7 +28,6 @@ def layout(gddid=None):
     
     try:
         global original
-        global results
         # get the metadata of the article
         if os.path.exists(os.path.join("data",
                                        "data-review-tool",
@@ -313,7 +311,7 @@ def layout(gddid=None):
                 ],
             ),
             html.Br(),
-            dcc.Store(id="results", data=[results]),
+            dcc.Store(id="results", data=results),
             dbc.Row(
                 [
                     dbc.Col(sidebar, width=12, lg=3, className="g-0"),
@@ -368,7 +366,7 @@ def get_accordion_items(checked, data):
                         dmc.Text(name),
                         dmc.Badge(
                             dmc.Text(
-                                f"{len([ent for ent in results['entities'][label].values() if ent['deleted'] != checked])}",
+                                f"{len([ent for ent in data['entities'][label].values() if ent['deleted'] != checked])}",
                                 style=review_badge_style
                             ),
                             p=0,
@@ -515,14 +513,14 @@ def cell_clicked(n_clicks):
     Output("chips_age", "children"),
     Output("chips_email", "children"),
     Input("toggle-switch", "checked"),
-    Input('results', 'data')
+    State('results', 'data'),
 )
 def update_chips(checked, data):
     """Return the children of the chips to update the chips on screen load
     
     Args:
         checked (bool): Whether the toggle switch is checked (True) or not (False)
-        data (dict): The data from the previous page
+        data (dict): The data of the article
     Returns:
         list: The children of the chips
     """
@@ -536,7 +534,7 @@ def update_chips(checked, data):
 
     # Get all the sentences and corresponding section names
     for entity in chips.keys():
-        for ent, values in results["entities"][entity].items():
+        for ent, values in data["entities"][entity].items():
             if values["deleted"] == deleted:
                 # Use the updated name for the chip
                 if values["corrected_name"] != None:
@@ -600,6 +598,7 @@ def unselect_chips(accordian):
     Input("chips_age", "value"),
     Input("chips_email", "value"),
     State("accordion", "value"),
+    Input("results", "data"),
 )
 def chips_values(site,
                  region,
@@ -608,7 +607,8 @@ def chips_values(site,
                  alti,
                  age,
                  email,
-                 accordian):
+                 accordian,
+                 data):
     """Return the children of the entity text to populate the entity text with the selected chip
     
     Args:
@@ -620,6 +620,7 @@ def chips_values(site,
         age (str): The value of the age chip
         email (str): The value of the email chip
         accordian (str): The value of the accordian
+        data (dict): The data of the article
     
     Returns:
         list: The children of the entity text
@@ -628,7 +629,7 @@ def chips_values(site,
     if accordian == None:
         return "No entity selected", True, True, ""
     
-    for entity, value in results["entities"][accordian].items():
+    for entity, value in data["entities"][accordian].items():
         if entity in [site, region, taxa, geog, alti, age, email]:
             if value["corrected_name"] != None:
                 corrected_name = value["corrected_name"]
@@ -712,12 +713,13 @@ def toggle_modal(n_clicks, close, opened, accordian):
     State("new-entity-text", "value"),
     State("new-entity-sentence", "value"),
     State("new-entity-section", "value"),
+    Input("results", "data"),
     prevent_initial_call=True,
 )
 def update_entity(
     correct, delete, submit, entity, site, region, 
     taxa, geog, alti, age, email, accordian, 
-    new_entity_text, new_entity_sentence, new_entity_section):
+    new_entity_text, new_entity_sentence, new_entity_section, data):
     """Update the results store when entity text is changed or it needs to be deleted
     
     Args:
@@ -736,13 +738,14 @@ def update_entity(
         new_entity_text (str): The value of the new entity text
         new_entity_sentence (str): The value of the new entity sentence
         new_entity_section (str): The value of the new entity section
+        data (dict): The data of the article
     
     Returns:
         dict: The updated results store
     """
     
     callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
-    original_text, _, _, _ = chips_values(site, region, taxa, geog, alti, age, email, accordian)
+    original_text, _, _, _ = chips_values(site, region, taxa, geog, alti, age, email, accordian, data)
     
     if callback_context == "new-entity-submit.n_clicks" and submit:
         if new_entity_text != None:
@@ -753,7 +756,7 @@ def update_entity(
                 start, end = 0, 0
             
             try:
-                sentences = pd.DataFrame(results["relevant_sentences"])
+                sentences = pd.DataFrame(data["relevant_sentences"])
                 min_sentid = int(sentences['sentid'].min() - 1)
                 if min_sentid >= 0:
                     min_sentid = -1
@@ -765,7 +768,7 @@ def update_entity(
             if not new_entity_section:
                 new_entity_section = "Manual Entry"
             
-            results["entities"][accordian][new_entity_text] = {
+            data["entities"][accordian][new_entity_text] = {
                 "sentence": [{
                     "text": new_entity_sentence,
                     "section_name": new_entity_section,
@@ -779,7 +782,7 @@ def update_entity(
                 "corrected_name": None,
                 "deleted": False,
             }
-            results["relevant_sentences"].append({
+            data["relevant_sentences"].append({
                 "sentid": sentid,
                 "text": new_entity_sentence,
             })
@@ -787,9 +790,9 @@ def update_entity(
     elif callback_context == "correct-button.n_clicks" and correct:
         # return results if entity == original_text so nothing happens
         if entity == original_text:
-            return results
-        if entity in results["entities"][accordian]:
-            for sentence in results["entities"][accordian][original_text]["sentence"]:
+            return data
+        if entity in data["entities"][accordian]:
+            for sentence in data["entities"][accordian][original_text]["sentence"]:
                 try:
                     start, end = find_start_end_char(sentence['text'], entity)
                 except:
@@ -799,24 +802,24 @@ def update_entity(
                 sentence["char_index"]["end"] = end
                 
                 # Add to sentences if not already present
-                if sentence not in results["entities"][accordian][entity]["sentence"]:
-                    results["entities"][accordian][entity]["sentence"].append(sentence)
+                if sentence not in data["entities"][accordian][entity]["sentence"]:
+                    data["entities"][accordian][entity]["sentence"].append(sentence)
             # Delete the old entity
-            del results['entities'][accordian][original_text]
+            del data['entities'][accordian][original_text]
             
         else:
-            for ent, values in results["entities"][accordian].items():
+            for ent, values in data["entities"][accordian].items():
                 if ent == original_text:
                     values["corrected_name"] = entity
                     break
 
     elif callback_context == "delete-restore-button.n_clicks" and delete:
-        for ent, values in results["entities"][accordian].items():
+        for ent, values in data["entities"][accordian].items():
             if ent == original_text:
                 values["deleted"] = not values["deleted"]
                 break
 
-    return results
+    return data
 
 @callback(
     Output("clicked-output", "children"),
@@ -841,10 +844,10 @@ def save_submit(submit, save, relevant, data):
     callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
 
     if callback_context == "confirm-submit-button.n_clicks" and submit:
-        results["status"] = "Completed"
-        results["last_updated"] = datetime.now().strftime("%Y-%m-%d")
-        gddid = results["gddid"]
-        data = json.dumps(results)
+        data["status"] = "Completed"
+        data["last_updated"] = datetime.now().strftime("%Y-%m-%d")
+        gddid = data["gddid"]
+        data = json.dumps(data)
         with open(os.path.join("data",
                                         "data-review-tool",
                                         "processed",
@@ -859,10 +862,10 @@ def save_submit(submit, save, relevant, data):
                     icon=DashIconify(icon="ic:round-celebration"),
                 )
     elif callback_context == "confirm-irrelevant-button.n_clicks" and relevant:
-        results["status"] = "Non-relevant"
-        results["last_updated"] = datetime.now().strftime("%Y-%m-%d")
-        gddid = results["gddid"]
-        data = json.dumps(results)
+        data["status"] = "Non-relevant"
+        data["last_updated"] = datetime.now().strftime("%Y-%m-%d")
+        gddid = data["gddid"]
+        data = json.dumps(data)
         with open(os.path.join("data",
                                         "data-review-tool",
                                         "processed",
@@ -877,9 +880,9 @@ def save_submit(submit, save, relevant, data):
                     icon=DashIconify(icon="dashicons-remove"),
                 )
     elif callback_context == "save-button.n_clicks" and save:
-        results["status"] = "In Progress"
-        gddid = results["gddid"]
-        data = json.dumps(results)
+        data["status"] = "In Progress"
+        gddid = data["gddid"]
+        data = json.dumps(data)
         with open(os.path.join("data",
                                         "data-review-tool",
                                         "processed",
@@ -907,9 +910,10 @@ def save_submit(submit, save, relevant, data):
     Input("chips_age", "value"),
     Input("chips_email", "value"),
     State("accordion", "value"),
+    Input("results", "data"),
     prevent_initial_call=True,
 )
-def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian):
+def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian, data):
     """Populate tabs with sentences under corresponding sections
     
     Args:
@@ -922,6 +926,7 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
         age (str): The age name
         email (str): The email name
         accordian (str): The current accordian
+        data (dict): The results store
     Returns:
         list: The list of tabs
     """
@@ -938,7 +943,7 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
     tabs = defaultdict(list)
 
     # Get all the sentences and corresponding section names
-    for entity, values in results["entities"][accordian].items():
+    for entity, values in data["entities"][accordian].items():
         if entity in [site, region, taxa, geog, alti, age, email]:
             sentences = values["sentence"]
             if values['corrected_name'] != None:

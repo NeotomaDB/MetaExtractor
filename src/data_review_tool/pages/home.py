@@ -4,75 +4,104 @@ import json
 import os
 import pandas as pd
 from dash.dependencies import Input, Output, State
+
 dash.register_page(__name__, path="/")
 
 from dash import dcc, html, Input, Output, callback
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 from pages.config import *
+
 suppress_callback_exceptions = True
+
 
 def layout():
     combined_df = read_articles("data/data-review-tool")
 
-
-    combined_df = combined_df[["title", "doi", "gddid", "status", "date_processed", "last_updated"]].rename(
-            columns={"title": "Article", 
-                    "doi": "DOI", 
-                    "status": "Status", 
-                    "date_processed": "Date Added",
-                    "last_updated": "Date Updated"}
-        )
+    combined_df = combined_df[
+        ["title", "doi", "gddid", "status", "date_processed", "last_updated"]
+    ].rename(
+        columns={
+            "title": "Article",
+            "doi": "DOI",
+            "status": "Status",
+            "date_processed": "Date Added",
+            "last_updated": "Date Updated",
+        }
+    )
     combined_df["Review"] = "Review"
 
     current = combined_df.query("Status == 'False' | Status =='In Progress'")
     completed = combined_df[combined_df["Status"] == "Completed"]
     nonrelevant = combined_df[combined_df["Status"] == "Non-relevant"]
-    
 
     layout = html.Div(
-        dbc.Col([
-            dmc.Tabs(
-                [
-                    dmc.TabsList(
-                        [
-                            get_article_tab("Current Articles", current),
-                            get_article_tab("Completed Articles", completed),
-                            get_article_tab("Irrelevant Articles", nonrelevant),
-                        ],
-                        position="apart"
-                    ),
-                    get_article_table("current_table", "location_current", "Current Articles", current),
-                    get_article_table("completed_table", "location_completed", "Completed Articles", completed),
-                    get_article_table("irrelevant_table", "location_irrelevant", "Irrelevant Articles", nonrelevant),
-                ],
-                id="article-tabs",
-                color="blue",
-                orientation="horizontal",
-                value="Current Articles",
-            ),
-        ],
-        width=10,
-        style = {'margin-left': 'auto', 'margin-right': 'auto',
-                 "max-width": "100%",
-                "word-wrap": "break-word"}
+        dbc.Col(
+            [
+                dmc.Tabs(
+                    [
+                        dmc.TabsList(
+                            [
+                                get_article_tab("Current Articles", current),
+                                get_article_tab("Completed Articles", completed),
+                                get_article_tab("Irrelevant Articles", nonrelevant),
+                            ],
+                            position="apart",
+                        ),
+                        get_article_table(
+                            "current_table",
+                            "location_current",
+                            "Current Articles",
+                            current,
+                        ),
+                        get_article_table(
+                            "completed_table",
+                            "location_completed",
+                            "Completed Articles",
+                            completed,
+                        ),
+                        get_article_table(
+                            "irrelevant_table",
+                            "location_irrelevant",
+                            "Irrelevant Articles",
+                            nonrelevant,
+                        ),
+                    ],
+                    id="article-tabs",
+                    color="blue",
+                    orientation="horizontal",
+                    value="Current Articles",
+                ),
+            ],
+            width=10,
+            style={
+                "margin-left": "auto",
+                "margin-right": "auto",
+                "max-width": "100%",
+                "word-wrap": "break-word",
+            },
         )
     )
     return layout
 
+
 @callback(
     Output("location_current", "href"),
-    Input("current_table", "active_cell"),  
+    Input("current_table", "active_cell"),
     State("current_table", "derived_viewport_data"),
-    Input("completed_table", "active_cell"),  
+    Input("completed_table", "active_cell"),
     State("completed_table", "derived_viewport_data"),
-    Input("irrelevant_table", "active_cell"),  
+    Input("irrelevant_table", "active_cell"),
     State("irrelevant_table", "derived_viewport_data"),
 )
-
-def current_article_clicked(active_cell_current, current_data, 
-                            active_cell_completed, completed_data, 
-                            active_cell_nonrelevant, nonrelevant_data):
+def current_article_clicked(
+    active_cell_current,
+    current_data,
+    active_cell_completed,
+    completed_data,
+    active_cell_nonrelevant,
+    nonrelevant_data,
+):
     """Get the URL of the article that was clicked on for each data table
 
     Args:
@@ -86,16 +115,21 @@ def current_article_clicked(active_cell_current, current_data,
     Returns:
         str: The URL of the article that was clicked on
     """
-    for active_cell, data in [(active_cell_current, current_data), (active_cell_completed, completed_data), (active_cell_nonrelevant, nonrelevant_data)]:
+    for active_cell, data in [
+        (active_cell_current, current_data),
+        (active_cell_completed, completed_data),
+        (active_cell_nonrelevant, nonrelevant_data),
+    ]:
         if active_cell:
             row = active_cell["row"]
             col = active_cell["column_id"]
             if col == "Review":
                 selected = data[row]["gddid"]
-                return f"http://0.0.0.0:8050/article/{selected}"
+                return f"/article/{selected}"
             else:
                 return dash.no_update
-        
+
+
 def get_article_tab(tab_header, data):
     """Get the tab for the specified article table
 
@@ -107,17 +141,18 @@ def get_article_tab(tab_header, data):
         dash_mantine_components.Tab: The tab for the specified article table
     """
     return dmc.Tab(
-            children=dmc.Text(tab_header,
-                                style=tab_header_style),
-            value=tab_header,
-            rightSection=dmc.Badge(
-                f"{data.shape[0]}",
-                p=0,
-                variant="filled",
-                style=badge_style,
-                sx={"width": 20, "height": 20, "pointerEvents": "none"}),
+        children=dmc.Text(tab_header, style=tab_header_style),
+        value=tab_header,
+        rightSection=dmc.Badge(
+            f"{data.shape[0]}",
+            p=0,
+            variant="filled",
+            style=badge_style,
+            sx={"width": 20, "height": 20, "pointerEvents": "none"},
+        ),
     )
-    
+
+
 def get_article_table(table_id, location_id, tab_header, data):
     """Get the table for the specified article table
 
@@ -131,7 +166,8 @@ def get_article_table(table_id, location_id, tab_header, data):
         dash_mantine_components.TabsPanel: The table for the specified article table
     """
     return dmc.TabsPanel(
-            html.Div([
+        html.Div(
+            [
                 dash_table.DataTable(
                     id=table_id,
                     filter_action="native",
@@ -143,17 +179,21 @@ def get_article_table(table_id, location_id, tab_header, data):
                     columns=[{"name": i, "id": i} for i in data.columns],
                     data=data.to_dict("records"),
                     style_data_conditional=table_conditional_style,
-                    style_table={'overflowX': 'auto',
-                                    "padding-top": "20px",},
+                    style_table={
+                        "overflowX": "auto",
+                        "padding-top": "20px",
+                    },
                     style_cell=table_cell_style,
                     style_header=table_header_style,
                 ),
                 dcc.Location(id=location_id, refresh=True),
             ],
-                style=tab_body_style),
-            value=tab_header
-        )
-    
+            style=tab_body_style,
+        ),
+        value=tab_header,
+    )
+
+
 def read_articles(directory):
     """Read the articles from the specified directory
 
@@ -174,7 +214,7 @@ def read_articles(directory):
             # List all files in the directory
             files = os.listdir(directory)
             # Filter JSON files
-            json_files = [file for file in files if file.endswith('.json')]
+            json_files = [file for file in files if file.endswith(".json")]
             # Read each JSON file into a dataframe and store it in the dictionary
             for file in json_files:
                 file_path = os.path.join(directory, file)
@@ -186,5 +226,14 @@ def read_articles(directory):
         # Combine all dataframes into a single dataframe
         combined_df = pd.concat(list(dfs.values()), ignore_index=True)
     except ValueError:
-        combined_df = pd.DataFrame(columns=["title", "doi", "gddid", "status", "date_processed", "last_updated"])
+        combined_df = pd.DataFrame(
+            columns=[
+                "title",
+                "doi",
+                "gddid",
+                "status",
+                "date_processed",
+                "last_updated",
+            ]
+        )
     return combined_df

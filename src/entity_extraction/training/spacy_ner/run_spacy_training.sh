@@ -7,7 +7,7 @@ echo python.__version__ = $(python -c 'import sys; print(sys.version)')
 # ensure we're in the MetaExtractor root directory
 echo "Current working directory: $(pwd)"
 
-DATA_DIR="/path/to/sample input folder"
+DATA_PATH="/path/to/sample input folder"
 DATA_OUTPUT_PATH="/path/to/sample output folder"
 MODEL_PATH="/path/to/model artifacts"
 MODEL_OUTPUT_PATH="/path/to/new model artifacts"
@@ -20,7 +20,7 @@ TEST_SPLIT=0.15
 rm -f src/entity_extraction/training/spacy_ner/spacy_transformer_$VERSION.cfg
 
 python3 src/preprocessing/labelling_data_split.py \
-        --raw_label_path $DATA_DIR \
+        --raw_label_path $DATA_PATH \
         --output_path $DATA_OUTPUT_PATH \
         --train_split $TRAIN_SPLIT \
         --val_split $VAL_SPLIT \

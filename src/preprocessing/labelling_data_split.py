@@ -2,7 +2,7 @@
 # Date: 2023-05-31
 """This script splits the  labelled text into train, validation, and test sets.
 
-Usage: labelstudio_preprocessing.py --raw_label_path=<raw_label_path> --output_path=<output_path> [--train_split=<train_split>] [--val_split=<val_split>] [--test_split=<test_split>]
+Usage: labelling_data_split.py --raw_label_path=<raw_label_path> --output_path=<output_path> [--train_split=<train_split>] [--val_split=<val_split>] [--test_split=<test_split>]
 
 Options:
     --raw_label_path=<raw_label_path>       The path to where the raw label files are.

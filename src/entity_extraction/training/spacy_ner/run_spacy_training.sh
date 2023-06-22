@@ -7,39 +7,59 @@ echo python.__version__ = $(python -c 'import sys; print(sys.version)')
 # ensure we're in the MetaExtractor root directory
 echo "Current working directory: $(pwd)"
 
-# set the location of the labelled data, ideally this is run from root of repo
-DATA_DIR="sample_folder"
+DATA_DIR="/path/to/sample input folder"
+DATA_OUTPUT_PATH="/path/to/sample output folder"
+MODEL_PATH="/path/to/model artifacts"
+MODEL_OUTPUT_PATH="/path/to/new model artifacts"
+VERSION="v1"
 TRAIN_SPLIT=0.7
 VAL_SPLIT=0.15
 TEST_SPLIT=0.15
-MODEL_PATH=""
-VERSION="v1"
 
-rm -f spacy_transformer_$VERSION.cfg
 
-python3 spacy_preprocess.py \
-        --data_path $DATA_DIR \
-        --train_split 0.7 \
-        --val_split 0.15 \
-        --test_split 0.15
+rm -f src/entity_extraction/training/spacy_ner/spacy_transformer_$VERSION.cfg
+
+python3 src/preprocessing/labelling_data_split.py \
+        --raw_label_path $DATA_DIR \
+        --output_path $DATA_OUTPUT_PATH \
+        --train_split $TRAIN_SPLIT \
+        --val_split $VAL_SPLIT \
+        --test_split $TEST_SPLIT
+
+python3 src/preprocessing/spacy_preprocess.py \
+        --data_path $DATA_OUTPUT_PATH \
+        --train_split $TRAIN_SPLIT \
+        --val_split $VAL_SPLIT \
+        --test_split $TEST_SPLIT
 
 if [ -z "$MODEL_PATH" ]; then
     # If the model path is null, then start training from scratch
-    python -m spacy init fill-config spacy_transformer_train.cfg spacy_transformer_$VERSION.cfg
-    python -m spacy train spacy_transformer_$VERSION.cfg \
-        --paths.train $DATA_DIR/train/train.spacy \
-        --paths.dev $DATA_DIR/val/val.spacy \
-        --output ./output
+
+    # Fill configuration with required fields
+    python -m spacy init fill-config \
+            src/entity_extraction/training/spacy_ner/spacy_transformer_train.cfg \
+            src/entity_extraction/training/spacy_ner/spacy_transformer_$VERSION.cfg
+
+    # Execute the training job by pointing to the new config file
+    python -m spacy train \
+        src/entity_extraction/training/spacy_ner/spacy_transformer_$VERSION.cfg \
+        --paths.train $DATA_OUTPUT_PATH/train.spacy \
+        --paths.dev $DATA_OUTPUT_PATH/val.spacy \
+        --output $MODEL_OUTPUT_PATH \
+        --gpu-id -1
 
 else
     # Else create a new config file to resume training
-    python create_config.py \
+    python src/entity_extraction/training/spacy_ner/create_config.py \
         --model_path $MODEL_PATH \
-        --output_path spacy_transformer_$VERSION.cfg
-    python -m spacy train spacy_transformer_$VERSION.cfg \
-        --paths.train $DATA_DIR/train/train.spacy \
-        --paths.dev $DATA_DIR/val/val.spacy \
+        --output_path src/entity_extraction/training/spacy_ner/spacy_transformer_$VERSION.cfg
+
+    python -m spacy train \
+        src/entity_extraction/training/spacy_ner/spacy_transformer_$VERSION.cfg \
+        --paths.train $DATA_OUTPUT_PATH/train.spacy \
+        --paths.dev $DATA_OUTPUT_PATH/val.spacy \
         --components.ner.source $MODEL_PATH \
         --components.transformer.source $MODEL_PATH \
-        --output ./output 
+        --output $MODEL_OUTPUT_PATH \
+        --gpu-id -1
 fi

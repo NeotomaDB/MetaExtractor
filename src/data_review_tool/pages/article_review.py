@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import pandas as pd
 import copy
@@ -10,10 +11,12 @@ import dash
 from dash import dcc, html, Input, Output, callback, State
 import dash_mantine_components as dmc
 import dash_bootstrap_components as dbc
-from pages.navbar import find_start_end_char
 from dash_iconify import DashIconify
-from pages.config import *
 import seaborn as sns
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+from src.data_review_tool.pages.config import *
 
 dash.register_page(__name__,  path_template="/article/<gddid>")
 
@@ -499,7 +502,7 @@ def cell_clicked(n_clicks):
         str: The href of the home button
     """
     if n_clicks:
-        return f"http://0.0.0.0:8050/"
+        return "/"
     else:
         return dash.no_update
 
@@ -782,10 +785,9 @@ def update_entity(
             })
             
     elif callback_context == "correct-button.n_clicks" and correct:
-        # for ent, values in results["entities"][accordian].items():
-        #     if ent == original_text:
-        #         values["corrected_name"] = entity
-        #         break
+        # return results if entity == original_text so nothing happens
+        if entity == original_text:
+            return results
         if entity in results["entities"][accordian]:
             for sentence in results["entities"][accordian][original_text]["sentence"]:
                 try:
@@ -881,7 +883,7 @@ def save_submit(submit, save, relevant, data):
         with open(os.path.join("data",
                                         "data-review-tool",
                                         "processed",
-                                        f"{gddid}.json"), "r") as f:
+                                        f"{gddid}.json"), "w") as f:
             f.write(data)
         return  dmc.Notification(
                     title="Progress Saved!",
@@ -1065,4 +1067,20 @@ for overflow in ["submit", "irrelevant"]:
         prevent_initial_call=True,
     )(toggle_confirmation_modal)
     
-    
+def find_start_end_char(text, entity):
+    """Find the start and end character of an entity in a text.
+
+    Args:
+        text (str): Text to search for entity.
+        entity (str): Entity to search for in text.
+
+    Returns:
+        start (int): Start character of entity in text.
+        end (int): End character of entity in text.
+    """
+    start = text.find(entity)
+    if start == -1:
+        end = -1
+    else:
+        end = start + len(entity)
+    return start, end

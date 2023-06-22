@@ -9,7 +9,6 @@ dash.register_page(__name__)
 from dash import dash, dcc, html, Input, Output, callback
 import os
 
-
 layout = html.Div(
     [
         html.H1("About Finding Fossils"),

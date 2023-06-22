@@ -93,8 +93,7 @@ The spaCy model training documentation is a WIP.
 The Data Review Tool can be launched by running the following command from the root directory of this repository:
 
 ```bash
-docker-compose build
-docker-compose up data-review-tool
+docker-compose up --build data-review-tool
 ```
 
 Once the image is built and the container is running, the Data Review Tool can be accessed at http://localhost:8050/. There is a sample "extracted entities" JSON file provided for demo purposes.

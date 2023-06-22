@@ -9,8 +9,7 @@ def create_navbar():
         dbc.Container(
             [
                 html.Div([
-                   html.Img(src= os.path.join("assets",
-                                              "finding-fossils-logo-symbol_highres.png"), 
+                   html.Img(src= "/assets/finding-fossils-logo-symbol_highres.png", 
                             height="55px",
                             style={"position": "relative", "left": "-60px"}),
                 ], style={"display": "flex"}),

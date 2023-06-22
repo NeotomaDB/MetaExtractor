@@ -30,11 +30,11 @@ def layout(gddid=None):
         # get the metadata of the article
         if os.path.exists(os.path.join("data",
                                        "data-review-tool",
-                                       "completed",
+                                       "processed",
                                        f"{gddid}.json")):
             article = open(os.path.join("data",
                                         "data-review-tool",
-                                        "completed",
+                                        "processed",
                                         f"{gddid}.json"), "r")
         else:
             article = open(os.path.join("data",
@@ -499,7 +499,7 @@ def cell_clicked(n_clicks):
         str: The href of the home button
     """
     if n_clicks:
-        return f"http://0.0.0.0:8050/"
+        return f"/"
     else:
         return dash.no_update
 
@@ -843,7 +843,10 @@ def save_submit(submit, save, relevant, data):
         results["last_updated"] = datetime.now().strftime("%Y-%m-%d")
         gddid = results["gddid"]
         data = json.dumps(results)
-        with open(f"data/data-review-tool/completed/{gddid}.json", "w") as f:
+        with open(os.path.join("data",
+                                        "data-review-tool",
+                                        "processed",
+                                        f"{gddid}.json"), "w") as f:
             f.write(data)
         return  dmc.Notification(
                     title="Review Complete!",
@@ -858,7 +861,10 @@ def save_submit(submit, save, relevant, data):
         results["last_updated"] = datetime.now().strftime("%Y-%m-%d")
         gddid = results["gddid"]
         data = json.dumps(results)
-        with open(f"data/data-review-tool/completed/{gddid}.json", "w") as f:
+        with open(os.path.join("data",
+                                        "data-review-tool",
+                                        "processed",
+                                        f"{gddid}.json"), "w") as f:
             f.write(data)
         return  dmc.Notification(
                     title="Article Removed!",
@@ -872,7 +878,10 @@ def save_submit(submit, save, relevant, data):
         results["status"] = "In Progress"
         gddid = results["gddid"]
         data = json.dumps(results)
-        with open(f"data/data-review-tool/completed/{gddid}.json", "w") as f:
+        with open(os.path.join("data",
+                                        "data-review-tool",
+                                        "processed",
+                                        f"{gddid}.json"), "r") as f:
             f.write(data)
         return  dmc.Notification(
                     title="Progress Saved!",

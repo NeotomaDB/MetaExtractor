@@ -14,10 +14,17 @@ from pathlib import Path
 from docopt import docopt
 import spacy
 
-opt = docopt(__doc__)
-
-def create_config():
+def create_config(model_path: str, output_path: str):
+    """
+    Loads a model's config and updates the source to resume training
     
+    Parameters
+    ----------
+    model_path: str
+        Path to the model artifacts to resume training
+    output_path: str
+        Output path to store the updated configuration file.
+    """
     spacy.require_cpu()
     nlp = spacy.load(opt["--model_path"])
 
@@ -37,4 +44,5 @@ def create_config():
     config.to_disk(opt["--output_path"])
     
 if __name__ == "__main__":
-    create_config()
+    opt = docopt(__doc__)
+    create_config(opt['--model_path'], opt['--output_path'])

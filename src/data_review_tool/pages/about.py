@@ -9,11 +9,6 @@ dash.register_page(__name__)
 from dash import dash, dcc, html, Input, Output, callback
 import os
 
-with open(os.path.join("src",
-                        "data_review_tool",
-                        "assets",
-                        'about.md'), 'r') as file:
-    markdown_text = file.read()
 
 layout = html.Div(
     [
@@ -23,12 +18,12 @@ layout = html.Div(
         ),
         html.H2("Finding Fossils Demo"),
         dp.DashPlayer(
-                            id="player",
-                            url="https://youtu.be/CSXBJ0fr0sM",
-                            controls=True,
-                            width="100%",
-                            height="250px",
-                        ),
+            id="player",
+            url="https://youtu.be/CSXBJ0fr0sM",
+            controls=True,
+            width="100%",
+            height="250px",
+        ),
         html.H2("How the app works"),
         html.H3("Home Page"),
         html.P(
@@ -47,47 +42,48 @@ layout = html.Div(
                 ),
             ]
         ),
-        html.Center(html.Img(src="../assets/about_assets/home.png", alt="Home Page", style={"width": "100%", "height": "auto"})),
+        html.Center(
+            html.Img(
+                src="../assets/about_assets/home.png",
+                alt="Home Page",
+                style={"width": "100%", "height": "auto"},
+            )
+        ),
         html.H3("Article Review"),
         html.P(
             "Once an article has been selected from the Home Page, the user is directed to the article relevance page. Several functionalities have been implemented to ensure a quick traversal and verification of an article."
         ),
         html.Ul(
             [
-                html.Li(
-                    [
-                        html.Strong("Home:"),
-                        " button to return to the Home Page."
-                    ]
-                ),
+                html.Li([html.Strong("Home:"), " button to return to the Home Page."]),
                 html.Li(
                     [
                         html.Strong("Relevance Score:"),
-                        " indicator showing the prediction results from the article relevance model."
+                        " indicator showing the prediction results from the article relevance model.",
                     ]
                 ),
                 html.Li(
                     [
                         html.Strong("Mark as irrelevant:"),
-                        " button to move the article to the Irrelevant Articles tab on the Home Page. This will remove the article from the queue of articles to be reviewed and can be used to retrain the article relevance model."
+                        " button to move the article to the Irrelevant Articles tab on the Home Page. This will remove the article from the queue of articles to be reviewed and can be used to retrain the article relevance model.",
                     ]
                 ),
                 html.Li(
                     [
                         html.Strong("Go to Article:"),
-                        " button to open the article in a new tab."
+                        " button to open the article in a new tab.",
                     ]
                 ),
                 html.Li(
                     [
                         html.Strong("Save:"),
-                        " button to save your changes but not submit the article. This will save your changes and will keep the article in the Current Articles tab on the Home Page with a status of In Progress."
+                        " button to save your changes but not submit the article. This will save your changes and will keep the article in the Current Articles tab on the Home Page with a status of In Progress.",
                     ]
                 ),
                 html.Li(
                     [
                         html.Strong("Submit:"),
-                        " button to submit the article once the review of the article is complete. This will save all of the changes that you have made to the article and will move the article to the Completed Articles tab on the Home Page."
+                        " button to submit the article once the review of the article is complete. This will save all of the changes that you have made to the article and will move the article to the Completed Articles tab on the Home Page.",
                     ]
                 ),
             ]
@@ -96,30 +92,55 @@ layout = html.Div(
         html.P(
             "On the left hand side of the page, there are accordions for each entity type found in the article. The number displayed beside the entity type indicates how many different entities are found in the article. Clicking on the accordion will open the list of entities. Clicking on the entity will open the entity review page that lists the section tabs under which the entities occur along with the corresponding sentences."
         ),
-        html.Center(html.Img(src="../assets/about_assets/accordions.png", alt="Accordions", width="400")),
+        html.Center(
+            html.Img(
+                src="../assets/about_assets/accordions.png",
+                alt="Accordions",
+                width="400",
+            )
+        ),
         html.H4("Entity Review"),
         html.P(
             "On the entity review page, you will see the Original Text which will display the label that the Entity Extraction model has extracted. Below this will be tabs of each of the sections of the journal article that this entity has been found in. Under each tab will be the sentences in which the entity has been found. The entity has been highlighted in blue. As a result of the scanning of articles from PDFs through Optical Character Recognition there could be issues with the text. If you see any issues with the text, you can edit the text in the text box below the sentence. Once you have made your changes, you can click the Correct button to save your changes. If you would like to delete the entity, you can click the Delete button. This will remove the entity from the accordion and will be reflected in the entity count on the left hand side of the article review page. If the entity is correct, simply move on to the next entity."
         ),
-        html.Center(html.Img(src="../assets/about_assets/entity_review.png", alt="Entity Review", style={"width": "100%", "height": "auto"})),
+        html.Center(
+            html.Img(
+                src="../assets/about_assets/entity_review.png",
+                alt="Entity Review",
+                style={"width": "100%", "height": "auto"},
+            )
+        ),
         html.H4("Adding a new entity"),
         html.P(
             "If through the process of reviewing the article you come across an entity that was not extracted by the Entity Extraction model, you can add a new entity. To do this, click the Add New Entity button. This will open a popup in which you can add the entity you have found. The information that you need to include here is the Entity Name, the Sentence that you found this entity in, as well as the Section Name of the article it was found in. Once you have added the necessary information, click the Add button. This will add the entity to the entity list on the left hand side of the article review page. You can then click on the entity to open the entity review page and make any changes to the entity that you would like."
         ),
-        html.Center(html.Img(src="../assets/about_assets/new_entity.png", alt="Add New Entity")),
+        html.Center(
+            html.Img(src="../assets/about_assets/new_entity.png", alt="Add New Entity")
+        ),
         html.H4("Restoring an entity"),
         html.P(
             "If you have deleted an entity by accident, you can restore the entity. To do this, select the Show deleted entity button on the below the accordions."
         ),
-        html.Center(html.Img(src="../assets/about_assets/deleted_toggle.png", alt="Show Deleted Entity")),
+        html.Center(
+            html.Img(
+                src="../assets/about_assets/deleted_toggle.png",
+                alt="Show Deleted Entity",
+            )
+        ),
         html.P(
             "From there, select the entity and click the Restore button on the entity review page. This will restore the entity to the entity list on the left hand side of the article review page."
         ),
-        html.Center(html.Img(src="../assets/about_assets/restore.png", alt="Restore Entity", style={"width": "100%", "height": "auto"})),
+        html.Center(
+            html.Img(
+                src="../assets/about_assets/restore.png",
+                alt="Restore Entity",
+                style={"width": "100%", "height": "auto"},
+            )
+        ),
     ],
-    style = {
+    style={
         "padding-left": "10%",
         "padding-right": "10%",
-        "font-family":"Arial, Helvetica, sans-serif",
-    }
+        "font-family": "Arial, Helvetica, sans-serif",
+    },
 )

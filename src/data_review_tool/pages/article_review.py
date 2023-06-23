@@ -20,6 +20,10 @@ from src.data_review_tool.pages.config import *
 
 dash.register_page(__name__,  path_template="/article/<gddid>")
 
+from src.logs import get_logger
+
+logger = get_logger(__name__)
+
 original = None
 color_palette = sns.color_palette("RdYlGn", 100).as_hex()
 
@@ -27,26 +31,14 @@ color_palette = sns.color_palette("RdYlGn", 100).as_hex()
 def layout(gddid=None):
     
     try:
+        logger.info(f"Loading article {gddid}")
         global original
         # get the metadata of the article
-        if os.path.exists(os.path.join("data",
-                                       "data-review-tool",
-                                       "processed",
-                                       f"{gddid}.json")):
-            article = open(os.path.join("data",
-                                        "data-review-tool",
-                                        "processed",
-                                        f"{gddid}.json"), "r")
-        else:
-            article = open(os.path.join("data",
-                                        "data-review-tool",
-                                        "raw",
-                                        f"{gddid}.json"), "r")
-
-        original = json.loads(article.read())
+        original = load_article(os.path.join("data", "data-review-tool"), gddid)
         results = copy.deepcopy(original)
 
     except FileNotFoundError:
+        logger.error(f"Article {gddid} not found")
         return html.Div([
             html.H1("Error - gddid Not Found"),
             html.P("The requested gddid does not exist in the files."),
@@ -330,6 +322,7 @@ def layout(gddid=None):
     Input("toggle-switch", "checked"),
 )
 def collapse(checked):
+    logger.info(f"checked: {checked}")
     """Return the value of the accordion to collapse it when toggling between deleted and extracted entities
 
     Args:
@@ -347,6 +340,7 @@ def collapse(checked):
     prevent_initial_call=True,
 )
 def get_accordion_items(checked, data):
+    logger.info(f"checked: {checked}")
     """Return the children of the accordion to populate it with the extracted entities
     
     Args:
@@ -447,7 +441,7 @@ def get_accordion_items(checked, data):
             ],
                 value=label,
             ))
-
+    # logger.debug()
     return children
 
 @callback(
@@ -640,37 +634,44 @@ def chips_values(site,
         if site == None:
             return "No entity selected", True, True, ""
         else:
+            logger.debug(f"site: {site} corrected: {corrected_name}")
             return site, False, False, corrected_name
+            
     elif accordian == "REGION":
         if region == None:
             return "No entity selected", True, True, ""
         else:
+            logger.debug(f"region: {region} corrected: {corrected_name}")
             return region, False, False, corrected_name
-            
     elif accordian == "TAXA":
         if taxa == None:
             return "No entity selected", True, True, ""
         else:
+            logger.debug(f"taxa: {taxa} corrected: {corrected_name}")        
             return taxa, False, False, corrected_name
     elif accordian == "GEOG":
         if geog == None:
             return "No entity selected", True, True, ""
         else:
+            logger.debug(f"geog: {geog} corrected: {corrected_name}")
             return geog, False, False, corrected_name
     elif accordian == "ALTI":
         if alti == None:
             return "No entity selected", True, True, ""
         else:
+            logger.debug(f"alti: {alti} corrected: {corrected_name}")
             return alti, False, False, corrected_name
     elif accordian == "AGE":
         if age == None:
             return "No entity selected", True, True, ""
         else:
+            logger.debug(f"age: {age} corrected: {corrected_name}")
             return age, False, False, corrected_name
     elif accordian == "EMAIL":
         if email == None:
             return "No entity selected", True, True, ""
         else:
+            logger.debug(f"email: {email} corrected: {corrected_name}")
             return email, False, False, corrected_name
 
 @callback(
@@ -694,6 +695,7 @@ def toggle_modal(n_clicks, close, opened, accordian):
         bool: The state of the modal
         str: The title of the modal
     """
+    logger.debug(f"n_clicks: {n_clicks} close: {close} opened: {opened} accordian: {accordian}")
     return not opened, f"Please add information for a new {accordian} entity below:"
 
 @callback(
@@ -746,8 +748,9 @@ def update_entity(
     
     callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
     original_text, _, _, _ = chips_values(site, region, taxa, geog, alti, age, email, accordian, data)
-    
+
     if callback_context == "new-entity-submit.n_clicks" and submit:
+        logger.debug(f"new_entity_text: {new_entity_text} new_entity_sentence: {new_entity_sentence} new_entity_section: {new_entity_section}")
         if new_entity_text != None:
             
             try:
@@ -790,8 +793,10 @@ def update_entity(
     elif callback_context == "correct-button.n_clicks" and correct:
         # return results if entity == original_text so nothing happens
         if entity == original_text:
+            logger.debug("entity == original_text")
             return data
         if entity in data["entities"][accordian]:
+            logger.debug(f"{entity} in data[entities][accordian]")
             for sentence in data["entities"][accordian][original_text]["sentence"]:
                 try:
                     start, end = find_start_end_char(sentence['text'], entity)
@@ -804,19 +809,23 @@ def update_entity(
                 # Add to sentences if not already present
                 if sentence not in data["entities"][accordian][entity]["sentence"]:
                     data["entities"][accordian][entity]["sentence"].append(sentence)
+                    logger.debug(f"Added {sentence} to data[entities][accordian][entity][sentence]")
             # Delete the old entity
-            del data['entities'][accordian][original_text]
+            data['entities'][accordian][original_text]["deleted"] = True
+            logger.debug(f"Changed {original_text} to deleted = True")
             
         else:
             for ent, values in data["entities"][accordian].items():
                 if ent == original_text:
                     values["corrected_name"] = entity
+                    logger.debug(f"Changed {original_text} to {entity}")
                     break
 
     elif callback_context == "delete-restore-button.n_clicks" and delete:
         for ent, values in data["entities"][accordian].items():
             if ent == original_text:
                 values["deleted"] = not values["deleted"]
+                logger.debug(f"Changed {original_text} to deleted = True")
                 break
 
     return data
@@ -844,6 +853,7 @@ def save_submit(submit, save, relevant, data):
     callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
 
     if callback_context == "confirm-submit-button.n_clicks" and submit:
+        logger.debug(f"Submitting {data['gddid']}")
         data["status"] = "Completed"
         data["last_updated"] = datetime.now().strftime("%Y-%m-%d")
         gddid = data["gddid"]
@@ -853,6 +863,7 @@ def save_submit(submit, save, relevant, data):
                                         "processed",
                                         f"{gddid}.json"), "w") as f:
             f.write(data)
+            logger.debug(f"Saved {gddid}.json")
         return  dmc.Notification(
                     title="Review Complete!",
                     id="submit-notification",
@@ -862,6 +873,7 @@ def save_submit(submit, save, relevant, data):
                     icon=DashIconify(icon="ic:round-celebration"),
                 )
     elif callback_context == "confirm-irrelevant-button.n_clicks" and relevant:
+        logger.debug(f"Removing {data['gddid']}")
         data["status"] = "Non-relevant"
         data["last_updated"] = datetime.now().strftime("%Y-%m-%d")
         gddid = data["gddid"]
@@ -871,6 +883,7 @@ def save_submit(submit, save, relevant, data):
                                         "processed",
                                         f"{gddid}.json"), "w") as f:
             f.write(data)
+            logger.debug(f"Saved {gddid}.json")
         return  dmc.Notification(
                     title="Article Removed!",
                     id="remove-notification",
@@ -880,6 +893,7 @@ def save_submit(submit, save, relevant, data):
                     icon=DashIconify(icon="dashicons-remove"),
                 )
     elif callback_context == "save-button.n_clicks" and save:
+        logger.debug(f"Saving {data['gddid']}")
         data["status"] = "In Progress"
         gddid = data["gddid"]
         data = json.dumps(data)
@@ -888,6 +902,7 @@ def save_submit(submit, save, relevant, data):
                                         "processed",
                                         f"{gddid}.json"), "w") as f:
             f.write(data)
+            logger.debug(f"Saved {gddid}.json")
         return  dmc.Notification(
                     title="Progress Saved!",
                     id="save-notification",
@@ -941,7 +956,9 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
     
     # Key is the tab name, value is a list of texts
     tabs = defaultdict(list)
-
+    
+    relevant_sentences = pd.DataFrame(data["relevant_sentences"])
+    positive_values = relevant_sentences['sentid'][relevant_sentences['sentid'] > 0]
     # Get all the sentences and corresponding section names
     for entity, values in data["entities"][accordian].items():
         if entity in [site, region, taxa, geog, alti, age, email]:
@@ -952,10 +969,20 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
                 highlight = entity
             for sentence in sentences:
                 section_name = sentence["section_name"]
-                #TODO: get text using `sentid` attribute
-                text = sentence["text"]
-                tabs[section_name].append(text)
+                if sentence["sentid"] < 0:
+                    text = relevant_sentences.query("sentid == @sentence['sentid']")["text"].values[0]
+                    tabs[section_name].append(text)
 
+                elif sentence["sentid"] == positive_values.min():
+                    text = []
+                    for i in [sentence["sentid"], sentence["sentid"] + 1]:
+                        text.append(relevant_sentences.query("sentid == @i")["text"].values[0])
+                    tabs[section_name].append(" ".join(text))
+                else:
+                    text = []
+                    for i in [sentence["sentid"] -1, sentence["sentid"], sentence["sentid"] + 1]:
+                        text.append(relevant_sentences.query("sentid == @i")["text"].values[0])
+                    tabs[section_name].append(" ".join(text))
     # Convert all the sentences in tabs to paper dmc components
     dmc_tabs_content = []
     for tab_name, tab_content in tabs.items():
@@ -1043,7 +1070,9 @@ def open_article(n_clicks):
     Returns:
         str: The article link
     """
+    logger.debug("Opening article in new tab")
     if n_clicks:
+        logger.debug(f"Opening article f{original['doi'][0]}")
         return "http://doi.org/" + original["doi"][0]
     else:
         return None
@@ -1089,3 +1118,29 @@ def find_start_end_char(text, entity):
     else:
         end = start + len(entity)
     return start, end
+
+def load_article(directory, gddid):
+    """Load the article from the raw or processed directory
+    
+    Args:
+        directory (str): The directory to load the article from
+        gddid (str): The gddid of the article
+        
+    returns: 
+        dict: The article"""
+    logger.info(f"Loading article {gddid}")
+    if os.path.exists(os.path.join(directory,
+                                       "processed",
+                                       f"{gddid}.json")):
+        article = open(os.path.join(directory,
+                                        "processed",
+                                        f"{gddid}.json"), "r")
+    else:
+        article = open(os.path.join(directory,
+                                        "raw",
+                                        f"{gddid}.json"), "r")
+
+    article = json.loads(article.read())
+    logger.debug(f"Article Entity Types {article.keys}")
+    assert sorted(article["entities"].keys()) == sorted(["SITE", "REGION", "TAXA", "GEOG", "ALTI", "AGE", "EMAIL"]), "Article does not have all the entity types"
+    return article

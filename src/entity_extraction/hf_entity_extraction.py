@@ -42,7 +42,9 @@ def load_ner_model_pipeline(model_path: str):
 
     # load the model
     model = AutoModelForTokenClassification.from_pretrained(model_path)
-    tokenizer = AutoTokenizer.from_pretrained(model_path, model_max_length=512)
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_path, model_max_length=512, padding=True, truncation=True
+    )
     ner_pipe = pipeline(
         "ner",
         model=model,
@@ -136,7 +138,7 @@ def get_predicted_labels(df, ner_pipe):
     df["predicted_labels"] = predicted_labels
 
     df[["split_text", "predicted_tokens"]] = df.apply(
-        lambda row: get_hf_token_labels(row.predicted_labels, " ".join(row.text)),
+        lambda row: get_hf_token_labels(row.predicted_labels, row.text),
         axis="columns",
         result_type="expand",
     )

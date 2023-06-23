@@ -1170,7 +1170,6 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
         value=first_tab,
     )
     tab_component.children.extend(dmc_tabs_content)
-    logger.debug(f"Tab component: {tab_component}")
     return tab_component
 
 

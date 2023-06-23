@@ -131,6 +131,7 @@ def current_article_clicked(
             if col == "Review":
                 selected = data[row]["gddid"]
                 return f"/article/{selected}"
+                return f"/article/{selected}"
             else:
                 return dash.no_update
 
@@ -232,19 +233,6 @@ def read_articles(directory):
         # Combine all dataframes into a single dataframe
         combined_df = pd.concat(list(dfs.values()), ignore_index=True)
     except ValueError:
-        logger.debug(f"No articles found in {directory}")
-        combined_df = pd.DataFrame(
-            columns=[
-                "title",
-                "doi",
-                "gddid",
-                "status",
-                "date_processed",
-                "last_updated",
-            ]
-        )
-    except FileNotFoundError:
-        logger.debug(f"No directory found at {directory}")
         combined_df = pd.DataFrame(
             columns=[
                 "title",

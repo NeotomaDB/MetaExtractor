@@ -41,4 +41,4 @@ app.layout = html.Div(
 app._favicon = "finding-fossils.ico"
 
 if __name__ == "__main__":
-    app.run_server("0.0.0.0", debug=True)
+    app.run_server("0.0.0.0", debug=True, port=8050)

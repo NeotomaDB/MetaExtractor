@@ -1,20 +1,6 @@
 #!/usr/bin/env sh 
 
-# Copyright 2020 The HuggingFace Team. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-# if running with conda envs, comment out if not
+# if running with conda envs, remove if not
 conda activate ffossils
 
 echo python.__version__ = $(python -c 'import sys; print(sys.version)')
@@ -25,13 +11,14 @@ echo "Current working directory: $(pwd)"
 # see https://huggingface.co/models for options
 export MODEL_NAME_OR_PATH="roberta-base"
 # what the end model should be called, this is used for logging and saving
-export FINAL_MODEL_NAME="MetaExtractor"
+export FINAL_MODEL_NAME="metaextractor"
 
 # set the location of the labelled data, ideally this is run from root of repo
 # leave test_split at non_zero value to ensure test set is created for evaluation
-export LABELLED_FILE_LOCATION="$(pwd)/data/entity-extraction/processed/2023-05-31_label-export_39-articles/"
-export OUTPUT_DIR="/models/ner/test-finetuning/"
-export LOG_DIR="/models/ner/test-finetuning/logs/"
+export RAW_LABELLED_FILE_LOCATION="/data/entity-extraction/raw/sample-labelstudio-output/"
+export PROCESSED_LABELS_LOCATION="/data/entity-extraction/processed/sample-processed-labelstudio/"
+export MODEL_OUTPUT_DIR="/models/ner/test-finetuning/"
+export MODEL_LOG_DIR="/models/ner/test-finetuning/logs/"
 
 # comment the following in/out if MLflow server is available/.env file setup
 # export MLFLOW_EXPERIMENT_NAME="test-hf-token-classification"

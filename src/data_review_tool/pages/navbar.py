@@ -1,3 +1,5 @@
+# Author: Shaun Hutchinson,
+# Date: 2023-06-22
 import os
 import sys
 from dash import html
@@ -7,37 +9,48 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from src.data_review_tool.pages.config import *
 
-def create_navbar():
 
+def create_navbar():
     navbar = dbc.Navbar(
         dbc.Container(
             [
-                html.Div([
-                   html.Img(src= os.path.join("/assets",
-                                              "finding-fossils-logo-symbol_highres.png"), 
+                html.Div(
+                    [
+                        html.Img(
+                            src=os.path.join(
+                                "/assets", "finding-fossils-logo-symbol_highres.png"
+                            ),
                             height="55px",
-                            style={"position": "relative", "left": "-60px"}),
-                ], style={"display": "flex"}),
-                html.Div([
-                    html.H3(
-                        "Finding Fossils",
-                        style=h3_style,
-                    ),
-                ], style={"display": "flex"}),
+                            style={"position": "relative", "left": "-60px"},
+                        ),
+                    ],
+                    style={"display": "flex"},
+                ),
+                html.Div(
+                    [
+                        html.H3(
+                            "Finding Fossils",
+                            style=h3_style,
+                        ),
+                    ],
+                    style={"display": "flex"},
+                ),
                 dbc.Nav(
                     [
                         dbc.NavItem(
-                            dbc.NavLink("Home", 
-                                        href="/", 
-                                        style={
-                                            "color": "white",
-                                            "font-family": "Futura"})),
+                            dbc.NavLink(
+                                "Home",
+                                href="/",
+                                style={"color": "white", "font-family": "Futura"},
+                            )
+                        ),
                         dbc.NavItem(
-                            dbc.NavLink("About", 
-                                        href="/about",
-                                        style={
-                                            "color": "white",
-                                            "font-family": "Futura"})),
+                            dbc.NavLink(
+                                "About",
+                                href="/about",
+                                style={"color": "white", "font-family": "Futura"},
+                            )
+                        ),
                     ],
                     className="ml-auto",
                     navbar=True,

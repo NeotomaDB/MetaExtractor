@@ -6,12 +6,18 @@ The finding fossils team setup a privately hosted version of LabelStudio using H
 
 **Table of Contents**
 
-- [Label Studio Setup \& Usage](#label-studio-setup--usage)
+- [Label Studio Setup](#label-studio-setup--usage)
   - [Create Azure Blob Storage](#create-azure-blob-storage)
   - [Setup Postgres Database](#setup-postgres-database)
   - [Setup Label Studio External Storage](#setup-label-studio-external-storage)
+- [Label Studio Usage](#labeling-instructions)
+  - [Account creation](#create-account)
+  - [Navigation](#navigation)
+  - [Labeling](#labeling)
 ---
-## Create Azure Blob Storage
+## **Label Studio Setup**
+---
+### **Create Azure Blob Storage**
 
 1. Create an Azure blob storage container to house both the data to be labelled as well as the output labelled files.
    1. Use this guide: [Azure Quickstart Upload/Download Blobs](https://www.google.com/search?q=create+azure+blob+storage+container&rlz=1C1RXQR_enCA1013CA1013&oq=create+azure+blob+storage+container&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIICAEQABgWGB4yCAgCEAAYFhgeMggIAxAAGBYYHjIICAQQABgWGB4yCAgFEAAYFhgeMggIBhAAGBYYHjIICAcQABgWGB4yCAgIEAAYFhgeMggICRAAGBYYHtIBCDc0OTZqMGo3qAIAsAIA&sourceid=chrome&ie=UTF-8)
@@ -22,12 +28,12 @@ To allow LabelStudio to access the objects stored in the bucket, update the `Res
 
 ---
 
-## Setup Postgres Database
+### **Setup PostgreSQL Database**
 
 1. Create a **Azure Database for PostgreSQL - Flexible Server** to take advantage of 750 hours of free compute time, which should be able to run the database free each month. \
 **MAKE SURE YOU REMEMBER THE ADMIN ACCOUNT NAME AND PASSWORD** 
 
-2. Create a database once the Postgres instance is up and running. e.g. `labelstudiodev`.
+2. Create a database once the postgres instance is up and running. e.g. `labelstudiodev`.
 
 3. Install the Postgres Azure extensions required by LabelStudio. \
 Follow section **How to use PostgreSQL extensions** section from the Azure docs [here](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-extensions)
@@ -47,7 +53,7 @@ In Label Studio, follow the instructions under section **Enable Configuration Pe
 
 ---
 
-## Setup Label Studio External Storage
+### **Setup Label Studio External Storage**
 
 Inside the Label Studio instance
 
@@ -63,22 +69,67 @@ Inside the Label Studio instance
 
 ---
 
-## Setup Labeling configuration
+## **Label Studio Usage**
+---
+### **Account creation**
 
+1. Create a Hugging Face hub account: https://huggingface.co/join
+2. Send your profile name to *Ty Andrews* to be added to the **Finding Fossils organization** on Hugging Face
+Email: ty.elgin.andrews@gmail.com, or create a new organization for a different project to work collaboratively with teammates.
+3. Once in the organization, navigate to the organization page from your profile.
+![Organization navigation](assets/org_nav.png)
+
+4. In the organization page, click the space 
+**LabelStudio**.
+![LabelStudio tab](assets/labelstudio_tab.png)
+
+5. Create a LabelStudio account and record your password in your password manager.
+![Create Account](assets/account_creation.png)
+
+### **Navigation**
+
+1. Open the **Green** project named like **Finding Fossils Labelling - Production** or create a new one.
+![Project tab](assets/green_tab.png)
+
+2. Navigate to the settings menu of the project. Here, several options are available to tweak the settings to be compatible for your task,
+![Project Settings](assets/settings.png)
+
+  - Review or create labelling instructions.
+  ![Labeling instructions button](assets/labeling_instructions_button.png)
+  - The instructions look like this:
+  ![Labeling instructions](assets/labeling_instructions.png)
+
+  - Labeling configuration:
 After syncing the buckets, the final step is to define the different categories of entities that the named entity recognition model will be trained to predict. A configuration file is used to define the classes and to initialize the UI components to aid a user label entities. A sample config file has the following tags:
+    ```html
+    <View>
+      <Labels name="label" toName="text">
+        <Label value="PER" background="red"/>
+        <Label value="ORG" background="darkorange"/>
+        <Label value="LOC" background="orange"/>
+        <Label value="MISC" background="green"/>
+      </Labels>
+      <Text name="text" value="$text"/>
+    </View>
+    ```
+    For more information about config files to setup a custom LabelStudio NER labeling task, refer the [this documentation](https://labelstud.io/templates/named_entity.html).
 
-```html
-<View>
-  <Labels name="label" toName="text">
-    <Label value="PER" background="red"/>
-    <Label value="ORG" background="darkorange"/>
-    <Label value="LOC" background="orange"/>
-    <Label value="MISC" background="green"/>
-  </Labels>
-  <Text name="text" value="$text"/>
-</View>
-```
+    For general information, [visit](https://labelstud.io/templates/index.html).
 
-For more information about config files to setup a custom LabelStudio NER labeling task, refer the [this documentation](https://labelstud.io/templates/named_entity.html).
+### **Labeling**
 
-For general information, [visit](https://labelstud.io/templates/index.html).
+1. Select the task with **global_index** of 0, the **global index** indicates this is the start of the article and start labelling each task by moving onto the next **global_index** number.
+![Global Index of tasks](assets/global_index.png)
+- **Ensure pre-labelled entities are correct and/or fix:** we have tried to auto-tag entities to make this faster but it’s not perfect and this is what we’re improving, so this commonly misses entities or gets them partially right.
+- **Label any missed entities:** these can be things with typos, words being smushed together, etc.
+2. **Using the labelling interface:**
+![Labeling](assets/labeling.png)
+3. **Correct a pre-labelled entity:**
+- If it’s completely wrong, delete it 
+  - Select the label
+  - On the right bar click the delete button
+- To fix a partial match
+  - Delete the entity using above
+  - Select the correct label and click/drag the correct span of text
+
+  ![Correct Entity](assets/correct_labels.png)

@@ -15,6 +15,8 @@ mlflow_skinny==2.3.2
 nltk==3.8.1
 numpy==1.24.3
 pandas==2.0.1
+percy==2.0.2
+psutil==5.9.5
 pyarrow==12.0.1
 pytest==7.3.2
 python-dotenv==1.0.0

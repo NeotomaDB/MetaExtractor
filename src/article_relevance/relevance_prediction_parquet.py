@@ -317,14 +317,15 @@ def relevance_prediction(input_df, model_path, predict_thld = 0.5):
     valid_df['prediction'] = valid_df.loc[:,'predict_proba'].apply(lambda x: 1 if x >= predict_thld else 0)
 
     # Filter results, store key information that could possibly be useful downstream
-    keyinfo_col = ['DOI', 'URL', 'gddid', 'valid_for_prediction',
-                    'prediction', 'predict_proba', 'title', 'subtitle', 'abstract',
-                'subject_clean', 'journal', 'author', 'text_with_abstract',
-                'is-referenced-by-count', 'has_abstract', 'language', 'published', 'publisher',
-                'queryinfo_min_date',
-                'queryinfo_max_date',
-                'queryinfo_term',
-                'queryinfo_n_recent']
+    keyinfo_col = (['DOI', 'URL', 'gddid', 'valid_for_prediction',
+                    'prediction', 'predict_proba'] + 
+                    feature_col + 
+                    ['title', 'subtitle', 'abstract', 'journal', 
+                     'author', 'text_with_abstract', 'language', 'published', 'publisher',
+                     'queryinfo_min_date',
+                     'queryinfo_max_date',
+                     'queryinfo_term',
+                     'queryinfo_n_recent'])
     invalid_col = ['DOI', 'URL', 'gddid', 'valid_for_prediction',
                  'title', 'subtitle', 'abstract',
                 'subject_clean', 'journal', 'author', 'text_with_abstract',

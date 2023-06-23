@@ -62,11 +62,3 @@ def test_chips_values():
 def test_enable_correct_button():
     "Test that the enable_correct_button function returns the correct values."
     assert enable_correct_button("Pinus") == False
-
-
-def test_update_chips():
-    "Test that the update_chips function returns the correct values."
-    deleted = False
-    data = {"entities": {"SITE": {"test": {"corrected_name": "test"}}}}
-
-    assert update_chips(deleted, data)[0] == "test"

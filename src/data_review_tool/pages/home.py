@@ -1,20 +1,24 @@
 import dash
-from dash import dash_table
 import json
+import sys
 import os
 import pandas as pd
 from dash.dependencies import Input, Output, State
-dash.register_page(__name__, path="/")
-
-from dash import dcc, html, Input, Output, callback
+from dash import dcc, html, Input, Output, callback, dash_table
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
-from pages.config import *
-suppress_callback_exceptions = True
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+from src.data_review_tool.pages.config import *
+from src.logs import get_logger
+logger = get_logger(__name__)
+
+dash.register_page(__name__, path="/")
 
 def layout():
-    
-    combined_df = read_articles("data/data-review-tool")
+
+    combined_df = read_articles(os.path.join("data", "data-review-tool"))
 
     combined_df = combined_df[["title", "doi", "gddid", "status", "date_processed", "last_updated"]].rename(
             columns={"title": "Article", 
@@ -92,7 +96,7 @@ def current_article_clicked(active_cell_current, current_data,
             col = active_cell["column_id"]
             if col == "Review":
                 selected = data[row]["gddid"]
-                return f"http://0.0.0.0:8050/article/{selected}"
+                return f"/article/{selected}"
             else:
                 return dash.no_update
         
@@ -164,6 +168,7 @@ def read_articles(directory):
         pandas.DataFrame: The articles in the directory
     """
     try:
+        logger.info(f"Reading articles from {directory}")
         directories = [os.path.join(directory, dir) for dir in ["processed", "raw"]]
 
         # Initialize an empty dictionary to store the dataframes
@@ -186,5 +191,9 @@ def read_articles(directory):
         # Combine all dataframes into a single dataframe
         combined_df = pd.concat(list(dfs.values()), ignore_index=True)
     except ValueError:
+        logger.debug(f"No articles found in {directory}")
+        combined_df = pd.DataFrame(columns=["title", "doi", "gddid", "status", "date_processed", "last_updated"])
+    except FileNotFoundError:
+        logger.debug(f"No directory found at {directory}")
         combined_df = pd.DataFrame(columns=["title", "doi", "gddid", "status", "date_processed", "last_updated"])
     return combined_df

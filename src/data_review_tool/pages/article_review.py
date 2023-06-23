@@ -31,7 +31,7 @@ color_palette = sns.color_palette("RdYlGn", 100).as_hex()
 def layout(gddid=None):
     
     try:
-        logger.info(f"Loading article {gddid}")
+        logger.debug(f"Loading article {gddid}")
         global original
         # get the metadata of the article
         original = load_article(os.path.join("data", "data-review-tool"), gddid)
@@ -322,7 +322,7 @@ def layout(gddid=None):
     Input("toggle-switch", "checked"),
 )
 def collapse(checked):
-    logger.info(f"checked: {checked}")
+    logger.debug(f"checked: {checked}")
     """Return the value of the accordion to collapse it when toggling between deleted and extracted entities
 
     Args:
@@ -340,18 +340,18 @@ def collapse(checked):
     prevent_initial_call=True,
 )
 def get_accordion_items(checked, data):
-    logger.info(f"checked: {checked}")
+    logger.debug(f"checked: {checked}")
     """Return the children of the accordion to populate it with the extracted entities
     
     Args:
         checked (bool): Whether the toggle switch is checked (True) or not (False)
-        data (dict): The data from the previous page
+        data (dict): The data from the article page
     
     Returns:
         list: The children of the accordion
     """
     children = []
-
+    
     for label, name in entity_name_mapping.items():
         children.append(
             dmc.AccordionItem([
@@ -441,7 +441,6 @@ def get_accordion_items(checked, data):
             ],
                 value=label,
             ))
-    # logger.debug()
     return children
 
 @callback(
@@ -458,6 +457,7 @@ def update_button(checked):
     Returns:
         list: The children of the button group
     """
+    logger.debug(f"checked: {checked}")
     if checked:
         return [
             dmc.Button(
@@ -493,6 +493,7 @@ def cell_clicked(n_clicks):
     Returns:
         str: The href of the home button
     """
+    logger.debug(f"n_clicks: {n_clicks}")
     if n_clicks:
         return "/"
     else:
@@ -520,7 +521,7 @@ def update_chips(checked, data):
     """
     chips = {"SITE": [], "REGION": [], "TAXA": [],
              "GEOG": [], "ALTI": [], "AGE": [], "EMAIL": []}
-
+    logger.debug(f"checked: {checked}")
     if checked:
         deleted = False
     else:
@@ -619,7 +620,7 @@ def chips_values(site,
     Returns:
         list: The children of the entity text
     """
-
+    logger.debug(f"accordian: {accordian}")
     if accordian == None:
         return "No entity selected", True, True, ""
     
@@ -956,7 +957,7 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
     
     # Key is the tab name, value is a list of texts
     tabs = defaultdict(list)
-    
+    logger.debug(f"Accordian: {accordian}")
     relevant_sentences = pd.DataFrame(data["relevant_sentences"])
     positive_values = relevant_sentences['sentid'][relevant_sentences['sentid'] > 0]
     # Get all the sentences and corresponding section names
@@ -967,17 +968,24 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
                 highlight = values['corrected_name']
             else:
                 highlight = entity
+                
             for sentence in sentences:
                 section_name = sentence["section_name"]
+                # New Entity Sentances have Negative sentid
+                # So only add that one sentance
                 if sentence["sentid"] < 0:
                     text = relevant_sentences.query("sentid == @sentence['sentid']")["text"].values[0]
                     tabs[section_name].append(text)
-
+                    
+                # If the sentid is the minimum positive value
+                # Than add the current and next sentence
                 elif sentence["sentid"] == positive_values.min():
                     text = []
                     for i in [sentence["sentid"], sentence["sentid"] + 1]:
                         text.append(relevant_sentences.query("sentid == @i")["text"].values[0])
                     tabs[section_name].append(" ".join(text))
+                    
+                # Else we want sentences before and after the current sentence as well
                 else:
                     text = []
                     for i in [sentence["sentid"] -1, sentence["sentid"], sentence["sentid"] + 1]:
@@ -1037,7 +1045,7 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
         value=first_tab
     )
     tab_component.children.extend(dmc_tabs_content)
-
+    logger.debug(f"Tab component: {tab_component}") 
     return tab_component
 
 @callback(
@@ -1127,8 +1135,9 @@ def load_article(directory, gddid):
         gddid (str): The gddid of the article
         
     returns: 
-        dict: The article"""
-    logger.info(f"Loading article {gddid}")
+        dict: The article's data
+        """
+    logger.debug(f"Loading article {gddid}")
     if os.path.exists(os.path.join(directory,
                                        "processed",
                                        f"{gddid}.json")):
@@ -1141,6 +1150,10 @@ def load_article(directory, gddid):
                                         f"{gddid}.json"), "r")
 
     article = json.loads(article.read())
+    
     logger.debug(f"Article Entity Types {article.keys}")
+    
+    # ensure the article has all the entity types
     assert sorted(article["entities"].keys()) == sorted(["SITE", "REGION", "TAXA", "GEOG", "ALTI", "AGE", "EMAIL"]), "Article does not have all the entity types"
+    
     return article

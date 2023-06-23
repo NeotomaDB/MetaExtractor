@@ -29,16 +29,33 @@ export HF_MLFLOW_LOG_ARTIFACTS="0"
 export MLFLOW_FLATTEN_PARAMS="2" # azure mlflow has a limit of 200 params, leveing this nested gets around it
 export AZUREML_ARTIFACTS_DEFAULT_TIMEOUT="3600" # large file upload times reuqire longer time out
 
+# split up the labelled data by GDD ID and create train/val/test splits
+python src/preprocessing/labelling_data_split.py \
+    --raw_label_path "$(pwd)$RAW_LABELLED_FILE_LOCATION" \
+    --output_path "$(pwd)$PROCESSED_LABELS_LOCATION" \
+    --train_split 0.7 \
+    --val_split 0.15 \
+    --test_split 0.15 
+
+# split labelled files into training chunks
+# max_seq_length - how many words are in each chunk, ensures once tokenized each is less than 512
+# stride - how many words overlap between chunks, ensures context is maximized
+python src/entity_extraction/training/hf_token_classification/huggingface_preprocess.py \
+    --label_files "$(pwd)$PROCESSED_LABELS_LOCATION" \
+    --max_seq_length 256 \
+    --stride 196
+
+# Kick off the training script. Use max_train_samples and max_eval_samples for local CPU testing
 python src/entity_extraction/training/hf_token_classification/ner_training.py \
     --seed 42 \
     --load_best_model_at_end True \
     --metric_for_best_model recall \
     --run_name finetuning-logging \
     --model_name_or_path "$MODEL_NAME_OR_PATH" \
-    --output_dir "$(pwd)$OUTPUT_DIR" \
-    --logging_dir "$(pwd)$LOG_DIR" \
-    --train_file "$LABELLED_FILE_LOCATION/train.json" \
-    --validation_file "$LABELLED_FILE_LOCATION/val.json" \
+    --output_dir "$(pwd)$MODEL_OUTPUT_DIR" \
+    --logging_dir "$(pwd)$MODEL_LOG_DIR" \
+    --train_file "$(pwd)$PROCESSED_LABELS_LOCATION/train.json" \
+    --validation_file "$(pwd)$PROCESSED_LABELS_LOCATION/val.json" \
     --text_column_name tokens \
     --label_column_name ner_tags \
     --label_all_tokens True \
@@ -57,12 +74,12 @@ python src/entity_extraction/training/hf_token_classification/ner_training.py \
     --num_train_epochs 2 \
     --per_device_train_batch_size 8 \
     --gradient_accumulation_steps 8 \
+    --warmup_steps 100 \
     --max_train_samples 1 \
-    --max_eval_samples 1 \
-    --warmup_steps 100 
+    --max_eval_samples 1 
 
 
-# all options, see here for hugginface description of all arguments: https://huggingface.co/docs/transformers/main_classes/trainer#transformers.TrainingArguments
+# all options, see here for huggingface description of all arguments: https://huggingface.co/docs/transformers/main_classes/trainer#transformers.TrainingArguments
 # usage: run_ner.py [-h] 
 #                   --model_name_or_path MODEL_NAME_OR_PATH 
 #                   [--config_name CONFIG_NAME] 

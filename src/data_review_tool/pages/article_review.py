@@ -32,14 +32,14 @@ color_palette = sns.color_palette("RdYlGn", 100).as_hex()
 
 def layout(gddid=None):
     try:
-        logger.debug(f"Loading article {gddid}")
+        logger.info(f"Loading article {gddid}")
         global original
         # get the metadata of the article
         original = load_article(os.path.join("data", "data-review-tool"), gddid)
         results = copy.deepcopy(original)
 
     except FileNotFoundError:
-        logger.error(f"Article {gddid} not found")
+        logger.debug(f"Article {gddid} not found")
         return html.Div(
             [
                 html.H1("Error - gddid Not Found"),
@@ -517,7 +517,7 @@ def update_button(checked):
     Returns:
         list: The children of the button group
     """
-    logger.debug(f"checked: {checked}")
+    logger.info(f"checked: {checked}")
     if checked:
         return [
             dmc.Button(
@@ -554,7 +554,7 @@ def cell_clicked(n_clicks):
     Returns:
         str: The href of the home button
     """
-    logger.debug(f"n_clicks: {n_clicks}")
+    logger.info(f"n_clicks: {n_clicks}")
     if n_clicks:
         return "/"
     else:
@@ -590,7 +590,7 @@ def update_chips(checked, data):
         "AGE": [],
         "EMAIL": [],
     }
-    logger.debug(f"checked: {checked}")
+    logger.info(f"checked: {checked}")
     if checked:
         deleted = False
     else:
@@ -699,7 +699,7 @@ def chips_values(site, region, taxa, geog, alti, age, email, accordian, data):
     Returns:
         list: The children of the entity text
     """
-    logger.debug(f"accordian: {accordian}")
+    logger.info(f"accordian: {accordian}")
     if accordian == None:
         return "No entity selected", True, True, ""
 
@@ -776,7 +776,7 @@ def toggle_modal(n_clicks, close, opened, accordian):
         bool: The state of the modal
         str: The title of the modal
     """
-    logger.debug(
+    logger.info(
         f"n_clicks: {n_clicks} close: {close} opened: {opened} accordian: {accordian}"
     )
     return not opened, f"Please add information for a new {accordian} entity below:"
@@ -850,7 +850,7 @@ def update_entity(
     )
 
     if callback_context == "new-entity-submit.n_clicks" and submit:
-        logger.debug(
+        logger.info(
             f"new_entity_text: {new_entity_text} new_entity_sentence: {new_entity_sentence} new_entity_section: {new_entity_section}"
         )
         if new_entity_text != None:
@@ -895,7 +895,7 @@ def update_entity(
     elif callback_context == "correct-button.n_clicks" and correct:
         # return results if entity == original_text so nothing happens
         if entity == original_text:
-            logger.debug("entity == original_text")
+            logger.info("entity == original_text")
             return data
         if entity in data["entities"][accordian]:
             logger.debug(f"{entity} in data[entities][accordian]")
@@ -911,25 +911,25 @@ def update_entity(
                 # Add to sentences if not already present
                 if sentence not in data["entities"][accordian][entity]["sentence"]:
                     data["entities"][accordian][entity]["sentence"].append(sentence)
-                    logger.debug(
+                    logger.info(
                         f"Added {sentence} to data[entities][accordian][entity][sentence]"
                     )
             # Delete the old entity
             data["entities"][accordian][original_text]["deleted"] = True
-            logger.debug(f"Changed {original_text} to deleted = True")
+            logger.info(f"Changed {original_text} to deleted = True")
 
         else:
             for ent, values in data["entities"][accordian].items():
                 if ent == original_text:
                     values["corrected_name"] = entity
-                    logger.debug(f"Changed {original_text} to {entity}")
+                    logger.info(f"Changed {original_text} to {entity}")
                     break
 
     elif callback_context == "delete-restore-button.n_clicks" and delete:
         for ent, values in data["entities"][accordian].items():
             if ent == original_text:
                 values["deleted"] = not values["deleted"]
-                logger.debug(f"Changed {original_text} to deleted = True")
+                logger.info(f"Changed {original_text} to deleted = True")
                 break
 
     return data
@@ -967,7 +967,7 @@ def save_submit(submit, save, relevant, data):
             os.path.join("data", "data-review-tool", "processed", f"{gddid}.json"), "w"
         ) as f:
             f.write(data)
-            logger.debug(f"Saved {gddid}.json")
+            logger.info(f"Submitted {gddid}.json")
         return dmc.Notification(
             title="Review Complete!",
             id="submit-notification",
@@ -977,7 +977,7 @@ def save_submit(submit, save, relevant, data):
             icon=DashIconify(icon="ic:round-celebration"),
         )
     elif callback_context == "confirm-irrelevant-button.n_clicks" and relevant:
-        logger.debug(f"Removing {data['gddid']}")
+        logger.debug(f"Marking {data['gddid']} as non-relevant")
         data["status"] = "Non-relevant"
         data["last_updated"] = datetime.now().strftime("%Y-%m-%d")
         gddid = data["gddid"]
@@ -986,7 +986,7 @@ def save_submit(submit, save, relevant, data):
             os.path.join("data", "data-review-tool", "processed", f"{gddid}.json"), "w"
         ) as f:
             f.write(data)
-            logger.debug(f"Saved {gddid}.json")
+            logger.debug(f"Marked {gddid}.json as non-relevant")
         return dmc.Notification(
             title="Article Removed!",
             id="remove-notification",
@@ -1004,7 +1004,7 @@ def save_submit(submit, save, relevant, data):
             os.path.join("data", "data-review-tool", "processed", f"{gddid}.json"), "w"
         ) as f:
             f.write(data)
-            logger.debug(f"Saved {gddid}.json")
+            logger.info(f"Saved {gddid}.json")
         return dmc.Notification(
             title="Progress Saved!",
             id="save-notification",
@@ -1204,9 +1204,9 @@ def open_article(n_clicks):
     Returns:
         str: The article link
     """
-    logger.debug("Opening article in new tab")
+
     if n_clicks:
-        logger.debug(f"Opening article f{original['doi'][0]}")
+        logger.info(f"Opening article f{original['doi'][0]}")
         return "http://doi.org/" + original["doi"][0]
     else:
         return None
@@ -1267,7 +1267,7 @@ def load_article(directory, gddid):
     returns:
         dict: The article's data
     """
-    logger.debug(f"Loading article {gddid}")
+    logger.info(f"Loading article {gddid}")
     if os.path.exists(os.path.join(directory, "processed", f"{gddid}.json")):
         article = open(os.path.join(directory, "processed", f"{gddid}.json"), "r")
     else:

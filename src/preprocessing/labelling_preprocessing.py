@@ -4,12 +4,13 @@
 This script splits the original article text into bite-sized JSON with fields required for LabelStudio.
 
 
-Usage: labelling_preprocessing.py --model_version <model_version> --output_path <output_path> [--model_path <model_path>] [--bib_path <bib_path>] [--sentences_path <sentences_path>] [--char_len <char_len>] [--min_len <min_len>]
+Usage: labelling_preprocessing.py --model_version <model_version> --output_path <output_path> [--model_path <model_path>] [--data_path=<data_path>] [--bib_path <bib_path>] [--sentences_path <sentences_path>] [--char_len <char_len>] [--min_len <min_len>]
 
 Options:
     --model_version=<model_version>         The model version used to generate labels
     --output_path=<output_path>             The path to the output directory to store the generated labels to upload to LabelStudio
     --model_path=<model_path>               The path to the model artifacts to use to generate labels
+    --data_path=<data_path>                 The path to data file in CSV format
     --bib_path=<bib_path>                   The path to the bibjson file containing article metadata
     --sentences_path=<sentences_path>       The path to the sentences_nlp file containing all sentences as returned by xDD
     --char_len=<char_len>                   If a section is very long, each chunk will be approximately char_len in length [default: 4000]
@@ -76,7 +77,9 @@ def get_journal_articles(sentences_path):
         pd.DataFrame with cleaned individual sentences for all articles
     """
     
-    assert os.path.exists(sentences_path)==True, f"Sentences NLP file does not exist {sentences_path}"
+    assert (
+        os.path.exists(sentences_path) == True 
+    ), f"Sentences NLP file does not exist {sentences_path}"
     
     journal_articles = pd.read_csv(
         sentences_path,
@@ -379,13 +382,13 @@ def load_data(opt):
     # Minor preprocessing
     journal_articles["words"] = journal_articles["words"].str.split(" ")
     journal_articles["words"] = journal_articles["words"].apply(clean_words)
-    journal_articles["sentence"] = journal_articles["words"].apply(
+    journal_articles["text"] = journal_articles["words"].apply(
         lambda x: " ".join(map(str, x))
     )
 
     # Join sentences into full text articles
     full_text = (
-        journal_articles.groupby("gddid")["sentence"]
+        journal_articles.groupby("gddid")["text"]
         .agg(lambda x: " ".join(x))
         .reset_index()
     )
@@ -416,31 +419,58 @@ def main(opt, nlp):
     # YOU MUST UPDATE THE FOLLOWING
     # Format:
     # data: pd.DataFrame
-    # columns: ["gddid", "sentence", "doi"]
+    # columns: ["gddid", "text", "doi"]
     # gddid: xDD ID of an article (If it doesn't exist on xDD, provide a unique placeholder)
     # doi: Digital Object Identifier (If the articl hasn't been published, provide a unique placeholder)
-    # sentence: The full text from an article/paper/other sources
+    # text: The full text from an article/paper/other sources
     
-    data = load_data(opt)
+    assert not (
+        opt['--data_path'] == 
+        opt['--bib_path'] == 
+        opt['sentences_path'] == None
+    ), "Please specify input path to an appropriate data location"
     
-    os.makedirs(os.path.join(opt['--output_path'],
-                             f"{opt['--model_version']}_labeling"),
+    
+    if opt['--data_path']:
+        try:
+            data = pd.read_csv(opt['--data_path'])
+            assert (
+                ("gddid" in data.columns) and
+                ("text" in data.columns) and
+                ("doi" in data.columns)
+            ), f"One of the required columns is missing: gddid, text, doi"
+            logger.info(
+                f"Data successfully loaded from file {opt['--data_path']}"
+            )
+        except Exception as e:
+            logger.error(
+                f"""
+                Error while loading data from file {opt['--data_path']}.
+                Exception: {str(e)}
+                """
+            )
+            exit(-1)
+    else:
+        data = load_data(opt)
+    
+    os.makedirs(os.path.join(
+                    opt['--output_path'],
+                    f"{opt['--model_version']}_labeling"),
                 exist_ok=True)
     
     # Pass each raw text file to the chunking pipeline
     for row in data.iterrows():
         
-        chunks, chunk_local, chunk_subsection = chunk_text(opt, row[1]["sentence"])
+        chunks, chunk_local, chunk_subsection = chunk_text(opt, row[1]["text"])
         gdd = row[1]["gddid"]
         doi = row[1]["doi"]
 
         logger.info(f"Split file {gdd} into {len(chunks)} chunks")
         
         """ Generate a hash code using the full text article"""
-        article_hash = get_hash(row[1]["sentence"])
+        article_hash = get_hash(row[1]["text"])
 
         for index, chunk in enumerate(chunks):
-            filename = get_hash(chunk)
             with open(
                 os.path.join(
                     opt['--output_path'],

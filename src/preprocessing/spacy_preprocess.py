@@ -2,13 +2,10 @@
 # Date: 2023-06-21
 """This script manages the custom data artifact creation for training and fine tuning of spacy models.
 
-Usage: spacy_preprocess.py --data_path=<data_path> --train_split=<train_split> --val_split=<val_split> --test_split=<test_split>
+Usage: spacy_preprocess.py --data_path=<data_path>
 
 Options:
     --data_path=<data_path>         The path to the dataset in JSONLines format.
-    --train_split=<train_split>     The ratio of files to include in the training set.
-    --val_split=<val_split>         The ratio of files to include in the validation set.
-    --test_split=<test_split>       The ratio of files to include in the testing set.
 """
 
 import os
@@ -67,7 +64,6 @@ def preprocess_data(data_path: str):
                 article = fin.readlines()
                 article_data = json.loads(article[0])
                 text = article_data['task']['data']["text"]
-                gdd_id = article_data['task']['data']["gdd_id"]
             
             doc = nlp.make_doc(text)
 
@@ -94,4 +90,6 @@ def preprocess_data(data_path: str):
     
 if __name__ == "__main__":
     opt = docopt(__doc__)
+    assert  os.path.exists(opt['--data_path']), \
+            f"Path to data directory {opt['--data_path']} does not exist."
     preprocess_data(opt['--data_path'])

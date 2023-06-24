@@ -8,14 +8,13 @@ import spacy
 # ensure that the parent directory is on the path for relative imports
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
 
+from src.logs import get_logger
+# logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
-def spacy_extract_all(text: str,
-                            ner_model=None,
-                            model_path=os.path.join(
-                                os.pardir,
-                                "models",
-                                "v1",
-                                "transformer")):
+def spacy_extract_all(  
+    text: str,
+    ner_model=None):
     """
     Extracts entities from text using a spacy model
 
@@ -25,8 +24,6 @@ def spacy_extract_all(text: str,
         The text to extract entities from
     ner_model : spacy model
         The spacy model to use for entity extraction
-    model_path : str
-        The path to the spacy model to use for entity extraction
     
     Returns
     -------
@@ -35,8 +32,8 @@ def spacy_extract_all(text: str,
     """
 
     if ner_model == None:
-        spacy.require_cpu()
-        ner_model = spacy.load(model_path)
+        logger.info("Empty model passed, return 0 labels.")
+        return []
 
     entities = []
     doc = ner_model(text)

@@ -1,6 +1,6 @@
 # Author: Jenit Jain
 # Date: 2023-06-21
-"""This script manages the custom training and fine tuning of spacy models.
+"""This script manages the custom data artifact creation for training and fine tuning of spacy models.
 
 Usage: spacy_preprocess.py --data_path=<data_path> --train_split=<train_split> --val_split=<val_split> --test_split=<test_split>
 
@@ -12,6 +12,7 @@ Options:
 """
 
 import os
+import sys
 import spacy
 import json
 import logging
@@ -19,8 +20,13 @@ import glob
 from docopt import docopt
 from spacy.tokens import DocBin
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# ensure that the parent directory is on the path for relative imports
+sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
+
+from src.logs import get_logger
+logger = get_logger(__name__)
+logger.setLevel(logging.INFO)
+
 
 def preprocess_data(data_path: str):
     """Creates data artifacts used by the Spacy model for training
@@ -35,6 +41,11 @@ def preprocess_data(data_path: str):
     nlp = spacy.blank("en")
     train_files = glob.glob(os.path.join(data_path, "train", "*.txt"))
     val_files = glob.glob(os.path.join(data_path, "val", "*.txt"))
+    
+    logger.info(
+        f"Number of files found under the train dir: {len(train_files)}")
+    logger.info(
+        f"Number of files found under the val dir: {len(val_files)}")
     
     def get_doc(files):
         """Creates and saves a doc bin object for training

@@ -49,7 +49,7 @@ python src/entity_extraction/training/hf_token_classification/huggingface_prepro
 python src/entity_extraction/training/hf_token_classification/ner_training.py \
     --seed 42 \
     --load_best_model_at_end True \
-    --metric_for_best_model recall \
+    --metric_for_best_model overall_recall \
     --run_name finetuning-logging \
     --model_name_or_path "$MODEL_NAME_OR_PATH" \
     --output_dir "$(pwd)$MODEL_OUTPUT_DIR" \

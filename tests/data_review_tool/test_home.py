@@ -5,8 +5,6 @@ from dash import html, dash_table
 import dash_mantine_components as dmc
 import pandas as pd
 import pytest
-from dash.testing.application_runners import import_app
-from dash.testing.composite import DashComposite
 import sys
 import os
 

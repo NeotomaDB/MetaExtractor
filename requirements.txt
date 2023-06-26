@@ -31,3 +31,5 @@ spacy==3.5.3
 torch==1.13.1
 tqdm==4.65.0
 transformers==4.30.2
+# to use the spacy model for baseline NER
+https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.5.0/en_core_web_lg-3.5.0-py3-none-any.whl

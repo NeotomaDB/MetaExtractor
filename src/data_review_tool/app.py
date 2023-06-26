@@ -1,17 +1,25 @@
+# Author: Shaun Hutchinson, Jenit Jain
+# Date: 2023-06-22
 import dash
 from dash import dcc, html
 import dash_bootstrap_components as dbc
 import os
+import sys
 
-from pages.navbar import create_navbar
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
+from src.data_review_tool.pages.navbar import create_navbar
+
+from src.logs import get_logger
+
+logger = get_logger(__name__)
 
 app = dash.Dash(
     __name__,
     use_pages=True,
     external_stylesheets=[
         dbc.themes.BOOTSTRAP,
-        "src/data_review_tool/assets/styles.css",
+        os.path.join("src", "data_review_tool", "assets", "styles.css"),
     ],
     title="Finding Fossils",
     suppress_callback_exceptions=True,

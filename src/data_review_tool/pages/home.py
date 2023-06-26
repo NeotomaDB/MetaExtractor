@@ -1,22 +1,27 @@
+# Author: Shaun Hutchinson, Jenit Jain
+# Date: 2023-06-22
 import dash
-from dash import dash_table
 import json
+import sys
 import os
 import pandas as pd
 from dash.dependencies import Input, Output, State
+from dash import dcc, html, Input, Output, callback, dash_table
+import dash_bootstrap_components as dbc
+import dash_mantine_components as dmc
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+from src.data_review_tool.pages.config import *
+from src.logs import get_logger
+
+logger = get_logger(__name__)
 
 dash.register_page(__name__, path="/")
 
-from dash import dcc, html, Input, Output, callback
-import dash_bootstrap_components as dbc
-import dash_mantine_components as dmc
-from pages.config import *
-
-suppress_callback_exceptions = True
-
 
 def layout():
-    combined_df = read_articles("data/data-review-tool")
+    combined_df = read_articles(os.path.join("data", "data-review-tool"))
 
     combined_df = combined_df[
         ["title", "doi", "gddid", "status", "date_processed", "last_updated"]
@@ -126,6 +131,7 @@ def current_article_clicked(
             if col == "Review":
                 selected = data[row]["gddid"]
                 return f"/article/{selected}"
+                return f"/article/{selected}"
             else:
                 return dash.no_update
 
@@ -204,6 +210,7 @@ def read_articles(directory):
         pandas.DataFrame: The articles in the directory
     """
     try:
+        logger.info(f"Reading articles from {directory}")
         directories = [os.path.join(directory, dir) for dir in ["processed", "raw"]]
 
         # Initialize an empty dictionary to store the dataframes

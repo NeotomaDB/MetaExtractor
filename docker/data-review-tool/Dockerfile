@@ -8,6 +8,8 @@ COPY ./docker/data-review-tool/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 WORKDIR MetaExtractor/
+
+ENV LOG_LEVEL=DEBUG
 # Copy the entire repository folder into the container
 COPY src ./src
 

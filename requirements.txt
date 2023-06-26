@@ -1,12 +1,9 @@
 dash==2.10.0
-dash-core-components==2.0.0
-dash-html-components==2.0.0
-dash-iconify==0.1.2
-dash-mantine-components==0.12.1
-dash-player==1.1.0
-dash-table==5.0.0
+dash_bootstrap_components==1.4.1
 dash-testing-stub==0.0.2
-dash-tools==1.11.1
+dash_iconify==0.1.2
+dash_mantine_components==0.12.1
+dash_player==1.1.0
 datasets==2.13.1
 docopt==0.6.2
 evaluate==0.4.0

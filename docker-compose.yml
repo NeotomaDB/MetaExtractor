@@ -5,10 +5,13 @@ services:
     build:
       dockerfile: ./docker/data-review-tool/Dockerfile
       context: .
+    environment:
+      - ARTICLE_RELEVANCE_BATCH=article_relevance_output.parquet
+      - ENTITY_EXTRACTION_BATCH=entity_extraction_output.zip
     ports:
       - "8050:8050"
     volumes:
-      - ./data/data-review-tool:/MetaExtractor/data/data-review-tool
+      - ./data/data-review-tool:/MetaExtractor/inputs:rw
   entity-extraction-pipeline:
     image: metaextractor-entity-extraction-pipeline:v0.0.2
     build: 

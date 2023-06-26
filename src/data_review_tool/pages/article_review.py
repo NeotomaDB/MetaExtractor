@@ -27,22 +27,8 @@ def layout(gddid=None):
     try:
         global original
         global results
-        # get the metadata of the article
-        if os.path.exists(os.path.join("data",
-                                       "data-review-tool",
-                                       "processed",
-                                       f"{gddid}.json")):
-            article = open(os.path.join("data",
-                                        "data-review-tool",
-                                        "processed",
-                                        f"{gddid}.json"), "r")
-        else:
-            article = open(os.path.join("data",
-                                        "data-review-tool",
-                                        "raw",
-                                        f"{gddid}.json"), "r")
-
-        original = json.loads(article.read())
+        
+        original = load_data(f"/MetaExtractor/inputs/entity_extraction/{gddid}.json")
         results = copy.deepcopy(original)
 
     except FileNotFoundError:
@@ -53,7 +39,7 @@ def layout(gddid=None):
             dcc.Link("Go back to Home", href="/"),
         ])
     
-    relevance_score = round(original["relevance_score"], 2) * 100
+    relevance_score = round(original["predict_proba"], 2) * 100
     
     sidebar = html.Div(
         [
@@ -186,7 +172,7 @@ def layout(gddid=None):
                 html.H2(original["title"],
                         style=h2_style)),
             dbc.Row(
-                html.H4(original["journal_name"],
+                html.H4(original["journal"],
                         style=h4_style)),
             dbc.Row(
                 [
@@ -292,7 +278,7 @@ def layout(gddid=None):
                                     variant="filled",
                                     active=True,
                                     href="http://doi.org/" + \
-                                    original["doi"],
+                                    original["DOI"],
                                     target="_blank",
                                     style=nav_button_style,
                                 )
@@ -837,17 +823,15 @@ def save_submit(submit, save, relevant, data):
         str: The notification to display
     """
     callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
-
+        
     if callback_context == "confirm-submit-button.n_clicks" and submit:
-        results["status"] = "Completed"
-        results["last_updated"] = datetime.now().strftime("%Y-%m-%d")
-        gddid = results["gddid"]
-        data = json.dumps(results)
-        with open(os.path.join("data",
-                                        "data-review-tool",
-                                        "processed",
-                                        f"{gddid}.json"), "w") as f:
-            f.write(data)
+        entities_data = {
+            "gddid": results["gddid"],
+            "last_updated": datetime.now().strftime("%Y-%m-%d"),
+            "corrected_entities": results['entities'],
+            "status": "Completed"
+        }
+        update_entity_extraction_output(**entities_data)
         return  dmc.Notification(
                     title="Review Complete!",
                     id="submit-notification",
@@ -856,16 +840,14 @@ def save_submit(submit, save, relevant, data):
                     message="Proceed to home page",
                     icon=DashIconify(icon="ic:round-celebration"),
                 )
+        
     elif callback_context == "confirm-irrelevant-button.n_clicks" and relevant:
-        results["status"] = "Non-relevant"
-        results["last_updated"] = datetime.now().strftime("%Y-%m-%d")
-        gddid = results["gddid"]
-        data = json.dumps(results)
-        with open(os.path.join("data",
-                                        "data-review-tool",
-                                        "processed",
-                                        f"{gddid}.json"), "w") as f:
-            f.write(data)
+        entities_data = {
+            "gddid": results["gddid"],
+            "last_updated": datetime.now().strftime("%Y-%m-%d"),
+            "status": "Non-relevant"
+        }
+        update_entity_extraction_output(**entities_data)
         return  dmc.Notification(
                     title="Article Removed!",
                     id="remove-notification",
@@ -874,15 +856,15 @@ def save_submit(submit, save, relevant, data):
                     message="Proceed to home page",
                     icon=DashIconify(icon="dashicons-remove"),
                 )
+        
     elif callback_context == "save-button.n_clicks" and save:
-        results["status"] = "In Progress"
-        gddid = results["gddid"]
-        data = json.dumps(results)
-        with open(os.path.join("data",
-                                        "data-review-tool",
-                                        "processed",
-                                        f"{gddid}.json"), "r") as f:
-            f.write(data)
+        entities_data = {
+            "gddid": results["gddid"],
+            "last_updated": datetime.now().strftime("%Y-%m-%d"),
+            "corrected_entities": results['entities'],
+            "status": "In Progress"
+        }
+        update_entity_extraction_output(**entities_data)
         return  dmc.Notification(
                     title="Progress Saved!",
                     id="save-notification",
@@ -1037,7 +1019,7 @@ def open_article(n_clicks):
         str: The article link
     """
     if n_clicks:
-        return "http://doi.org/" + original["doi"][0]
+        return "http://doi.org/" + original["DOI"][0]
     else:
         return None
     
@@ -1064,5 +1046,70 @@ for overflow in ["submit", "irrelevant"]:
         State(f"modal-{overflow}", "opened"),
         prevent_initial_call=True,
     )(toggle_confirmation_modal)
+
+def load_data(file_path):
+    """Fetches the extracted entities and metadata for an article
+
+    Parameter
+    ---------
+    file_path: str
+        Path to extracted entities for an article
+
+    Returns
+    -------
+    dict: entities and metadata for an article
+        
+    """
+    entities = json.load(open(file_path, "r"))
+    if "correct_entities" in entities:
+        entities["entities"] = entities["corrected_entities"]
+    metadata = get_article_metadata(entities['gddid'])
+    print({**entities, **metadata[entities['gddid']]})
+    return {**entities, **metadata[entities['gddid']]}
+
     
+def get_article_metadata(gddid):
+    """Fetch the article metadata
     
+    Parameter
+    ---------
+    gddid: str
+        xDD ID of the current selected article
+        
+    Returns
+    -------
+    dict: dictionary containing the current article's metadata
+    """
+    # Read the Parquet file with pushdown predicate
+    results = pd.read_parquet(os.path.join(
+                    "/MetaExtractor",
+                    "inputs",
+                    # "data",
+                    # "data-review-tool",
+                    os.environ["ARTICLE_RELEVANCE_BATCH"]
+                ))    
+    filtered_metadata = (
+        results[results['gddid'] == gddid]
+        [[ 
+          'DOI', 'gddid', 'predict_proba', 'title',
+          'subtitle', 'journal',
+        ]]
+        .set_index("gddid")
+        .to_dict(orient='index')
+    )
+    return filtered_metadata
+
+
+def update_entity_extraction_output(**args):
+    """Update the entity extraction output file
+    
+    Parameter
+    ---------
+    args: dict
+        Various keys to update in the file
+    """
+    file_path = f"/MetaExtractor/inputs/entity_extraction/{args['gddid']}.json"
+    entities = json.load(open(file_path, "r"))
+    entities = {**entities, **args}
+    with open(file_path, "w") as f:
+        json.dump(entities, f, indent=4)

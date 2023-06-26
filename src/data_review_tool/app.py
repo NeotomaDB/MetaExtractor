@@ -2,6 +2,7 @@ import dash
 from dash import dcc, html
 import dash_bootstrap_components as dbc
 import os
+import zipfile
 
 from pages.navbar import create_navbar
 
@@ -32,5 +33,18 @@ app.layout = html.Div(
 )
 app._favicon = "finding-fossils.ico"
 
+# Has the file been unzipped
+unzipped = False
+
 if __name__ == "__main__":
+    
+    if not unzipped:
+        os.makedirs("/MetaExtractor/inputs/entity_extraction/", exist_ok=True)
+        with zipfile.ZipFile(f"/MetaExtractor/inputs/{os.environ['ENTITY_EXTRACTION_BATCH']}", 
+                             mode = 'r', 
+                             allowZip64 = True) as file:
+            
+            file.extractall("/MetaExtractor/inputs/entity_extraction/")
+        unzipped = True
+        
     app.run_server("0.0.0.0", debug=True, port=8050)

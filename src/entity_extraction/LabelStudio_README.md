@@ -77,53 +77,57 @@ Inside the Label Studio instance
 2. Send your profile name to *Ty Andrews* to be added to the **Finding Fossils organization** on Hugging Face
 Email: ty.elgin.andrews@gmail.com, or create a new organization for a different project to work collaboratively with teammates.
 3. Once in the organization, navigate to the organization page from your profile.
-![Organization navigation](assets/org_nav.png)
+![Organization navigation](../../assets/org_nav.png)
 
 4. In the organization page, click the space 
 **LabelStudio**.
-![LabelStudio tab](assets/labelstudio_tab.png)
+![LabelStudio tab](../../assets/labelstudio_tab.png)
 
 5. Create a LabelStudio account and record your password in your password manager.
-![Create Account](assets/account_creation.png)
+![Create Account](../../assets/account_creation.png)
 
 ### **Navigation**
 
 1. Open the **Green** project named like **Finding Fossils Labelling - Production** or create a new one.
-![Project tab](assets/green_tab.png)
+![Project tab](../../assets/green_tab.png)
 
 2. Navigate to the settings menu of the project. Here, several options are available to tweak the settings to be compatible for your task,
-![Project Settings](assets/settings.png)
+![Project Settings](../../assets/settings.png)
 
   - Review or create labelling instructions.
-  ![Labeling instructions button](assets/labeling_instructions_button.png)
+  ![Labeling instructions button](../../assets/labeling_instructions_button.png)
   - The instructions look like this:
-  ![Labeling instructions](assets/labeling_instructions.png)
+  ![Labeling instructions](../../assets/labeling_instructions.png)
 
   - Labeling configuration:
 After syncing the buckets, the final step is to define the different categories of entities that the named entity recognition model will be trained to predict. A configuration file is used to define the classes and to initialize the UI components to aid a user label entities. A sample config file has the following tags:
-    ```html
-    <View>
-      <Labels name="label" toName="text">
-        <Label value="PER" background="red"/>
-        <Label value="ORG" background="darkorange"/>
-        <Label value="LOC" background="orange"/>
-        <Label value="MISC" background="green"/>
-      </Labels>
-      <Text name="text" value="$text"/>
-    </View>
-    ```
-    For more information about config files to setup a custom LabelStudio NER labeling task, refer the [this documentation](https://labelstud.io/templates/named_entity.html).
+```html
+<View>
+  <View style="display:flex;align-items:start;gap:8px;flex-direction:row-reverse">
+    <Text name="text" valueType="text" value="$text" granularity="word"/>
+    <Labels name="label" toName="text" showInline="false">
+      <Label value="SITE" background="#336cf0"/>
+      <Label value="GEOG" background="#D4380D"/>
+      <Label value="AGE" background="#f0c528"/>
+      <Label value="ALTI" background="#86d425"/>
+      <Label value="TAXA" background="#925ff2"/>
+      <Label value="EMAIL" background="#ff941a"/>
+    <Label value="REGION" background="#ff9ee5"/></Labels>
+  </View>
+</View>
+```
+For more information about config files to setup a custom LabelStudio NER labeling task, refer the [this documentation](https://labelstud.io/templates/named_entity.html).
 
-    For general information, [visit](https://labelstud.io/templates/index.html).
+For general information, [visit LabelStudios templates page.](https://labelstud.io/templates/index.html).
 
 ### **Labeling**
 
 1. Select the task with **global_index** of 0, the **global index** indicates this is the start of the article and start labelling each task by moving onto the next **global_index** number.
-![Global Index of tasks](assets/global_index.png)
+![Global Index of tasks](../../assets/global_index.png)
 - **Ensure pre-labelled entities are correct and/or fix:** we have tried to auto-tag entities to make this faster but it’s not perfect and this is what we’re improving, so this commonly misses entities or gets them partially right.
 - **Label any missed entities:** these can be things with typos, words being smushed together, etc.
 2. **Using the labelling interface:**
-![Labeling](assets/labeling.png)
+![Labeling](../../assets/labeling.png)
 3. **Correct a pre-labelled entity:**
 - If it’s completely wrong, delete it 
   - Select the label
@@ -132,4 +136,4 @@ After syncing the buckets, the final step is to define the different categories 
   - Delete the entity using above
   - Select the correct label and click/drag the correct span of text
 
-  ![Correct Entity](assets/correct_labels.png)
+  ![Correct Entity](../../assets/correct_labels.png)

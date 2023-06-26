@@ -60,9 +60,10 @@ To train the supervised classification model, a sample of labelled articles has 
 | **Label** | **Sample Size** | **Description**                                                                                                                                                                                                                                      |
 |:--:|:--:|:---------|
 | Positive  |       911       | Through the assistance of Neotoma, a randomly sampled list of articles that currently contribute to Neotoma was provided as the positive cases. These articles cover various types of fossil data in the Neotoma database.                                        |
+|-----------------|--------------------|---------------------------------------------------------------------|
 | Negative  |      3523       | Articles from non-paleoecology-related subjects were queried to form a representative sample of non-relevant articles. Among these articles, there are articles that are closely related to paleoecology but do not contain fossil collection data. |
 
-: Labelled Sampled Article {#tbl-relevance_sample}
+: Labelled Sampled Article {#tbl-relevance_sample} {tbl-colwidths="[25,25,75]"}
 
 The labelled articles were split into train/validation/test sets with splits of 0.7/0.15/0.15, which correspond to 3103/665/666 articles. Due to the relatively small total sample size, 70% of the articles were included in the training set so that there are more examples provided during training.
 
@@ -73,15 +74,15 @@ Article's metadata were retrieved from the CrossRef API. There were over 50 type
 | **Feature**                                | **Decision**                                                                                                                                                                                                                                                                                                                                                                  |
 |:----|:--------|
 | Title & subtitle                           | Title and subtitle (if any) are concatenated as a descriptive text feature. Text representation techniques were then applied to this feature.                                                                                                                                                                                                                                 |
-|------------------------------------------|---------------------------------------------------------------------|
+|------------------------------------------|-----------------------------------------------------------------------|
 | Abstract                                   | Due to copyright issues, less than half of the articles have an abstract available from the CrossRef API. However, the abstract contains valuable information about the article's content. Thus, to solve the missing data problem when the abstract is available, it is concatenated with the article title and subtitle. Altogether they formed a descriptive text feature. Considering that the availability of an abstract could affect model prediction, a binary feature was derived to indicate if the article's text feature has an abstract or not. |
-|------------------------------------------|---------------------------------------------------------------------|
+|------------------------------------------|-----------------------------------------------------------------------|
 | Author & Journal                           | In order to mitigate potential bias towards well-established authors and journals, the feature list was modified to exclude time-sensitive indicators so that it could account for new Authors and Journals published in the future.                                                            |
-|------------------------------------------|---------------------------------------------------------------------|
+|------------------------------------------|-----------------------------------------------------------------------|
 | Subject                                    | Instead of using the name of the journal, the subject of the journal was used as a proxy of the journal.                                                                                                                                                                                                                                                                      |
-|------------------------------------------|---------------------------------------------------------------------|
+|------------------------------------------|-----------------------------------------------------------------------|
 | Number of citation                         | Number of citations could potentially indicate if the article contains important data and is referred to in other articles.                                                                                                                                                                                                                                                   |
-|------------------------------------------|---------------------------------------------------------------------|
+|------------------------------------------|-----------------------------------------------------------------------|
 | Feature related to the publication process | These features do not provide any contextual information about the article, thus they were removed from the feature list.                                                                                                                                                                                                                                                     |
 
 
@@ -99,17 +100,15 @@ The descriptive text feature provides crucial contextual information for the mod
 
 **Sentence embedding (Final):** Sentence embedding is the state-of-the-art approach for text representation. Three sentence embedding models were experimented and allenai/specter2 model resulted in the best overall performance as documented in @tbl-sent_embedding.
 
-+-----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Model                       | Result                                                                                                                                                                                   |
-+=============================+==========================================================================================================================================================================================+
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | bert-tiny-finetuned-squadv2 | This model is of a small scale so that the embedding process will be quick.                                                                                                              |
-+-----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| --------------------------- | -------------------------------------------------------------------------------------- |
 | Biobert                     | This model is pre-trained based on large-scale biomedical corpora, thus it could be better at understanding biology-related jargons that frequently appear in the field of paleoecology. |
-+-----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| --------------------------- | --------------------------------------------------------------------------------------- |
 | specter2                    | This model is pre-trained using over 6 million scientific articles, thus it could be better at understanding the language style and pattern in scientific articles.                      |
-+-----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
-: Sentence Embedding Models {#tbl-sent_embedding}
+: Sentence Embedding Models {#tbl-sent_embedding} {tbl-colwidths="[25,75]"}
 
 #### Model Selection
 
@@ -532,23 +531,21 @@ The project's objective was to develop a customizable and freely available produ
 
 In order to create an interactive tool that would be appropriate and efficient for the reviewers who are using this tool, the aim was to make it user-friendly and simple to use. To accomplish this success criteria, the requirements outlined in @tbl-review_metrics were developed along with the targets to make these requirements successful for the data reviewers.
 
-+-------------------------------------------------------+--------------------------------------------------+
 | **Requirement**                                       | **Target**                                       |
-+=======================================================+==================================================+
+| ----------------------------------------------------- | ------------------------------------------------ |
 | Options for reviewing extracted data                  | Accept, Reject, Edit then Accept                 |
-+-------------------------------------------------------+--------------------------------------------------+
+| ----------------------------------------------------- | ------------------------------------------------ |
 | Other data made available to the user                 | Article DOI, Journal Name, Hyperlink to Article  |
-+-------------------------------------------------------+--------------------------------------------------+
+| ----------------------------------------------------- | ------------------------------------------------ |
 | Displaying text from where the data was extracted     | Current sentence and 1-2 sentences before/after. |
-+-------------------------------------------------------+--------------------------------------------------+
+| ----------------------------------------------------- | ------------------------------------------------ |
 | User skill to run                                     | Non-Technical (e.g. no code/CLI)                 |
-+-------------------------------------------------------+--------------------------------------------------+
+| ----------------------------------------------------- | ------------------------------------------------ |
 | Number of mouse clicks to review single piece of data | 1-2                                              |
-+-------------------------------------------------------+--------------------------------------------------+
+| ----------------------------------------------------- | ------------------------------------------------ |
 | Reviewing workflow                                    | Able to save/resume progress.                    |
-+-------------------------------------------------------+--------------------------------------------------+
+| ----------------------------------------------------- | ------------------------------------------------ |
 | Output file format                                    | JSON                                             |
-+-------------------------------------------------------+--------------------------------------------------+
 
 : Data Review Tool Target Metrics {#tbl-review_metrics}
 
@@ -736,23 +733,21 @@ This web application enables users to review the extracted entities from article
 
 The output of this data review tool is a JSON object that stores the originally extracted entities as well as the corrected entities. The Neotoma organization can utilize these entities to add new paleoecology articles to the database. In addition, the reviewed entities can be fed back to model using our model retraining pipeline, contributing to the continuous improvement of the quality of extraction of entities.
 
-+---------------------------------------------------------+-----------------------------------------------+
 | **Requirement**                                         | **Results**                                   |
-+=========================================================+===============================================+
+| ------------------------------------------------------- | --------------------------------------------- |
 | Options for reviewing extracted data                    | Accept, Reject, Edit, Add then Accept         |
-+---------------------------------------------------------+-----------------------------------------------+
+| ----------------------------------------------------- | ------------------------------------------------ |
 | Other data made available to the user                   | Article DOI, Hyperlink to Article             |
-+---------------------------------------------------------+-----------------------------------------------+
+| ----------------------------------------------------- | ------------------------------------------------ |
 | Displaying text from where the data was extracted       | Current sentence and 1 sentence before/after. |
-+---------------------------------------------------------+-----------------------------------------------+
+| ----------------------------------------------------- | ------------------------------------------------ |
 | User skill to run                                       | Non-Technical (e.g. no code/CLI)              |
-+---------------------------------------------------------+-----------------------------------------------+
+| ----------------------------------------------------- | ------------------------------------------------ |
 | Number of mouse clicks to review a single piece of data | 3 clicks from launch                          |
-+---------------------------------------------------------+-----------------------------------------------+
+| ----------------------------------------------------- | ------------------------------------------------ |
 | Reviewing workflow                                      | Able to save/resume progress.                 |
-+---------------------------------------------------------+-----------------------------------------------+
+| ----------------------------------------------------- | ------------------------------------------------ |
 | Output file format                                      | JSON                                          |
-+---------------------------------------------------------+-----------------------------------------------+
 
 : Data Review Tool Mertic Results {#tbl-review_results}
 

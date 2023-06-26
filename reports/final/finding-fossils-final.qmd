@@ -41,7 +41,7 @@ The project Finding Fossils in Literature is sponsored by the Neotoma database (
 
 # Introduction
 
-The Neotoma database (Neotoma) [@NeotomaDB] is used by researchers studying ecological changes over the past 5 million years. However, the data collection process relies heavily on manual submissions by researchers, leading to challenges in data entry and hindering collaborative efforts to comprehend ecological changes comprehensively. This project aims to automate the extraction of data from relevant journal articles which can be added to Neotoma. This will be done in three parts. First, article relevancy to Neotoma is predicted. Relevant articles are then parsed using natural language processing (NLP) techniques. Finally, an interactive data review tool was built to review and correct the extracted data before it is submitted to Neotoma. The outputs of this data review tool are then used to retrain the two data models in the future.
+The Neotoma database (Neotoma) [@NeotomaDB] serves as a valuable resource for researchers investigating ecological transformations spanning the last 5 million years. Nevertheless, the collection of data heavily relies on manual submissions from researchers, presenting challenges in data entry and impeding collaborative endeavors aimed at achieving a comprehensive understanding of ecological changes.This project aims to automate the extraction of data from relevant journal articles which can be added to Neotoma. This completed in three parts. First, article relevancy to Neotoma is predicted. Relevant articles are then parsed using natural language processing (NLP) techniques. Finally, an interactive data review tool was built to review and correct the extracted data before it is submitted to Neotoma. The outputs of this data review tool are then used to retrain the two data models in the future.
 
 \newpage
 
@@ -49,49 +49,55 @@ The Neotoma database (Neotoma) [@NeotomaDB] is used by researchers studying ecol
 
 ## Article Relevance Prediction
 
-The article relevance prediction is posed as a binary classification problem. Based on the available article metadata, the model will predict how likely the article is relevant to the Neotoma paleoecology/paleoenvironment database. If the article is deemed likely relevant, the article will proceed to the next stage for article data extraction.
+The article relevance prediction is posed as a binary classification problem. Based on the available article metadata, the model is able to  predict how likely the article is relevant to the Neotoma paleoecology/paleoenvironment database. If the article is deemed likely relevant, the article will proceed to the next stage for article data extraction.
 
 ### Approach
 
 #### Building the Training Data
 
-To train the supervised classification model, a sample of labelled articles has been compiled.
+To train the supervised classification model, a sample of labelled articles has been compiled as shown in @tbl-relevance_sample.
 
 | **Label** | **Sample Size** | **Description**                                                                                                                                                                                                                                      |
 |:--:|:--:|:---------|
-| Positive  |       911       | With the help from our partner Simon, a list of articles that currently contribute to Neotoma was provided as the positive cases. These articles cover various types of fossil data in the Neotoma database.                                        |
+| Positive  |       911       | Through the assistance of Neotoma, a randomly sampled list of articles that currently contribute to Neotoma was provided as the positive cases. These articles cover various types of fossil data in the Neotoma database.                                        |
 | Negative  |      3523       | Articles from non-paleoecology-related subjects were queried to form a representative sample of non-relevant articles. Among these articles, there are articles that are closely related to paleoecology but do not contain fossil collection data. |
 
+: Labelled Sampled Article {#tbl-relevance_sample}
 
 The labelled articles were split into train/validation/test sets with splits of 0.7/0.15/0.15, which correspond to 3103/665/666 articles. Due to the relatively small total sample size, 70% of the articles were included in the training set so that there are more examples provided during training.
 
 #### Preprocessing & Feature Selection
 
-Article's metadata were retrieved from the CrossRef API. There were over 50 types of metadata provided by the CrossRef API. Since many of them are related to the publication aspect of the article, not the contextual aspect, feature selection was performed to reduce dimensionality. The summary table below explains the key decisions made during the feature selection step.
+Article's metadata were retrieved from the CrossRef API. There were over 50 types of metadata provided by the CrossRef API [@crossref]. Since many of them are related to the publication aspect of the article, not the contextual aspect, feature selection was performed to reduce dimensionality. @tbl-feature_selection explains the key decisions made during the feature selection step.
 
 | **Feature**                                | **Decision**                                                                                                                                                                                                                                                                                                                                                                  |
-|:------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|:----|:--------|
 | Title & subtitle                           | Title and subtitle (if any) are concatenated as a descriptive text feature. Text representation techniques were then applied to this feature.                                                                                                                                                                                                                                 |
+|------------------------------------------|---------------------------------------------------------------------|
 | Abstract                                   | Due to copyright issues, less than half of the articles have an abstract available from the CrossRef API. However, the abstract contains valuable information about the article's content. Thus, to solve the missing data problem when the abstract is available, it is concatenated with the article title and subtitle. Altogether they formed a descriptive text feature. Considering that the availability of an abstract could affect model prediction, a binary feature was derived to indicate if the article's text feature has an abstract or not. |
-| Author & Journal                           | To prevent the model from being biased towards older and more famous authors and journals, these time-sensitive features were removed from the feature list.                                                                                                                                                                                                                  |
+|------------------------------------------|---------------------------------------------------------------------|
+| Author & Journal                           | In order to mitigate potential bias towards well-established authors and journals, the feature list was modified to exclude time-sensitive indicators so that it could account for new Authors and Journals published in the future.                                                            |
+|------------------------------------------|---------------------------------------------------------------------|
 | Subject                                    | Instead of using the name of the journal, the subject of the journal was used as a proxy of the journal.                                                                                                                                                                                                                                                                      |
+|------------------------------------------|---------------------------------------------------------------------|
 | Number of citation                         | Number of citations could potentially indicate if the article contains important data and is referred to in other articles.                                                                                                                                                                                                                                                   |
+|------------------------------------------|---------------------------------------------------------------------|
 | Feature related to the publication process | These features do not provide any contextual information about the article, thus they were removed from the feature list.                                                                                                                                                                                                                                                     |
 
 
-: Feature Selection Decisions
+: Feature Selection Decisions {#tbl-feature_selection}
 
 The features selected include a descriptive text feature (concatenation of title, subtitle and abstract), subject of the journal, number of citations and a binary indicator for having an abstract available from CrossRef or not.
 
 #### Feature Engineering: Text representation
 
-The descriptive text feature provides crucial contextual information for the model to predict if the topic is related to paleoecology or not. Feature engineering was conducted to represent this descriptive text feature in numeric forms. Several text representations were experimented and the sentence transformer performed the best among all methods.
+The descriptive text feature provides crucial contextual information for the model to predict if the topic is related to paleoecology or not. Feature engineering was conducted to represent this descriptive text feature in numeric forms. The following text representations were explored and tested to identify the most effective approach.
 
-**Bag of words representation:** word-frequency based method. While the model with bag of words feature achieved a decent performance, the limitation is that the semantic aspect of the text could not be well represented. This method was chosen to be used in the baseline model.
+**Bag of words representation (Baseline):** word-frequency based method. While the model with bag of words feature achieved a decent performance, the limitation is that the semantic aspect of the text could not be well represented. This method was chosen to be used in the baseline model.
 
-**Adding term-association probability with zero-shot classification:** providing a candidate label, a transformer based model could predict the probability that the text is related to the candidate label. The idea was to let the pre-trained model add the text association probability for several paleoecology related terms. This method was not used eventually because not only the handcrafted list of terms could introduce subjective bias in the model, but also the added term-association feature did not show high feature importance in the trained models.
+**Adding term-association probability with zero-shot classification (Not Used):** providing a candidate label, a transformer based model could predict the probability that the text is related to the candidate label. The idea was to let the pre-trained model add the text association probability for several paleoecology related terms. This method was ultimatly not used because not only the handcrafted list of terms could introduce subjective bias in the model, but also the added term-association feature did not show high feature importance in the trained models.
 
-**Sentence embedding:** Sentence embedding is the state-of-the-art approach for text representation. The following sentence embedding models were experimented and allenai/specter2 model resulted in the best overall performance.
+**Sentence embedding (Final):** Sentence embedding is the state-of-the-art approach for text representation. Three sentence embedding models were experimented and allenai/specter2 model resulted in the best overall performance as documented in @tbl-sent_embedding.
 
 +-----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Model                       | Result                                                                                                                                                                                   |
@@ -103,17 +109,19 @@ The descriptive text feature provides crucial contextual information for the mod
 | specter2                    | This model is pre-trained using over 6 million scientific articles, thus it could be better at understanding the language style and pattern in scientific articles.                      |
 +-----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
-: Sentence Embedding Models
+: Sentence Embedding Models {#tbl-sent_embedding}
 
 #### Model Selection
 
-A variety of supervised classification models were experimented.
+The following selection of Probability Classifiers, Analogy-based and Tree-based & Gradient-boosted models were experimented with.
 
 **Probability classifiers:** Traditional probability classifiers provide fast training and prediction time, which is a plus when processing and retraining hundreds and thousands of new articles. Its simplicity also provide good model transparency and interpretability for model evaluation. Logistic regression and naive Bayes were experimented during model selection.
 
 **Analogy-based models:** The nature of the article relevance prediction problem could be framed as looking for articles that are similar to the positive examples. Analogy-based models can be suitable for this problem. K-nearest neighbour and Support Vector Machine with RBF kernel were experimented.
 
-**Tree-based & Gradient-boosted models:** Tree-based classifiers could use different feature subsets at various steps during the prediction, which can be suitable for our relatively high dimensional data problem. Decision Tree, Random Forest Model, LightGBM, XGBoost and CatBoost were experimented. The choice of the final model was mainly based on model performance on recall score. The chosen model went through further hyperparameter tuning to optimise the performance.
+**Tree-based & Gradient-boosted models:** Tree-based classifiers could use different feature subsets at various steps during the prediction, which can be suitable for our relatively high dimensional data problem. Decision Tree, Random Forest Model, LightGBM, XGBoost and CatBoost were experimented. 
+
+The choice of the final model was primarily based on model performance on recall score. The chosen model went through further hyperparameter tuning to optimise the performance.
 
 ### Model Evaluation
 
@@ -242,7 +250,7 @@ An original sample of 300+ full text articles related to Neotoma was provided. S
 
 For the development of the NER models a sample of 39 articles relevant to Neotoma were preprocessed and labelled by the research team using LabelStudio. Preprocessing steps involved chunking the articles, varying in length drastically, into bite-sized pieces and replacing special tokens with their English equivalent symbol. Other text preprocessing techniques like stemming, lemmatization and converting text to lower case were not used for this project as the aim was to preserve the original text and ensure that the model understands contextual information. The Label Studio interface hosted on HuggingFace was used for labeling purposes as it provides an out-of-the-box collaborative environment for several ML tagging tasks, including named entity recognition. Input and output files were efficiently synced with buckets on the Azure cloud, with scope of onboarding a larger team in the future to carry on model development. The SITE entity proved difficult to label as differentiating between obscure location names or an acronym of a core sample was difficult for the team. Similarly, correctly identifying TAXA and where on TAXA label began and another ends proved challenging. A significant improvement in results is expected by improving the quality of labeling with the help of data stewards with subject matter expertise.
 
-The labelled articles were split into train/validation/test sets by full article with splits of 0.7/0.15/0.15 respectively. The data splitting was done based upon whole articles to prevent data leakage into the model learning certain articles patterns before evaluation. This resulted in the final dataset with the following statistics.
+The labelled articles were split into train/validation/test sets by full article with splits of 0.7/0.15/0.15 respectively. The data splitting was done based upon whole articles to prevent data leakage into the model learning certain articles patterns before evaluation. This resulted in the final dataset with the statistics as shown in @fig-entity_distribution.
 
 ```{python}
 def plot_distribution_of_entities(
@@ -292,12 +300,12 @@ def plot_distribution_of_entities(
 ```
 
 ```{python}
-# | warning: false
-# | echo: false
-# | layout-ncol: 1
-# | fig-cap:
-# | - "Entity Distribution for Test set"
-# | - "Entity Distribution for Validation set"
+#| label: fig-entity_distribution
+#| fig-cap: "Entity Distribution"
+#| fig-subcap:
+#|   - "Entity Distribution for Test set"
+#|   - "Entity Distribution for Validation set"
+#| layout-ncol: 1
 sns.set_style(
     "whitegrid",
     rc={
@@ -343,7 +351,7 @@ The following approaches were considered along with the rationale for their incl
 | Text to Text Transfer Transformer(T5) | T5 models turn every problem into a text to text problem which for NER requires significant pre/post processing to work and was excluded for this reason.                                             |
 +---------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
-: NER Approaches
+: NER Approaches 
 
 For the transformer based models two approaches were used for training, spaCy CLI and Hugging Face's Training API. Both come with the following advantages and disadvantages:
 
@@ -443,10 +451,10 @@ Final hyper parameters used to train the models were as follows:
 
 Interesting difference to note here are the architectures of the NER models. Both the models use a base model to tokenize the input sentence and generate word embeddings, but the HuggingFace NER model fine-tunes a token classification head to it, which consists of a set of linear layer and soft max, whereas, the spaCy NER model chunks and labels a sequence of inputs using an algorithm similar to transition-based dependency parsing using Stack-LSTMs.
 
-The following workflow shows the primary steps for training with the Entity Extraction models with intermediate files and processes.
+The workflow in @fig-training_pipeline shows the primary steps for training with the Entity Extraction models with intermediate files and processes.
 
 ```{mermaid}
-%%| label: training_pipeline
+%%| label: fig-training_pipeline
 %%| fig-cap: "This is how the Entity Extraction model training process runs with intermediate files and processes."
 %%| fig-height: 6
 %%{init: {'theme':'base','themeVariables': {'fontFamily': 'arial','primaryColor': '#BFDFFF','primaryTextColor': '#000','primaryBorderColor': '#4C75A3','lineColor': '#000','secondaryColor': '#006100','tertiaryColor': '#fff'}, 'flowchart' : {'curve':'monotoneY'}}}%%
@@ -518,11 +526,11 @@ In order to for the Neotoma data stewards to view the results of the Article Rel
 
 ### Approach
 
-As the goal of this project was to create a product with custom components that was open-source and free to create, it was decided that ultimately using R Shiny[@shiny] or Plotly Dash [@dash] would meet the customization needs of the project better than a paid alternative like Tableau or Power BI. In the discussion with Neotoma, there was no impact on whether the team decided to implement either of these options. Ultimately, the team decided that as the rest of our project dashboard development would continue by using Plotly Dash in Python.
+The project's objective was to develop a customizable and freely available product with custom components. Considering this, the decision was made to prioritize open-source solutions such as R Shiny [@shiny] and Plotly Dash [@dash] over paid alternatives like Tableau or Power BI. The choice between R Shiny and Plotly Dash was influenced by the project's customization requirements. During discussions with Neotoma, the decision to implement either of these options did not have any impact. Ultimately, the team concluded that Plotly Dash in Python would be the preferred choice for the ongoing development of the project dashboard as the rest of the pipeline was to be written in Python.
 
 ### Evaluation
 
-In order to create an interactive tool that would be appropriate and efficient for the reviewers who are using this tool, the aim was to make it user-friendly and simple to use. To accomplish this success criteria, the following requirements were developed along with the targets to make these requirements successful for the data reviewers.
+In order to create an interactive tool that would be appropriate and efficient for the reviewers who are using this tool, the aim was to make it user-friendly and simple to use. To accomplish this success criteria, the requirements outlined in @tbl-review_metrics were developed along with the targets to make these requirements successful for the data reviewers.
 
 +-------------------------------------------------------+--------------------------------------------------+
 | **Requirement**                                       | **Target**                                       |
@@ -542,15 +550,15 @@ In order to create an interactive tool that would be appropriate and efficient f
 | Output file format                                    | JSON                                             |
 +-------------------------------------------------------+--------------------------------------------------+
 
-: Data Review Tool Target Metrics
+: Data Review Tool Target Metrics {#tbl-review_metrics}
 
 # Data Products and Results
 
 ## Article Relevance Prediction
 
-![Model Performance Comparison using Cross-Validation Scores](assets/relevance-model-comparison.png)
+![Model Performance Comparison using Cross-Validation Scores](assets/relevance-model-comparison.png){#fig-relevance_performance}
 
-Among all the models trained, Naive Bayes has the highest recall score, but its precision score was low and will introduce false positives. Among all gradient boosted models, LGBM has the highest precision, but its recall score did not outperform logistic regression. Among the analogy-based models, SVM with RBF kernel achieve a performance that's comparable to logistic regression, and both are sufficiently high. The final decision was to use logistic regression with tuned hyperparameters for its good performance and better interpretability. On the test data set, the final model achieved a recall score of 96.5%, and a precision score of 85.2%. To put this into actual article counts, among the 666 articles in the test set, there are 5 false negatives and 24 false positives.
+Among all the models trained, Naive Bayes has the highest recall score (96.7%), but its precision score was low (70.1%) and will introduce false positive. Among all gradient boosted models, LGBM has the highest precision (93.9%), but its recall score (89.3%) did not outperform logistic regression (94.8%). Among the analogy-based models, SVM with RBF kernel achieve a recall performance (94.8%) that's comparable to logistic regression (95.0%), and both are sufficiently high (@fig-relevance_performance). The final decision was to use logistic regression with tuned hyperparameters for its good performance and better interpretability. On the test data set, the final model achieved a recall score of 96.5%, and a precision score of 85.2%. To put this into actual article counts, among the 666 articles in the test set, there are 5 false negatives and 24 false positives.
 
 ## Article Data Extraction
 
@@ -559,9 +567,8 @@ Of the two approaches developed using the spaCy and Hugging Face model training 
 @fig-extraction_recall_results shows the primary candidate models token and entity based recall.
 
 ```{python}
-# | label: fig-extraction_recall_results
-# | layout-ncol: 1
-# | fig-cap: "The entity and token based recall for each model on the test set."
+#| label: fig-extraction_recall_results
+#| fig-cap: "The entity and token based recall for each model on the test set."
 
 
 def plot_model_metric_comparison(
@@ -655,12 +662,10 @@ plot_model_metric_comparison(
 The token based recall for each model on the test set by entity type are shown in @tbl-token-recall.
 
 ```{python}
-# | label: tbl-token-recall
-# | tbl-cap: 'Entity extraction model results for token based recall, overall and by entity type'
-# | tbl-cap-location: bottom
-# | tbl-colwidths: [0.2,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]
-# | tbl-column: body
-# | output: markdown
+#| label: tbl-token-recall
+#| tbl-cap: 'Entity extraction model results for token based recall, overall and by entity type'
+#| tbl-cap-location: bottom
+#| output: markdown
 # render the token_recall, token_precision, and token_f1 scores for each model and each entity type
 render_columns = [
     "model",
@@ -725,9 +730,9 @@ An important observation to make here is that even the top models have a lower p
 
 The final data review tool that was created was a multi-page Plotly Dash application. The tool can be replicated by launching Docker containers, enabling anyone within the Neotoma community to easily launch and utilize the tool for reviewing outputs from the entity extraction pipeline. This approach ensures accessibility and convenience for users who wish to review the pipeline outputs within the Neotoma project.
 
-![Data Review Tool](assets/data_review.png)
+![Data Review Tool](assets/data_review.png){#fig-review_tool_snap}
 
-This web application enables users to review the extracted entities from articles, make changes, add additional missed entities and remove inaccurately extracted entities. The application includes a button to launch the article in an external browser tab so that the reviewer can verify beyond the current sentence and sentence preceding/following that was provided as output. The entire review process does not require any coding knowledge, and reviewers can navigate through the review workflow in three clicks or fewer from the Article Review page.
+This web application enables users to review the extracted entities from articles, make changes, add additional missed entities and remove inaccurately extracted entities. The application includes a button to launch the article in an external browser tab so that the reviewer can verify beyond the current sentence and sentence preceding/following that was provided as output. The entire review process does not require any coding knowledge, and reviewers can navigate through the review workflow in three clicks or fewer from the Article Review page @fig-review_tool_snap.
 
 The output of this data review tool is a JSON object that stores the originally extracted entities as well as the corrected entities. The Neotoma organization can utilize these entities to add new paleoecology articles to the database. In addition, the reviewed entities can be fed back to model using our model retraining pipeline, contributing to the continuous improvement of the quality of extraction of entities.
 
@@ -749,16 +754,18 @@ The output of this data review tool is a JSON object that stores the originally 
 | Output file format                                      | JSON                                          |
 +---------------------------------------------------------+-----------------------------------------------+
 
-: Data Review Tool Mertic Results
+: Data Review Tool Mertic Results {#tbl-review_results}
 
-As the table above shows, all of the requirements that were originally laid out in the proposal were implemented through this Dash application. However, there are further improvements that could be made if there was more time available. One crucial improvement would involve incorporating an additional page within the dashboard to enable users to review the results of the Article Relevance Prediction model. This page would present both positive predictions (articles relevant to Neotoma) and negative predictions (articles not relevant). By allowing Neotoma data stewards to review and correct these predictions, the accuracy of the Article Relevance model can be improved through retraining. At present, the data review tool includes a button in which the user can mark an article as irrelevant. This can then be used to retrain the model by labelling it as not relevant to Neotoma. However, there is no current method implemented to make corrections on negative predictions. If this was addressed in the future, the original bias from the sample of data that was used to train the Article relevance tool could be minimized which would lead to greater model performance.
+As @tbl-review_results shows, all of the requirements that were originally laid out in the proposal were implemented through this Dash application. However, there are further improvements that could be made if there was more time available. One crucial improvement would involve incorporating an additional page within the dashboard to enable users to review the results of the Article Relevance Prediction model. This page would present both positive predictions (articles relevant to Neotoma) and negative predictions (articles not relevant). By allowing Neotoma data stewards to review and correct these predictions, the accuracy of the Article Relevance model can be improved through retraining. At present, the data review tool includes a button in which the user can mark an article as irrelevant. This can then be used to retrain the model by labelling it as not relevant to Neotoma. However, there is no current method implemented to make corrections on negative predictions. If this was addressed in the future, the original bias from the sample of data that was used to train the Article relevance tool could be minimized which would lead to greater model performance.
 
 ## Product Deployment
 
-THe end goal of this project is to have each data product running in a semi/un-supervised fashion. The article relevance prediction pipeline is containerized using Docker. It will be scheduled to run daily or weekly by the Neotoma and gets the latest published articles from the public xDD API, runs the article relevance prediction, and finally submits relevant articles to xDD to have their full text processed. The Article Data Extraction pipeline is containerized using Docker and contains the entity extraction model within it. It is run on the xDD servers as xDD is not legally allowed to send full text articles off their servers. The container accepts full text articles, extracts the entities, and outputs a single JSON object for each article which is then exported by xDD back to the Neotoma team. The extracted entity JSON objects are combined with the article relevance prediction results and this is what is loaded by the Data Review Tool. The following diagram depicts the work flow.
+The end goal of this project is to have each data product running in a semi/un-supervised fashion. The article relevance prediction pipeline is containerized using Docker. It is expected to run on a daily daily or weekly basis by the Neotoma and gets the latest published articles from the public xDD API, runs the article relevance prediction, and finally submits relevant articles to xDD to have their full text processed. 
+
+The Article Data Extraction pipeline is containerized using Docker and contains the entity extraction model within it. It is run on the xDD servers as xDD is not legally allowed to send full text articles off their servers. The container accepts full text articles, extracts the entities, and outputs a single JSON object for each article which is then exported by xDD back to the Neotoma team. The extracted entity JSON objects are combined with the article relevance prediction results and this is what is loaded by the Data Review Tool. @fig-deployment_pipeline depicts the work flow.
 
 ```{mermaid}
-%%| label: deployment_pipeline
+%%| label: fig-deployment_pipeline
 %%| fig-cap: "This is how the MetaExtractor pipeline flows between the different components."
 %%| fig-height: 6
 graph TD

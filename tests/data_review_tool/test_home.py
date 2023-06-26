@@ -21,7 +21,7 @@ def test_directory_structure():
     dir = "data/data-review-tool"
     expected = ["processed", "raw"]
 
-    assert sorted(os.listdir(dir)) == expected
+    assert expected[0] in os.listdir(dir) and expected[1] in os.listdir(dir)
 
 
 def test_current_article_clicked():

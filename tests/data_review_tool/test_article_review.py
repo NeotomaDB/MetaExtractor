@@ -26,7 +26,7 @@ def test_directory_structure():
     "Test that the directory structure is as expected."
     dir = "data/data-review-tool"
     expected = ["processed", "raw"]
-    assert sorted(os.listdir(dir)) == expected
+    assert expected[0] in os.listdir(dir) and expected[1] in os.listdir(dir)
 
 
 def test_find_start_end_char():

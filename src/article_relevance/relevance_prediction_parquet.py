@@ -32,9 +32,7 @@ import datetime
 
 # Locate src module
 current_dir = os.path.dirname(os.path.abspath(__file__))
-print(current_dir)
 src_dir = os.path.dirname(current_dir)
-print(src_dir)
 sys.path.append(src_dir)
 
 from logs import get_logger

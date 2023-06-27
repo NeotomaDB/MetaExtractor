@@ -10,19 +10,17 @@ services:
     volumes:
       - ./data/data-review-tool:/MetaExtractor/data/data-review-tool
   entity-extraction-pipeline:
-    image: metaextractor-entity-extraction-pipeline:v0.0.2
+    image: metaextractor-entity-extraction-pipeline:v0.0.3
     build: 
       dockerfile: ./docker/entity-extraction-pipeline/Dockerfile
       context: .
     ports:
       - "5000:5000"
     volumes:
-    - ./data/entity-extraction/raw/original_files/:/app/inputs/
-    - ./data/entity-extraction/processed/processed_articles/:/app/outputs/
+    - ./data/entity-extraction/raw/original_files/:/inputs/
+    - ./data/entity-extraction/processed/processed_articles/:/outputs/
     environment:
-      - HF_NER_MODEL_NAME=finding-fossils/metaextractor
-      - SPACY_NER_MODEL_NAME=en_metaextractor_spacy
       - USE_NER_MODEL_TYPE=huggingface
-      - LOG_OUTPUT_DIR=/app/outputs/
+      - LOG_OUTPUT_DIR=/outputs/
       - MAX_SENTENCES=20
       - MAX_ARTICLES=1

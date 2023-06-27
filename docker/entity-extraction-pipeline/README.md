@@ -6,23 +6,23 @@ This docker image contains the models and code required to run entity extraction
 2. The raw input data is mounted as a volume to the docker folder `/app/inputs/`
 3. The expected output location is mounted as a volume to the docker folder `/app/outputs/`
 4. A single JSON file per article is exported into the output folder along with a `.log` file for the processing run.
-5. An environment variable `LOG_OUTPUT_DIR` is set to the path of the output folder. This is used to write the log file. Default is the directory from which the docker container is run.
 
 ## Additional Options Enabled by Environment Variables
 
 The following environment variables can be set to change the behavior of the pipeline:
 - `USE_NER_MODEL_TYPE`: This variable can be set to `spacy` or `huggingface` to change the NER model used. The default is `huggingface`. This will be used to run batches with each model to evaluate final performance.
+- `HF_NER_MODEL_NAME`: The name of the `huggingface-hub` repository hosting the huggingface model artifacts.
+- `SPACY_NER_MODEL_NAME`: The name of the `huggingface-hub` repository hosting the spacy model artifacts.
 - `MAX_SENTENCES`: This variable can be set to a number to limit the number of sentences processed per article. This is useful for testing and debugging. The default is `-1` which means no limit.
 - `MAX_ARTICLES`: This variable can be set to a number to limit the number of articles processed. This is useful for testing and debugging. The default is `-1` which means no limit.
+- `LOG_OUTPUT_DIR`: This variable is set to the path of the output folder to write the log file. Default is the directory from which the docker container is run.
 
-## Sample Docker Run & Compose Setup
+## Sample Docker Compose Setup
 
-Below is a sample docker run command for running the image:
-- the `$(id -u)` is used to run the docker container as the current user so that the output files are not owned by root
-- the `LOG_OUTPUT_DIR="../outputs/"` is different from the docker compose as it is relative to the current directory which from Docker run starts in `app` folder
-- for git bash on windows the `/${PWD}` is used to get the current directory and the forward slash is important to get the correct path
+Update the environment variables defined under the `entity-extraction-pipeline` service in the `docker-compose.yml` file under the root directory. Then build and run the docker image to install the required dependencies using `docker-compose` as follows:
 ```bash
-docker run -u $(id -u) -p 5000:5000 -v /${PWD}/data/entity-extraction/raw/original_files/:/inputs/ -v /${PWD}/data/entity-extraction/processed/processed_articles/:/outputs/ --env LOG_OUTPUT_DIR="../outputs/" metaextractor-entity-extraction-pipeline:v0.0.2
+docker-compose build
+docker-compose up entity-extraction-pipeline
 ```
 
 Below is a sample docker compose configuration for running the image:
@@ -39,6 +39,8 @@ services:
     - ./data/raw/:/app/inputs/
     - ./data/processed/:/app/outputs/
     environment:
+      - HF_NER_MODEL_NAME=finding-fossils/metaextractor
+      - SPACY_NER_MODEL_NAME=en_metaextractor_spacy
       - USE_NER_MODEL_TYPE=huggingface
       - LOG_OUTPUT_DIR=/app/outputs/
       - MAX_SENTENCES=20

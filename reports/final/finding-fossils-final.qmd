@@ -478,12 +478,6 @@ C4 --> F4(Log Final\nTrained Model)
 F4 --> C3
 C3 --> F6(Evaluation Plots)
 C3 --> F5(Evaluation results\nJSON)
-subgraph Legend
-    computation[Computation] 
-    fileOutput[File Input/Output]
-    style computation fill:#BFDFFF, stroke:#4C75A3
-    style fileOutput fill:#d3d3d3, stroke:#808080
-end
 ```
 
 ### Model Evaluation

@@ -1077,7 +1077,6 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
     tabs = defaultdict(list)
     logger.debug(f"Accordian: {accordian}")
     relevant_sentences = pd.DataFrame(data["relevant_sentences"])
-    logger.debug(relevant_sentences)
     positive_values = relevant_sentences["sentid"][relevant_sentences["sentid"] > 0]
     # Get all the sentences and corresponding section names
     for entity, values in data["entities"][accordian].items():

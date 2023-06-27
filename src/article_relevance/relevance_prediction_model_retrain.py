@@ -349,12 +349,17 @@ def model_eval(model, valid_df, test_df, report_dir):
                                      'test_FP': FP,
                                      }
     
+    logger.info(f'Evaluation - test recall = {TP / (TP + FN)}')
+    logger.info(f'Evaluation - test precision = {TP / (TP + FP)}')
+    
     # convert to Json file and export
     report_file_path = os.path.join(report_dir, f"retrained_model_{formatted_datetime}_metrics.json")
 
     with open(report_file_path, 'w') as json_file:
         json.dump(results, json_file)
     
+    logger.info(f'Evaluation - Completed. Results saved in specified folder.')
+
 
 def main():
 
@@ -381,6 +386,10 @@ def main():
         train_df_merged, valid_df_merged, test_df_merged = retrain_data_merge(train_df_old, train_df_new, valid_df_old, valid_df_new, test_df_old, test_df_new)
 
     retrained_model = model_train(train_df_merged, model_folder, model_c = 0.01563028103558011)
-    
+
     model_eval(retrained_model, valid_df_merged, test_df_merged, result_dir)
 
+
+
+if __name__ == "__main__":
+    main()

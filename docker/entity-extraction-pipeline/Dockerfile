@@ -15,13 +15,6 @@ RUN pip install https://huggingface.co/finding-fossils/metaextractor-spacy/resol
 # Copy the entire repository folder into the container
 COPY src ./src
 
-# Set env variables for when running the container
-ENV HF_NER_MODEL_NAME="finding-fossils/metaextractor"
-ENV SPACY_NER_MODEL_NAME="en_metaextractor_spacy"
-ENV USE_NER_MODEL_TYPE="huggingface"
-ENV MAX_ARTICLES=-1
-ENV MAX_SENTENCES=-1
-
 # non-root user control inspired from here: https://stackoverflow.com/questions/66349101/docker-non-root-user-does-not-have-writing-permissions-when-using-volumes
 # Create a non-root user that owns the input/outputs directory by default
 RUN useradd -r extraction-user          # no specific user ID

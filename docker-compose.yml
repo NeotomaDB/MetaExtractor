@@ -20,6 +20,8 @@ services:
     - ./data/entity-extraction/raw/original_files/:/inputs/
     - ./data/entity-extraction/processed/processed_articles/:/outputs/
     environment:
+      - HF_NER_MODEL_NAME=finding-fossils/metaextractor
+      - SPACY_NER_MODEL_NAME=en_metaextractor_spacy
       - USE_NER_MODEL_TYPE=huggingface
       - LOG_OUTPUT_DIR=/outputs/
       - MAX_SENTENCES=20

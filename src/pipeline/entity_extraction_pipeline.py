@@ -35,8 +35,8 @@ load_dotenv(find_dotenv())
 HF_NER_MODEL_NAME = os.getenv("HF_NER_MODEL_NAME", "finding-fossils/metaextractor")
 SPACY_NER_MODEL_NAME = os.getenv("SPACY_NER_MODEL_NAME", "en_metaextractor_spacy")
 USE_NER_MODEL_TYPE = os.getenv("USE_NER_MODEL_TYPE", "huggingface")
-MAX_SENTENCES = os.getenv("MAX_SENTENCES", "20")
-MAX_ARTICLES = os.getenv("MAX_ARTICLES", "1")
+MAX_SENTENCES = os.getenv("MAX_SENTENCES", "-1")
+MAX_ARTICLES = os.getenv("MAX_ARTICLES", "-1")
 
 logger = get_logger(__name__)
 

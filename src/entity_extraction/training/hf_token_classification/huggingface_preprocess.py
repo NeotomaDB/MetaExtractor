@@ -16,13 +16,14 @@ import pandas as pd
 import numpy as np
 import json
 from docopt import docopt
-import logging
 
 sys.path.append(
     os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, os.pardir)
 )
 
-logger = logging.getLogger(__name__)
+from src.logs import get_logger
+
+logger = get_logger(__name__)
 
 from src.entity_extraction.entity_extraction_evaluation import get_token_labels
 
@@ -68,6 +69,8 @@ def convert_labelled_data_to_hf_format(
     for folder in ["train", "test", "val"]:
         data_folder = os.path.join(labelled_file_path, folder)
 
+        logger.info(f"Processing {folder} data.")
+
         labelled_chunks = []
 
         for file in os.listdir(data_folder):
@@ -112,6 +115,8 @@ def convert_labelled_data_to_hf_format(
 
             except Exception as e:
                 logger.warning(f"Issue detected with file, skipping: {file}, {e}")
+
+            logger.debug(f"Processed {file}, generated {len(chunked_data)} chunks.")
 
             # save the data to the hf_processed folder with each list item in a new line delimited json
             with open(os.path.join(labelled_file_path, f"{folder}.json"), "w") as f:

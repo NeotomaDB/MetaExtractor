@@ -22,6 +22,7 @@ import json
 from tqdm import tqdm
 from docopt import docopt
 from transformers import AutoTokenizer, AutoModelForTokenClassification, pipeline
+import torch
 
 sys.path.append(
     os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, os.pardir)
@@ -118,13 +119,25 @@ def load_ner_model_pipeline(model_path: str):
         The loaded tokenizer.
     """
 
+    device_str = "cuda:0" if torch.cuda.is_available() else "cpu"
+    if "cuda" in device_str:
+        logger.info("Using GPU for predictions, batch size of 32")
+        batch_size = 32
+    else:
+        logger.info("Using CPU for predictions, batch size of 1")
+        batch_size = 1
+
     # load the model
     model = AutoModelForTokenClassification.from_pretrained(model_path)
-    tokenizer = AutoTokenizer.from_pretrained(model_path, model_max_length=512)
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_path, model_max_length=512, padding=True, truncation=True
+    )
     ner_pipe = pipeline(
         "ner",
         model=model,
         tokenizer=tokenizer,
+        device=torch.device(device_str),
+        batch_size=batch_size,
         aggregation_strategy="simple",
     )
 
@@ -197,149 +210,6 @@ def get_predicted_labels(ner_pipe, df):
     )
 
     return df
-
-
-def generate_classification_results(true_tokens, predicted_tokens):
-    """
-    Summarizes the classification results by both entity and token based methods.
-
-    Parameters
-    ----------
-    true_tokens : list[list[str]]
-        The true labels per token.
-    predicted_tokens : list[list[str]]
-        The predicted labels per token.
-
-    Returns
-    -------
-    classification_results : dict
-        The classification results.
-    """
-
-    if len(true_tokens) != len(predicted_tokens):
-        raise ValueError(
-            "The true tokens and predicted tokens must be the same length."
-        )
-
-    if len(true_tokens) == 0 or len(predicted_tokens) == 0:
-        raise ValueError("The true tokens and predicted tokens must not be empty.")
-
-    (
-        token_accuracy,
-        token_f1,
-        token_recall,
-        token_precision,
-    ) = calculate_entity_classification_metrics(
-        predicted_tokens=predicted_tokens, labelled_tokens=true_tokens, method="tokens"
-    )
-    (
-        entity_accuracy,
-        entity_f1,
-        entity_recall,
-        entity_precision,
-    ) = calculate_entity_classification_metrics(
-        predicted_tokens=predicted_tokens,
-        labelled_tokens=true_tokens,
-        method="entities",
-    )
-
-    # make a dict of all the number of each label type
-    label_counts = {}
-    for document in true_tokens:
-        for label in document:
-            label = label.replace("B-", "").replace("I-", "")
-            if label not in label_counts.keys():
-                label_counts[label] = 1
-            else:
-                label_counts[label] += 1
-
-    # make the results into a dict
-    results_dict = {
-        "token": {
-            "accuracy": token_accuracy,
-            "f1": token_f1,
-            "recall": token_recall,
-            "precision": token_precision,
-        },
-        "entity": {
-            "accuracy": entity_accuracy,
-            "f1": entity_f1,
-            "recall": entity_recall,
-            "precision": entity_precision,
-        },
-        # calculate total tokens from the true tokens list of lists
-        "num_tokens": sum([len(document) for document in true_tokens]),
-        "entity_counts": label_counts,
-    }
-
-    return results_dict
-
-
-def export_classification_report_plots(
-    true_tokens, predicted_tokens, output_path: str, model_name: str
-):
-    """
-    Exports the classification report plots.
-
-    Parameters
-    ----------
-    true_tokens : list[list[str]]
-        The true labels per token.
-    predicted_tokens : list[list[str]]
-        The predicted labels per token.
-    output_path : str
-        The path to export the plots to.
-    model_name : str
-        The name of the model.
-    """
-
-    # plot the classification report
-    token_results_fig = plot_token_classification_report(
-        labelled_tokens=true_tokens,
-        predicted_tokens=predicted_tokens,
-        title=f"{model_name} Token Based Classification Report",
-        method="tokens",
-        display=False,
-    )
-
-    entity_results_fig = plot_token_classification_report(
-        labelled_tokens=true_tokens,
-        predicted_tokens=predicted_tokens,
-        title=f"{model_name} Entity Based Classification Report",
-        method="entities",
-        display=False,
-    )
-
-    # export the plots
-    token_results_fig.savefig(
-        os.path.join(output_path, f"{model_name}_token_classification_report.png")
-    )
-    entity_results_fig.savefig(
-        os.path.join(output_path, f"{model_name}_entity_classification_report.png")
-    )
-
-
-def export_classification_results(
-    classification_results: dict, output_path: str, model_name: str
-):
-    """
-    Exports the classification results.
-
-    Parameters
-    ----------
-    classification_results : dict
-        The classification results.
-    output_path : str
-        The path to export the plots to.
-    model_name : str
-        The name of the model.
-    """
-
-    # export the classification results
-    with open(
-        os.path.join(output_path, f"{model_name}_classification_results.json"), "w"
-    ) as f:
-        json.dump(classification_results, f, indent=4)
 
 
 def main():

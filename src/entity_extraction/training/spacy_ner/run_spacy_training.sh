@@ -26,11 +26,7 @@ python3 src/preprocessing/labelling_data_split.py \
         --val_split $VAL_SPLIT \
         --test_split $TEST_SPLIT
 
-python3 src/preprocessing/spacy_preprocess.py \
-        --data_path $DATA_OUTPUT_PATH \
-        --train_split $TRAIN_SPLIT \
-        --val_split $VAL_SPLIT \
-        --test_split $TEST_SPLIT
+python3 src/preprocessing/spacy_preprocess.py --data_path $DATA_OUTPUT_PATH
 
 if [ -z "$MODEL_PATH" ]; then
     # If the model path is null, then start training from scratch

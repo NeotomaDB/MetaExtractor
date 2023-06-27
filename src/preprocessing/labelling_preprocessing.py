@@ -1,14 +1,39 @@
+# Author: Jenit Jain
+# Date: 2023-06-23
+"""
+This script splits the original article text into bite-sized JSON with fields required for LabelStudio.
+
+
+Usage: labelling_preprocessing.py --model_version <model_version> --output_path <output_path> [--model_path <model_path>] [--data_path=<data_path>] [--bib_path <bib_path>] [--sentences_path <sentences_path>] [--char_len <char_len>] [--min_len <min_len>]
+
+Options:
+    --model_version=<model_version>         The model version used to generate labels
+    --output_path=<output_path>             The path to the output directory to store the generated labels to upload to LabelStudio
+    --model_path=<model_path>               The path to the model artifacts to use to generate labels
+    --data_path=<data_path>                 The path to data file in CSV format
+    --bib_path=<bib_path>                   The path to the bibjson file containing article metadata
+    --sentences_path=<sentences_path>       The path to the sentences_nlp file containing all sentences as returned by xDD
+    --char_len=<char_len>                   If a section is very long, each chunk will be approximately char_len in length [default: 4000]
+    --min_len=<min_len>                     If a section is very small (smaller than min_len), then it will be combined with the next section [default: 1500]
+"""
+
 import pandas as pd
 import os
-import re
+import logging
 import hashlib
 import json
 import spacy
 from datetime import datetime
+from docopt import docopt
 import sys
 
 # ensure that the parent directory is on the path for relative imports
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
+
+from src.logs import get_logger
+# logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
+logger.setLevel(logging.INFO)
 
 from src.entity_extraction.baseline_entity_extraction import baseline_extract_all
 from src.entity_extraction.spacy_entity_extraction import spacy_extract_all
@@ -51,6 +76,11 @@ def get_journal_articles(sentences_path):
     journal_articles: pd.DataFrame
         pd.DataFrame with cleaned individual sentences for all articles
     """
+    
+    assert (
+        os.path.exists(sentences_path) == True 
+    ), f"Sentences NLP file does not exist {sentences_path}"
+    
     journal_articles = pd.read_csv(
         sentences_path,
         sep="\t",
@@ -109,6 +139,8 @@ def preprocessed_bibliography(path):
     bibliography: pd.DataFrame
         pd.DataFrame with GDD ID and the Digital Object Identifier.
     """
+    assert os.path.exists(path)==True, f"Bibliography file does not exist {path}"
+    
     with open(path, "r") as f:
         bib_dict = json.load(f)
 
@@ -143,6 +175,7 @@ def get_hash(text):
 
 
 def return_json(
+    nlp,
     chunk,
     chunk_local,
     chunk_global,
@@ -157,6 +190,8 @@ def return_json(
 
     Parameters
     ----------
+    nlp: spacy.lang.en.English
+        The NLP pipeline model used to generate new entities
     chunk : str
         A chunk of text from a full text journal article
     chunk_local: int
@@ -195,12 +230,16 @@ def return_json(
         "predictions": [{"model_version": model_version, "result": []}],
     }
 
-    nlp = spacy.load(
-        os.path.join(os.pardir, os.pardir, "models", "ner", "transformer-v3")
-    )
-
-    # labels = baseline_extract_all(chunk)
-    labels = spacy_extract_all(chunk, nlp)
+    try:
+        # labels = baseline_extract_all(chunk)
+        labels = spacy_extract_all(chunk, nlp)
+        logger.info(f"Predicted {len(labels)} labels for the file {gdd}_{chunk_global}")
+    except Exception as e:
+        logger.exception(
+            f"Error occured while using the model to predict entities.\n{str(e)}"
+        )
+        labels = []
+            
     entities = []
     for label in labels:
         entities.append(
@@ -212,6 +251,7 @@ def return_json(
                     "start": label["start"],
                     "end": label["end"],
                     "text": label["text"],
+                    # Spacy NER does not return a confidence score
                     "score": 0.5,
                     "labels": label["labels"],
                 },
@@ -222,11 +262,11 @@ def return_json(
     return training_json
 
 
-def chunk_text(article):
-    # If a section is very long, each chunk will be approximately char_len in length
-    char_len = 4500
-    # If a section is very small (smaller than min_len), then it will be combined with the next section
-    min_len = 1500
+def chunk_text(opt, article):
+    
+    char_len = int(opt['--char_len'])
+    min_len = int(opt['--min_len'])
+    
     # text chunk from full text articles
     chunks = []
     # Name of the subsection
@@ -239,6 +279,7 @@ def chunk_text(article):
     subsection = None
     # Current chunk of text
     cur_para = ""
+    
     # Possible Subsection names
     patterns = [
         "Introduction",
@@ -255,6 +296,7 @@ def chunk_text(article):
     # Possible Ending condition keywords names
     endwords = ["Acknowledgement", "Reference"]
 
+    #Split the article by sentences so that no chunk consists of partial sentences
     sentences = article.split(". ")
 
     for sent in sentences:
@@ -304,10 +346,10 @@ def chunk_text(article):
                 break
         if end:
             break
-
         # If no pattern or ending condition is present in the current sentence, then add it to the current para
         if check:
             cur_para += sent + ". "
+            
     if len(cur_para) > 0:
         chunks.append(cur_para.strip())
         chunk_subsection.append(subsection)
@@ -316,81 +358,149 @@ def chunk_text(article):
     return chunks, chunk_local, chunk_subsection
 
 
-if __name__ == "__main__":
-    model_version = "transformers-ner-0.0.3"
+def load_data(opt):
+    """Loads the original article text data
 
-    bib_df = preprocessed_bibliography(
-        os.path.join(
-            os.pardir,
-            os.pardir,
-            "data",
-            "entity-extraction",
-            "raw",
-            "original_files",
-            "bibjson",
-        )
-    )
+    Parameters
+    ----------
+    opt: Docopt object
+        The docopt object that consists of input arguments
 
-    journal_articles = get_journal_articles(
-        os.path.join(
-            os.pardir,
-            os.pardir,
-            "data",
-            "entity-extraction",
-            "raw",
-            "original_files",
-            "sentences_nlp352",
-        )
-    )
+    Returns
+    -------
+    doi_gdd: pd.DataFrame
+        A dataframe consists of 3 columns ["doi", "gddid", "sentence"]
+    """
+    
+    model_version = opt["--model_version"]
+    bib_path = opt["--bib_path"]
+    sentences_path = opt["--sentences_path"]
+
+    bib_df = preprocessed_bibliography(bib_path)
+    journal_articles = get_journal_articles(sentences_path)
 
     # Minor preprocessing
     journal_articles["words"] = journal_articles["words"].str.split(" ")
     journal_articles["words"] = journal_articles["words"].apply(clean_words)
-    journal_articles["sentence"] = journal_articles["words"].apply(
+    journal_articles["text"] = journal_articles["words"].apply(
         lambda x: " ".join(map(str, x))
     )
 
     # Join sentences into full text articles
     full_text = (
-        journal_articles.groupby("gddid")["sentence"]
+        journal_articles.groupby("gddid")["text"]
         .agg(lambda x: " ".join(x))
         .reset_index()
     )
 
     doi_gdd = full_text.merge(bib_df, on="gddid")
 
+    logger.info("Successfully merged the bibjson and sentences_nlp files")
+    
+    return doi_gdd
+
+
+def main(opt, nlp):
+    """
+    Takes in a set of documents, chunks it smaller pieces, 
+    finds entities using a pretrained model, and stores them in a format
+    compatible with Label Studio
+    
+    Parameters
+    ----------
+    opt: Docopt
+        Docopt object containing command line arguments
+    nlp: spacy.lang.en.English
+        Spacy NLP pipeline object for generating entities
+    """
+    
+    # data below is a dataframe that we use to split articles into smaller chunks
+    # If retraining from scratch for a different usecase than Paleoecology, 
+    # YOU MUST UPDATE THE FOLLOWING
+    # Format:
+    # data: pd.DataFrame
+    # columns: ["gddid", "text", "doi"]
+    # gddid: xDD ID of an article (If it doesn't exist on xDD, provide a unique placeholder)
+    # doi: Digital Object Identifier (If the articl hasn't been published, provide a unique placeholder)
+    # text: The full text from an article/paper/other sources
+    
+    assert not (
+        opt['--data_path'] == 
+        opt['--bib_path'] == 
+        opt['sentences_path'] == None
+    ), "Please specify input path to an appropriate data location"
+    
+    
+    if opt['--data_path']:
+        try:
+            data = pd.read_csv(opt['--data_path'])
+            assert (
+                ("gddid" in data.columns) and
+                ("text" in data.columns) and
+                ("doi" in data.columns)
+            ), f"One of the required columns is missing: gddid, text, doi"
+            logger.info(
+                f"Data successfully loaded from file {opt['--data_path']}"
+            )
+        except Exception as e:
+            logger.error(
+                f"""
+                Error while loading data from file {opt['--data_path']}.
+                Exception: {str(e)}
+                """
+            )
+            exit(-1)
+    else:
+        data = load_data(opt)
+    
+    os.makedirs(os.path.join(
+                    opt['--output_path'],
+                    f"{opt['--model_version']}_labeling"),
+                exist_ok=True)
+    
     # Pass each raw text file to the chunking pipeline
-    for row in full_text.iterrows():
-        chunks, chunk_local, chunk_subsection = chunk_text(row[1]["sentence"])
+    for row in data.iterrows():
+        
+        chunks, chunk_local, chunk_subsection = chunk_text(opt, row[1]["text"])
         gdd = row[1]["gddid"]
-        doi = doi_gdd[doi_gdd["gddid"] == gdd].iloc[0]["doi"]
+        doi = row[1]["doi"]
 
+        logger.info(f"Split file {gdd} into {len(chunks)} chunks")
+        
         """ Generate a hash code using the full text article"""
-        article_hash = get_hash(row[1]["sentence"])
+        article_hash = get_hash(row[1]["text"])
 
-        for i, chunk in enumerate(chunks):
-            filename = get_hash(chunk)
+        for index, chunk in enumerate(chunks):
             with open(
                 os.path.join(
-                    os.pardir,
-                    os.pardir,
-                    "data",
-                    "entity-extraction",
-                    "raw",
-                    "pre-labeling",
-                    f"{model_version}_labeling",
-                    f"{gdd}_{i}.json",
+                    opt['--output_path'],
+                    f"{opt['--model_version']}_labeling",
+                    f"{gdd}_{index}.json",
                 ),
                 "w",
             ) as fout:
                 json_chunk = return_json(
+                    nlp,
                     chunk,
-                    chunk_local[i],
-                    i,
-                    chunk_subsection[i],
+                    chunk_local[index],
+                    index,
+                    chunk_subsection[index],
                     gdd,
                     doi,
                     article_hash,
-                    model_version,
+                    opt['--model_version'],
                 )
                 json.dump(json_chunk, fout)
+
+
+if __name__ == "__main__":
+    opt = docopt(__doc__)
+    
+    try:
+        nlp = spacy.load(opt['--model_path'])
+        logger.info(f"Loading model from {opt['--model_path']}")
+    except OSError as e:
+        logger.warning(f"Could not load model from {opt['--model_path']}")
+        nlp = None
+        
+    main(opt, nlp)

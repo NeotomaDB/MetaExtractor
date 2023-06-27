@@ -13,6 +13,8 @@ LOG_FILE = os.environ.get("LOG_OUTPUT_DIR", "") + dt.now().strftime(
     "logs_%Y-%m-%dT%H-%M-%S.log"
 )
 
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "DEBUG").upper()
+
 
 def get_console_handler():
     console_handler = logging.StreamHandler(sys.stdout)
@@ -32,7 +34,7 @@ def get_logger(logger_name):
     if logger.hasHandlers():
         logger.handlers.clear()
 
-    logger.setLevel(logging.DEBUG)  # better to have too much log than not enough
+    logger.setLevel(LOG_LEVEL)  # better to have too much log than not enough
 
     logger.addHandler(get_console_handler())
     logger.addHandler(get_file_handler())

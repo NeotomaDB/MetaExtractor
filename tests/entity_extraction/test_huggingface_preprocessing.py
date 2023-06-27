@@ -9,7 +9,7 @@ import pytest
 # ensure that the parent directory is on the path for relative imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from src.entity_extraction.training.hf_token_classification.labelstudio_preprocessing import (
+from src.entity_extraction.training.hf_token_classification.huggingface_preprocess import (
     convert_labelled_data_to_hf_format,
 )
 
@@ -46,16 +46,16 @@ def test_process_labelled_data(tmp_path):
     os.makedirs(val_folder)
 
     sample_data = {
-        "task": {"data": {"text": "Sample text", "gdd_id": "sample_id"}},
+        "task": {"data": {"text": "Found Pinus pollen", "gdd_id": "sample_id"}},
         "result": [
             {
                 "id": "OXpADMYGB3",
                 "type": "labels",
                 "value": {
-                    "end": 63,
-                    "text": "Neogene Mediterranean",
-                    "start": 42,
-                    "labels": ["REGION"],
+                    "end": 11,
+                    "text": "Pinus",
+                    "start": 5,
+                    "labels": ["TAXA"],
                 },
                 "origin": "prediction",
                 "to_name": "text",

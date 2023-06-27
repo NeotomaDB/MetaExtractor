@@ -1,21 +1,26 @@
+# Author: Shaun Hutchinson, Jenit Jain
+# Date: 2023-06-22
 import dash
-from dash import dash_table
 import json
+import sys
 import os
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pyarrow.compute as pc
 from dash.dependencies import Input, Output, State
-
-dash.register_page(__name__, path="/")
-
-from dash import dcc, html, Input, Output, callback
+from dash import dcc, html, Input, Output, callback, dash_table
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
-from pages.config import *
 
-suppress_callback_exceptions = True
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+from src.data_review_tool.pages.config import *
+from src.logs import get_logger
+
+logger = get_logger(__name__)
+
+dash.register_page(__name__, path="/")
 
 article_relevance_data_path = os.path.join(
     "/MetaExtractor",
@@ -25,6 +30,7 @@ article_relevance_data_path = os.path.join(
 
 def layout():    
     combined_df = load_data(f"/entity_extraction/")
+
     combined_df["Review"] = "Review"
     
     current = combined_df.query("Status == 'False' | Status =='In Progress'")
@@ -122,6 +128,7 @@ def current_article_clicked(
             if col == "Review":
                 selected = data[row]["gddid"]
                 return f"/article/{selected}"
+                return f"/article/{selected}"
             else:
                 return dash.no_update
 
@@ -209,6 +216,9 @@ def load_data(directory):
     
 def read_entities(directory):
     """Reads the extracted data from all articles under the specified directory
+    try:
+        logger.info(f"Reading articles from {directory}")
+        directories = [os.path.join(directory, dir) for dir in ["processed", "raw"]]
 
     Parameter
     ---------

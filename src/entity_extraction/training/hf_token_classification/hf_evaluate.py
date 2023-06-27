@@ -121,7 +121,7 @@ def load_ner_model_pipeline(model_path: str):
 
     device_str = "cuda:0" if torch.cuda.is_available() else "cpu"
     if "cuda" in device_str:
-        logger.info("Using GPU for predictions, batch size of 8")
+        logger.info("Using GPU for predictions, batch size of 32")
         batch_size = 32
     else:
         logger.info("Using CPU for predictions, batch size of 1")

@@ -6,7 +6,7 @@ import sys
 
 import pandas as pd
 from transformers import AutoTokenizer, AutoModelForTokenClassification, pipeline
-from torch import cuda
+import torch
 
 from src.logs import get_logger
 
@@ -32,10 +32,10 @@ def load_ner_model_pipeline(model_path: str):
         The loaded tokenizer.
     """
 
-    device = "cuda" if cuda.is_available() else "cpu"
-    if device == "cuda":
-        logger.info("Using GPU for predictions, batch size of 8")
-        batch_size = 8
+    device_str = "cuda:0" if torch.cuda.is_available() else "cpu"
+    if "cuda" in device_str:
+        logger.info("Using GPU for predictions, batch size of 32")
+        batch_size = 32
     else:
         logger.info("Using CPU for predictions, batch size of 1")
         batch_size = 1
@@ -49,7 +49,7 @@ def load_ner_model_pipeline(model_path: str):
         "ner",
         model=model,
         tokenizer=tokenizer,
-        device=device,
+        device=torch.device(device_str),
         batch_size=batch_size,
         aggregation_strategy="simple",
     )

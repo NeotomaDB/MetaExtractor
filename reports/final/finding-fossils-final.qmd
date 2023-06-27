@@ -354,7 +354,7 @@ plot_distribution_of_entities(
 
 ### Approach
 
-The state of the art for NER tasks is currently dominated by transformer based models. The best performing non-transformer based models are a transition-based stack long-short term memory (S-LSTM) model used in the spaCy package.
+The state of the art for NER tasks is currently dominated by transformer based models. The best performing non-transformer based models are a transition-based stack long-short term memory (S-LSTM) [@S-LSTM] model used in the spaCy package.
 
 The approaches considered along with the rationale for their inclusion/rejection from development are outlined in @tbl-ner-approaches.
 

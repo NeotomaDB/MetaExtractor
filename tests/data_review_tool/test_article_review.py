@@ -7,6 +7,9 @@ import os
 # ensure that the parent directory is on the path for relative imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
+os.environ["ARTICLE_RELEVANCE_BATCH"] = "article-relevance-output.parquet"
+os.environ["ENTITY_EXTRACTION_BATCH"] = "entity-extraction-output.zip"
+
 from src.data_review_tool.app import *
 from src.data_review_tool.pages.article_review import *
 
@@ -20,20 +23,6 @@ def test_cell_clicked():
     "Test that the cell_clicked function returns the correct value when a cell is clicked."
     assert cell_clicked(1) == "/"
     assert cell_clicked(0) == dash.no_update
-
-
-def test_directory_structure():
-    "Test that the directory structure is as expected."
-    dir = "data/data-review-tool"
-    expected = ["processed", "raw"]
-    assert expected[0] in os.listdir(dir) and expected[1] in os.listdir(dir)
-
-
-def test_find_start_end_char():
-    "Test that the find_start_end_char function returns the correct values."
-    text = "This is a test"
-    entity = "test"
-    assert find_start_end_char(text, entity) == (10, 14)
 
 
 def test_update_button():

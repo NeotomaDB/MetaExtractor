@@ -3,6 +3,7 @@
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 [![MIT License][license-shield]][license-url]
+[![codecov][codecov-shield]][codecov-url]
 
 # **MetaExtractor: Finding Fossils in the Literature**
 
@@ -109,7 +110,7 @@ The Data Review Tool can be launched by running the following command from the r
 docker-compose up --build data-review-tool
 ```
 
-Once the image is built and the container is running, the Data Review Tool can be accessed at http://localhost:8050/. There is a sample "extracted entities" JSON file provided for demo purposes.
+Once the image is built and the container is running, the Data Review Tool can be accessed at <http://localhost:8050/>. There is a sample "extracted entities" JSON file provided for demo purposes.
 
 
 ### Article Relevance & Entity Extraction Model
@@ -127,6 +128,7 @@ The article relevance prediction component requires a list of journals that are 
 #### Data Extraction Pipeline
 
 As the full text articles provided by the xDD team are not publicly available we cannot create a public link to download the labelled training data. For access requests please contact Simon Goring at goring@wisc.edu or Ty Andrews at ty.elgin.andrews@gmail.com.
+
 ### System Requirements
 
 The project has been developed and tested on the following system:
@@ -154,9 +156,6 @@ The pre-built Docker images were built using Docker version 4.20.0 but should wo
 │   │   ├── processed/                  <- Processed data
 │   │   └── interim/                    <- Temporary data location
 │   ├── data-review-tool/               <- Directory for data related to data review tool
-│   │   ├── raw/                        <- Raw unprocessed data
-│   │   ├── processed/                  <- Processed data
-│   │   └── interim/                    <- Temporary data location
 ├── results/                            <- Directory for results
 │   ├── article-relevance/              <- Directory for results related to article relevance prediction
 │   ├── ner/                            <- Directory for results related to named entity recognition
@@ -181,7 +180,6 @@ This project is an open project, and contributions are welcome from any individu
 
 The UBC MDS project team consists of:
 
-- **Ty Andrews**
 - [![ORCID](https://img.shields.io/badge/orcid-0009--0003--0699--5838-brightgreen.svg)](https://orcid.org/0009-0003-0699-5838) [Ty Andrews](http://www.ty-andrews.com)
 - [![ORCID](https://img.shields.io/badge/orcid-0009--0004--2508--4746-brightgreen.svg)](https://orcid.org/0009-0004-2508-4746) Kelly Wu
 - [![ORCID](https://img.shields.io/badge/orcid-0009--0007--1998--3392-brightgreen.svg)](https://orcid.org/0009-0007-1998-3392) Shaun Hutchinson
@@ -208,3 +206,5 @@ All products of the Neotoma Paleoecology Database are licensed under an [MIT Lic
 [issues-url]: https://github.com/NeotomaDB/MetaExtractor/issues
 [license-shield]: https://img.shields.io/github/license/NeotomaDB/MetaExtractor.svg?style=for-the-badge
 [license-url]: https://github.com/NeotomaDB/MetaExtractor/blob/master/LICENSE.txt
+[codecov-shield]: https://img.shields.io/codecov/c/github/NeotomaDB/MetaExtractor?style=for-the-badge
+[codecov-url]: https://codecov.io/gh/NeotomaDB/MetaExtractor

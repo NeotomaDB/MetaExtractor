@@ -10,13 +10,10 @@ services:
     volumes:
       - ./data/data-review-tool:/MetaExtractor/data/data-review-tool
   entity-extraction-pipeline:
-    image: metaextractor-entity-extraction-pipeline:v0.0.2
+    image: metaextractor-entity-extraction-pipeline:v0.0.3
     build: 
       dockerfile: ./docker/entity-extraction-pipeline/Dockerfile
       context: .
-      args:
-        HF_NER_MODEL_NAME: "roberta-finetuned-v3"
-        SPACY_NER_MODEL_NAME: "spacy-transformer-v3"
     ports:
       - "5000:5000"
     volumes:
@@ -26,4 +23,4 @@ services:
       - USE_NER_MODEL_TYPE=huggingface
       - LOG_OUTPUT_DIR=/outputs/
       - MAX_SENTENCES=20
-      - MAX_ARTICLES=1 
+      - MAX_ARTICLES=1

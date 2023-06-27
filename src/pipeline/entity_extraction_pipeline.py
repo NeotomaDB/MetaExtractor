@@ -1,11 +1,13 @@
 # Author: Ty Andrews
 # Date: 2023-06-05
 """
-Usage: entity_extraction_pipeline.py --article_text_path=<article_text_path> --output_path=<output_path>
+Usage: entity_extraction_pipeline.py --article_text_path=<article_text_path> --output_path=<output_path> [--max_sentences=<max_sentences>] [--max_articles=<max_articles>]
 
 Options:
 --article_text_path=<article_text_path> The path to the article text data file.
 --output_path=<output_path> The path to export the extracted entities to.
+--max_sentences=<max_sentences> The maximum number of sentences to extract entities from. [default: -1]
+--max_articles <max_articles> The maximum number of articles to extract entities from. [default: -1]
 """
 
 import os
@@ -32,7 +34,7 @@ from src.entity_extraction.spacy_entity_extraction import (
 load_dotenv(find_dotenv())
 
 # get the MODEL_NAME from environment variables
-HF_NER_MODEL_NAME = os.getenv("HF_NER_MODEL_NAME", "finding-fossils/metaextractor")
+HF_NER_MODEL_PATH = os.getenv("HF_NER_MODEL_PATH", "./models/ner/metaextractor")
 SPACY_NER_MODEL_NAME = os.getenv("SPACY_NER_MODEL_NAME", "en_metaextractor_spacy")
 USE_NER_MODEL_TYPE = os.getenv("USE_NER_MODEL_TYPE", "huggingface")
 MAX_SENTENCES = os.getenv("MAX_SENTENCES", "-1")
@@ -286,7 +288,7 @@ def recreate_original_sentences_with_labels(row):
 def extract_entities(
     article_text_data: pd.DataFrame,
     model_type: str = "huggingface",
-    model_path: str = "finding-fossils/metaextractor",
+    model_path: str = "metaextractor",
 ) -> pd.DataFrame:
     """
     Extracts the entities from the article text data.
@@ -562,10 +564,21 @@ def main():
                     ]
                 )
             ]
+            logger.info(
+                f"Using just a subsample of the data of with {int(MAX_ARTICLES)} articles"
+            )
 
         # if max_sentences is not -1 then only use the first max_sentences sentences
         if MAX_SENTENCES is not None and int(MAX_SENTENCES) != -1:
-            article_text_data = article_text_data.head(int(MAX_SENTENCES))
+            # get just sentence id's for each gdd up to max_sentences
+            article_text_data = article_text_data[
+                article_text_data["sentid"].isin(
+                    article_text_data["sentid"].unique()[0 : int(MAX_SENTENCES)]
+                )
+            ]
+            logger.info(
+                f"Using just a subsample of the data of with {int(MAX_SENTENCES)} sentences"
+            )
 
         for article_gdd in article_text_data["gddid"].unique():
             logger.info(f"Processing GDD ID: {article_gdd}")
@@ -573,8 +586,8 @@ def main():
             article_text = article_text_data[article_text_data["gddid"] == article_gdd]
 
             if USE_NER_MODEL_TYPE == "huggingface":
-                logger.info(f"Using HuggingFace model {HF_NER_MODEL_NAME}")
-                model_path = HF_NER_MODEL_NAME
+                logger.info(f"Using HuggingFace model {HF_NER_MODEL_PATH}")
+                model_path = HF_NER_MODEL_PATH
             elif USE_NER_MODEL_TYPE == "spacy":
                 logger.info(f"Using Spacy model {SPACY_NER_MODEL_NAME}")
                 model_path = SPACY_NER_MODEL_NAME
@@ -610,6 +623,13 @@ def main():
                     f"Error post processing entities for GDD ID: {article_gdd}, no results output. Error: {e}"
                 )
                 continue
+
+            # delete the file if it already exists with the article_gdd name
+            if os.path.exists(os.path.join(opt["--output_path"], f"{article_gdd}.json")):
+                os.remove(os.path.join(opt["--output_path"], f"{article_gdd}.json"))
+                logger.warning(
+                    f"Deleted existing file {article_gdd}.json in output directory."
+                )
 
             export_extracted_entities(
                 extracted_entities=pprocessed_entities,

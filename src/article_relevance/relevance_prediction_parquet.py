@@ -403,7 +403,6 @@ def prediction_export(input_df, output_path):
     # Check if a file with the current batch number already exists
     parquet_file_name = os.path.join(parquet_folder, f"article-relevance-prediction_{formatted_datetime}.parquet")
     while os.path.isfile(parquet_file_name):
-        # If the file exists, increment the batch number and try again
         parquet_file_name = os.path.join(parquet_folder, f"article-relevance-prediction_{formatted_datetime}.parquet")
 
     # Write the Parquet file

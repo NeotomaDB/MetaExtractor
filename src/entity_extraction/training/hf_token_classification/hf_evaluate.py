@@ -22,6 +22,7 @@ import json
 from tqdm import tqdm
 from docopt import docopt
 from transformers import AutoTokenizer, AutoModelForTokenClassification, pipeline
+import torch
 
 sys.path.append(
     os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, os.pardir)
@@ -118,13 +119,25 @@ def load_ner_model_pipeline(model_path: str):
         The loaded tokenizer.
     """
 
+    device_str = "cuda:0" if torch.cuda.is_available() else "cpu"
+    if "cuda" in device_str:
+        logger.info("Using GPU for predictions, batch size of 8")
+        batch_size = 32
+    else:
+        logger.info("Using CPU for predictions, batch size of 1")
+        batch_size = 1
+
     # load the model
     model = AutoModelForTokenClassification.from_pretrained(model_path)
-    tokenizer = AutoTokenizer.from_pretrained(model_path, model_max_length=512)
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_path, model_max_length=512, padding=True, truncation=True
+    )
     ner_pipe = pipeline(
         "ner",
         model=model,
         tokenizer=tokenizer,
+        device=torch.device(device_str),
+        batch_size=batch_size,
         aggregation_strategy="simple",
     )
 

@@ -3,6 +3,7 @@
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 [![MIT License][license-shield]][license-url]
+[![codecov][codecov-shield]][codecov-url]
 
 # **MetaExtractor: Finding Fossils in the Literature**
 
@@ -192,3 +193,5 @@ All products of the Neotoma Paleoecology Database are licensed under an [MIT Lic
 [issues-url]: https://github.com/NeotomaDB/MetaExtractor/issues
 [license-shield]: https://img.shields.io/github/license/NeotomaDB/MetaExtractor.svg?style=for-the-badge
 [license-url]: https://github.com/NeotomaDB/MetaExtractor/blob/master/LICENSE.txt
+[codecov-shield]: https://img.shields.io/codecov/c/github/NeotomaDB/MetaExtractor?style=for-the-badge
+[codecov-url]: https://codecov.io/gh/NeotomaDB/MetaExtractor

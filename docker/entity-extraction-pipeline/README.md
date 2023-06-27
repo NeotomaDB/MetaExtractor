@@ -32,7 +32,11 @@ docker run -u $(id -u) -p 5000:5000 -v /${PWD}/data/entity-extraction/raw/origin
 
 ## Sample Docker Compose Setup
 
-Update the environment variables defined under the `entity-extraction-pipeline` service in the `docker-compose.yml` file under the root directory. Then build and run the docker image to install the required dependencies using `docker-compose` as follows:
+Update the environment variables defined under the `entity-extraction-pipeline` service in the `docker-compose.yml` file under the root directory. The volume paths are:
+- `INPUT_FOLDER`: The folder containing the raw text `nlp352` TSV file, eg. `./data/entity-extraction/raw/original_files/` (recommended)
+- `OUTPUT_FOLDER`: The folder to dump the final JSON files, eg. `./data/entity-extraction/processed/processed_articles/` (recommended)
+
+Then build and run the docker image to install the required dependencies using `docker-compose` as follows:
 
 ```bash
 docker-compose build
@@ -50,15 +54,14 @@ services:
     ports:
       - "5000:5000"
     volumes:
-    - ./data/raw/:/inputs/
-    - ./data/processed/:/outputs/
+    - ./data/entity-extraction/raw/<INPUT_FOLDER>:/inputs/
+    - ./data/entity-extraction/processed/<OUTPUT_FOLDER>:/outputs/
     environment:
       - USE_NER_MODEL_TYPE=huggingface
       - LOG_OUTPUT_DIR=/outputs/
       - MAX_SENTENCES=20
       - MAX_ARTICLES=1
 ```
-
 ## Pushing the Docker Image to Docker Hub
 
 To push the docker image to docker hub, first login to docker hub using the following command:

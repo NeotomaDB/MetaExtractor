@@ -1,5 +1,6 @@
 import os
 import json
+import sys
 import pandas as pd
 import copy
 import numpy as np
@@ -14,6 +15,9 @@ from pages.navbar import find_start_end_char
 from dash_iconify import DashIconify
 from pages.config import *
 import seaborn as sns
+sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir))
+
+from src.logs import get_logger
 
 dash.register_page(__name__,  path_template="/article/<gddid>")
 
@@ -21,6 +25,7 @@ original = None
 results = None
 color_palette = sns.color_palette("RdYlGn", 100).as_hex()
 
+logger = get_logger(__name__)
 
 def layout(gddid=None):
     
@@ -28,7 +33,7 @@ def layout(gddid=None):
         global original
         global results
         
-        original = load_data(f"/MetaExtractor/inputs/entity_extraction/{gddid}.json")
+        original = load_data(f"/entity_extraction/{gddid}.json")
         results = copy.deepcopy(original)
 
     except FileNotFoundError:
@@ -40,6 +45,10 @@ def layout(gddid=None):
         ])
     
     relevance_score = round(original["predict_proba"], 2) * 100
+    
+    logger.info(
+        f"Relevance score for article {gddid} = {relevance_score}"
+    )
     
     sidebar = html.Div(
         [
@@ -768,10 +777,6 @@ def update_entity(
             })
             
     elif callback_context == "correct-button.n_clicks" and correct:
-        # for ent, values in results["entities"][accordian].items():
-        #     if ent == original_text:
-        #         values["corrected_name"] = entity
-        #         break
         if entity in results["entities"][accordian]:
             for sentence in results["entities"][accordian][original_text]["sentence"]:
                 try:
@@ -825,13 +830,14 @@ def save_submit(submit, save, relevant, data):
     callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
         
     if callback_context == "confirm-submit-button.n_clicks" and submit:
-        entities_data = {
+        update_data = {
             "gddid": results["gddid"],
-            "last_updated": datetime.now().strftime("%Y-%m-%d"),
-            "corrected_entities": results['entities'],
+            "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "corrected_entities": json.dumps(results['entities']),
             "status": "Completed"
         }
-        update_entity_extraction_output(**entities_data)
+        update_output(**update_data)
+        logger.info("Entities saved!")
         return  dmc.Notification(
                     title="Review Complete!",
                     id="submit-notification",
@@ -842,12 +848,14 @@ def save_submit(submit, save, relevant, data):
                 )
         
     elif callback_context == "confirm-irrelevant-button.n_clicks" and relevant:
-        entities_data = {
+        update_data = {
             "gddid": results["gddid"],
-            "last_updated": datetime.now().strftime("%Y-%m-%d"),
+            "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "corrected_entities": "None",
             "status": "Non-relevant"
         }
-        update_entity_extraction_output(**entities_data)
+        update_output(**update_data)
+        logger.info("Article removed from queue")
         return  dmc.Notification(
                     title="Article Removed!",
                     id="remove-notification",
@@ -858,13 +866,14 @@ def save_submit(submit, save, relevant, data):
                 )
         
     elif callback_context == "save-button.n_clicks" and save:
-        entities_data = {
+        update_data = {
             "gddid": results["gddid"],
             "last_updated": datetime.now().strftime("%Y-%m-%d"),
-            "corrected_entities": results['entities'],
+            "corrected_entities": json.dumps(results['entities']),
             "status": "In Progress"
         }
-        update_entity_extraction_output(**entities_data)
+        update_output(**update_data)
+        logger.info("Article progress saved!")
         return  dmc.Notification(
                     title="Progress Saved!",
                     id="save-notification",
@@ -1061,10 +1070,15 @@ def load_data(file_path):
         
     """
     entities = json.load(open(file_path, "r"))
-    if "correct_entities" in entities:
-        entities["entities"] = entities["corrected_entities"]
-    metadata = get_article_metadata(entities['gddid'])
-    print({**entities, **metadata[entities['gddid']]})
+    logger.info(f"Entities extracted from file: {file_path}")
+    
+    metadata, corrected_entities = get_article_metadata(entities['gddid'])
+    logger.info(f"Metadata extracted for the article")
+    
+    if corrected_entities != "None":
+        entities["entities"] = json.loads(corrected_entities)
+        logger.info("Fetched verified entities from stored output")
+            
     return {**entities, **metadata[entities['gddid']]}
 
     
@@ -1079,37 +1093,65 @@ def get_article_metadata(gddid):
     Returns
     -------
     dict: dictionary containing the current article's metadata
+    str: dictionary of updated entities in string format
     """
     # Read the Parquet file with pushdown predicate
-    results = pd.read_parquet(os.path.join(
+    article_metadata = pd.read_parquet(os.path.join(
                     "/MetaExtractor",
                     "inputs",
-                    # "data",
-                    # "data-review-tool",
                     os.environ["ARTICLE_RELEVANCE_BATCH"]
                 ))    
     filtered_metadata = (
-        results[results['gddid'] == gddid]
+        article_metadata[article_metadata['gddid'] == gddid]
         [[ 
           'DOI', 'gddid', 'predict_proba', 'title',
-          'subtitle', 'journal',
+          'subtitle', 'journal', 'status', 'last_updated',
+          'corrected_entities'
         ]]
         .set_index("gddid")
         .to_dict(orient='index')
     )
-    return filtered_metadata
+    
+    if gddid in filtered_metadata:
+        corrected_entities = filtered_metadata[gddid].get("corrected_entities", "None")
+    else:
+        corrected_entities = "None"
+    
+    return filtered_metadata, corrected_entities
 
 
-def update_entity_extraction_output(**args):
-    """Update the entity extraction output file
+def update_output(**args):
+    """
+    Updates the article relevance parquet file
+    with extracted and verified entities
     
     Parameter
     ---------
     args: dict
         Various keys to update in the file
+        
+        gddid: str
+            xDD ID of the article to update
+        last_updated: datetime
+            Datetime stamp when the user updated the article review
+        corrected_entities: str
+            Dictionary of corrected and updated entities in string format
+        status: str
+            Status of the reviewing process
     """
-    file_path = f"/MetaExtractor/inputs/entity_extraction/{args['gddid']}.json"
-    entities = json.load(open(file_path, "r"))
-    entities = {**entities, **args}
-    with open(file_path, "w") as f:
-        json.dump(entities, f, indent=4)
+    
+    article_metadata = pd.read_parquet(os.path.join(
+                    "/MetaExtractor",
+                    "inputs",
+                    os.environ["ARTICLE_RELEVANCE_BATCH"]
+                ))    
+    article_metadata.loc[article_metadata['gddid'] == args['gddid'], 'status'] = args['status']
+    article_metadata.loc[article_metadata['gddid'] == args['gddid'], 'last_updated'] = args['last_updated']
+    article_metadata.loc[article_metadata['gddid'] == args['gddid'], 'corrected_entities'] = args['corrected_entities']
+    
+    article_metadata.to_parquet(os.path.join(
+        "/MetaExtractor",
+        "inputs",
+        os.environ["ARTICLE_RELEVANCE_BATCH"]
+    ))
+        

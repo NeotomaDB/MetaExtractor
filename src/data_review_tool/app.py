@@ -39,12 +39,15 @@ unzipped = False
 if __name__ == "__main__":
     
     if not unzipped:
-        os.makedirs("/MetaExtractor/inputs/entity_extraction/", exist_ok=True)
+        # Create folder to unzip the entity extraction compressed output from xDD servers
+        if not os.path.exists("/entity_extraction"):
+            os.mkdir("/entity_extraction")
+        
         with zipfile.ZipFile(f"/MetaExtractor/inputs/{os.environ['ENTITY_EXTRACTION_BATCH']}", 
                              mode = 'r', 
-                             allowZip64 = True) as file:
+                             allowZip64 = True) as file:    
+            file.extractall("/entity_extraction")
             
-            file.extractall("/MetaExtractor/inputs/entity_extraction/")
         unzipped = True
         
     app.run_server("0.0.0.0", debug=True, port=8050)

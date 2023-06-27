@@ -3,6 +3,7 @@ from dash import dash_table
 import json
 import os
 import pandas as pd
+import pyarrow as pa
 import pyarrow.parquet as pq
 import pyarrow.compute as pc
 from dash.dependencies import Input, Output, State
@@ -16,10 +17,14 @@ from pages.config import *
 
 suppress_callback_exceptions = True
 
+article_relevance_data_path = os.path.join(
+    "/MetaExtractor",
+    "inputs",
+    os.environ["ARTICLE_RELEVANCE_BATCH"]
+)
 
 def layout():    
-    combined_df = load_data(f"/MetaExtractor/inputs/entity_extraction/")
-    combined_df = combined_df[["Article", "DOI", "gddid", "Status", "Date Added", "Date Updated"]]
+    combined_df = load_data(f"/entity_extraction/")
     combined_df["Review"] = "Review"
     
     current = combined_df.query("Status == 'False' | Status =='In Progress'")
@@ -198,6 +203,7 @@ def load_data(directory):
     articles = read_entities(directory)
     filtered_df = add_article_metadata(articles)
     combined_df = pd.merge(articles, filtered_df, on="gddid", how='left')
+    combined_df = combined_df[["Article", "DOI", "gddid", "Status", "Date Added", "Date Updated"]]
     
     return combined_df
     
@@ -228,24 +234,19 @@ def read_entities(directory):
             df = pd.json_normalize(json.loads(article.read()))
             # Only keep the data if the file is not already in the dictionary
             if file not in dfs:
-                dfs[file] = df
+                dfs[file.split(".")[0]] = df
         
         # Combine all dataframes into a single dataframe
         df = pd.concat(list(dfs.values()), ignore_index=True)
-        df = df[['gddid', 'date_processed', 'last_updated', 'status']].rename(
-            columns={
-                "status": "Status", 
-                "date_processed": "Date Added",
-                "last_updated": "Date Updated"}
+        df = df[['gddid', 'date_processed',]].rename(
+            columns={"date_processed": "Date Added"}
         )
     except ValueError as e:
         print(str(e))
         df = pd.DataFrame(
             columns=[
                 "gddid",
-                "Status",
                 "Date Added",
-                "Date Updated",
             ]
         )
     return df
@@ -263,21 +264,31 @@ def add_article_metadata(df):
     filtered_df: pd.DataFrame
         metadata for articles relevant for the UI 
     """
-    gddid = [gdd.split(".")[0] for gdd in df['gddid'].tolist()]
+    gddid = df['gddid'].tolist()
     
+    schema = pq.read_schema(article_relevance_data_path)
     # Read the Parquet file with pushdown predicate
-    results = pd.read_parquet(os.path.join(
-                    "/MetaExtractor",
-                    "inputs",
-                    # "data",
-                    # "data-review-tool",
-                    os.environ["ARTICLE_RELEVANCE_BATCH"]
-                ))
+    results = pd.read_parquet(article_relevance_data_path)
+
+    if "status" not in results.columns:
+        results["status"] = "False"
+        schema = schema.append(pa.field('status', pa.string())) # False, In Progress, Non-relevant, Completed
+    # TODO: improve the following 2 datatypes for the future
+    if "last_updated" not in results.columns:
+        results["last_updated"] = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
+        schema = schema.append(pa.field('last_updated', pa.string())) # Date in string format
+    if "corrected_entities" not in results.columns:
+        results["corrected_entities"] = "None"
+        schema = schema.append(pa.field('corrected_entities', pa.string())) # JSON in string format
+
+    results.to_parquet(article_relevance_data_path, schema=schema)
     
     filtered_df = results[results['gddid'].isin(gddid)].rename(
         columns={
+            "status": "Status",
             "title": "Article", 
             "doi": "DOI",
+            "last_updated": "Date Updated"
         }
     )
 

@@ -474,9 +474,7 @@ def export_extracted_entities(
     results_dict = {
         "gddid": extracted_entities["gddid"].iloc[0],
         "date_processed": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "last_updated": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
         "model_name": extracted_entities["model_name"].iloc[0],
-        "status": "False",
         "entities": {
             "TAXA": {},
             "GEOG": {},

@@ -14,9 +14,6 @@ services:
     build: 
       dockerfile: ./docker/entity-extraction-pipeline/Dockerfile
       context: .
-      args:
-        HF_NER_MODEL_NAME: "roberta-finetuned-v3"
-        SPACY_NER_MODEL_NAME: "spacy-transformer-v3"
     ports:
       - "5000:5000"
     volumes:

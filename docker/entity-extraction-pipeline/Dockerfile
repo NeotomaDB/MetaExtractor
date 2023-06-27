@@ -10,24 +10,17 @@ COPY docker/entity-extraction-pipeline/requirements.txt .
 # Install the required Python packages
 RUN pip install --no-cache-dir -r requirements.txt
 RUN python -m nltk.downloader stopwords
+RUN pip install https://huggingface.co/finding-fossils/metaextractor-spacy/resolve/main/en_metaextractor_spacy-any-py3-none-any.whl
 
 # Copy the entire repository folder into the container
 COPY src ./src
 
-# Build args
-ARG HF_NER_MODEL_NAME
-ARG SPACY_NER_MODEL_NAME
-
 # Set env variables for when running the container
-ENV HF_NER_MODEL_NAME=${HF_NER_MODEL_NAME}
-ENV SPACY_NER_MODEL_NAME=${SPACY_NER_MODEL_NAME}
-ENV USE_NER_MODEL_TYPE=huggingface
+ENV HF_NER_MODEL_NAME="finding-fossils/metaextractor"
+ENV SPACY_NER_MODEL_NAME="en_metaextractor_spacy"
+ENV USE_NER_MODEL_TYPE="huggingface"
 ENV MAX_ARTICLES=-1
 ENV MAX_SENTENCES=-1
-
-# Copy in the model defined by the env variable NER_MODEL_NAME from models folder
-COPY models/ner/${HF_NER_MODEL_NAME} ./models/ner/${HF_NER_MODEL_NAME} 
-COPY models/ner/${SPACY_NER_MODEL_NAME} ./models/ner/${SPACY_NER_MODEL_NAME}
 
 # non-root user control inspired from here: https://stackoverflow.com/questions/66349101/docker-non-root-user-does-not-have-writing-permissions-when-using-volumes
 # Create a non-root user that owns the input/outputs directory by default

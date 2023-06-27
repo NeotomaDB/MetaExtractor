@@ -34,8 +34,8 @@ from src.entity_extraction.spacy_entity_extraction import (
 load_dotenv(find_dotenv())
 
 # get the MODEL_NAME from environment variables
-HF_NER_MODEL_NAME = os.getenv("HF_NER_MODEL_NAME", "roberta-finetuned-v3")
-SPACY_NER_MODEL_NAME = os.getenv("SPACY_NER_MODEL_NAME", "spacy-transformer-v3")
+HF_NER_MODEL_NAME = os.getenv("HF_NER_MODEL_NAME", "finding-fossils/metaextractor")
+SPACY_NER_MODEL_NAME = os.getenv("SPACY_NER_MODEL_NAME", "en_metaextractor_spacy")
 USE_NER_MODEL_TYPE = os.getenv("USE_NER_MODEL_TYPE", "huggingface")
 
 logger = get_logger(__name__)
@@ -286,7 +286,7 @@ def recreate_original_sentences_with_labels(row):
 def extract_entities(
     article_text_data: pd.DataFrame,
     model_type: str = "huggingface",
-    model_path: str = os.path.join("models", "ner", "roberta-finetuned-v3"),
+    model_path: str = "finding-fossils/metaextractor",
 ) -> pd.DataFrame:
     """
     Extracts the entities from the article text data.
@@ -574,10 +574,10 @@ def main():
 
             if USE_NER_MODEL_TYPE == "huggingface":
                 logger.info(f"Using HuggingFace model {HF_NER_MODEL_NAME}")
-                model_path = os.path.join("models", "ner", HF_NER_MODEL_NAME)
+                model_path = HF_NER_MODEL_NAME
             elif USE_NER_MODEL_TYPE == "spacy":
                 logger.info(f"Using Spacy model {SPACY_NER_MODEL_NAME}")
-                model_path = os.path.join("models", "ner", SPACY_NER_MODEL_NAME)
+                model_path = SPACY_NER_MODEL_NAME
             else:
                 raise ValueError(
                     f"Model type {USE_NER_MODEL_TYPE} not supported. Please set MODEL_TYPE to either 'huggingface' or 'spacy'."

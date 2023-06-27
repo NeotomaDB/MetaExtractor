@@ -19,11 +19,10 @@ The following environment variables can be set to change the behavior of the pip
 
 ## Sample Docker Compose Setup
 
-Update the environment variables defined under the `entity-extraction-pipeline` service in the `docker-compose.yml` file under the root directory. Then build and run the docker image to install the required dependencies using `docker-compose` as follows:
-```bash
-docker-compose build
-docker-compose up entity-extraction-pipeline
-```
+Update the environment variables defined under the `entity-extraction-pipeline` service in the `docker-compose.yml` file under the root directory. The volume paths are:
+
+- `INPUT_PATH`: The folder containing the raw text `nlp352` TSV file, eg. `./data/entity-extraction/raw/original_files/` (recommended)
+- `OUTPUT_PATH`: The folder to dump the final JSON files, eg. `./data/entity-extraction/processed/processed_articles/` (recommended)
 
 Below is a sample docker compose configuration for running the image:
 ```yaml
@@ -36,8 +35,8 @@ services:
     ports:
       - "5000:5000"
     volumes:
-    - ./data/raw/:/app/inputs/
-    - ./data/processed/:/app/outputs/
+    - {INPUT_PATH}:/app/inputs/
+    - {OUTPUT_PATH}:/app/outputs/
     environment:
       - HF_NER_MODEL_NAME=finding-fossils/metaextractor
       - SPACY_NER_MODEL_NAME=en_metaextractor_spacy
@@ -46,3 +45,9 @@ services:
       - MAX_SENTENCES=20
       - MAX_ARTICLES=1
 ```
+Then build and run the docker image to install the required dependencies using `docker-compose` as follows:
+```bash
+docker-compose build
+docker-compose up entity-extraction-pipeline
+```
+

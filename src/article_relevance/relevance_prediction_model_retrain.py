@@ -52,9 +52,8 @@ from sklearn.metrics import roc_curve
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 
-
 # Locate src module
-current_dir = os.path.dirname(os.path.abspath('__file__'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
 src_dir = os.path.dirname(current_dir)
 sys.path.append(src_dir)
 
@@ -150,7 +149,6 @@ def retrain_data_load_split(reviewed_parquet_folder_path):
     valid_df, test_df = train_test_split(val_test_df, test_size=0.5, random_state=123)
     
     logger.info(f'Data Loading - Reviewed new sample has {train_df.shape[0]}/{valid_df.shape[0]}/{test_df.shape[0]} in train/valid/test splits.')
-    logger.info(f'Data Loading - Each new sample has {train_df.shape[1]} features.')
 
     return train_df, valid_df, test_df
 
@@ -182,7 +180,6 @@ def retrain_data_merge(old_train, new_train, old_valid, new_valid,old_test, new_
     test_df = pd.concat([old_test, new_test], ignore_index=True)
 
     logger.info(f'Data Loading - Final training sample has {train_df.shape[0]}/{valid_df.shape[0]}/{test_df.shape[0]} in train/valid/test splits.')
-    logger.info(f'Data Loading - Each merged sample has {train_df.shape[1]} features.')
 
     return train_df, valid_df, test_df
 
@@ -331,26 +328,26 @@ def model_eval(model, valid_df, test_df, report_dir):
         results[f'thld_{thld}'] = {'valid_recall' : recall, 
                                      'valid_precision': precision,
                                      'valid_f1': f1_score,
-                                     'valid_TN': TN,
-                                     'valid_FN': FN,
-                                     'valid_TP': TP,
-                                     'valid_FP': FP,
+                                     'valid_TN': int(TN),
+                                     'valid_FN': int(FN),
+                                     'valid_TP': int(TP),
+                                     'valid_FP': int(FP),
                                      }
     
     # ======= Test set performnace, assuming using 0.5 threshold
     predictions = model.predict(X_test)
     TN, FP, FN, TP = confusion_matrix(y_test, predictions).ravel()
-    results['test_performance_0.5'] = {'test_recall' : TP / (TP + FN), 
-                                     'test_precision': TP / (TP + FP),
-                                     'test_f1': (2 * precision * recall) / (precision + recall),
-                                     'test_TN': TN,
-                                     'test_FN': FN,
-                                     'test_TP': TP,
-                                     'test_FP': FP,
+    results['test_performance_0.5'] = {'test_recall' : round(TP / (TP + FN),3), 
+                                     'test_precision': round(TP / (TP + FP),3),
+                                     'test_f1': round((2 * precision * recall) / (precision + recall), 3),
+                                     'test_TN': int(TN),
+                                     'test_FN': int(FN),
+                                     'test_TP': int(TP),
+                                     'test_FP': int(FP)
                                      }
     
-    logger.info(f'Evaluation - test recall = {TP / (TP + FN)}')
-    logger.info(f'Evaluation - test precision = {TP / (TP + FP)}')
+    logger.info(f'Evaluation - test recall = {round(TP / (TP + FN), 3)}')
+    logger.info(f'Evaluation - test precision = {round(TP / (TP + FP), 3)}')
     
     # convert to Json file and export
     report_file_path = os.path.join(report_dir, f"retrained_model_{formatted_datetime}_metrics.json")

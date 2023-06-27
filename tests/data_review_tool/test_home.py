@@ -10,18 +10,13 @@ import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
+os.environ["ARTICLE_RELEVANCE_BATCH"] = "article-relevance-output.parquet"
+os.environ["ENTITY_EXTRACTION_BATCH"] = "entity-extraction-output.zip"
+
 # Import the names of callback functions you want to test
 from src.data_review_tool.app import *
 from src.data_review_tool.pages.home import *
 from src.data_review_tool.pages.config import *
-
-
-def test_directory_structure():
-    "test that the data directory structure is correct"
-    dir = "data/data-review-tool"
-    expected = ["processed", "raw"]
-
-    assert expected[0] in os.listdir(dir) and expected[1] in os.listdir(dir)
 
 
 def test_current_article_clicked():

@@ -3,6 +3,7 @@
 import os
 import sys
 import json
+import sys
 import pandas as pd
 import copy
 import numpy as np
@@ -15,6 +16,12 @@ import dash_mantine_components as dmc
 import dash_bootstrap_components as dbc
 from dash_iconify import DashIconify
 import seaborn as sns
+
+sys.path.append(
+    os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir)
+)
+
+from src.logs import get_logger
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -29,17 +36,19 @@ logger = get_logger(__name__)
 original = None
 color_palette = sns.color_palette("RdYlGn", 100).as_hex()
 
+logger = get_logger(__name__)
+
 
 def layout(gddid=None):
     try:
         logger.info(f"Loading article {gddid}")
         global original
-        # get the metadata of the article
-        original = load_article(os.path.join("data", "data-review-tool"), gddid)
+        global results
+
+        original = load_data(f"/entity_extraction/{gddid}.json")
         results = copy.deepcopy(original)
 
     except FileNotFoundError:
-        logger.debug(f"Article {gddid} not found")
         return html.Div(
             [
                 html.H1("Error - gddid Not Found"),
@@ -49,7 +58,9 @@ def layout(gddid=None):
             ]
         )
 
-    relevance_score = round(original["relevance_score"], 2) * 100
+    relevance_score = round(original["predict_proba"], 2) * 100
+
+    logger.info(f"Relevance score for article {gddid} = {relevance_score}")
 
     sidebar = html.Div(
         [
@@ -196,7 +207,7 @@ def layout(gddid=None):
         html.Div(
             [
                 dbc.Row(html.H2(original["title"], style=h2_style)),
-                dbc.Row(html.H4(original["journal_name"], style=h4_style)),
+                dbc.Row(html.H4(original["journal"], style=h4_style)),
                 dbc.Row(
                     [
                         dmc.Group(
@@ -321,7 +332,7 @@ def layout(gddid=None):
                                             ),
                                             variant="filled",
                                             active=True,
-                                            href="http://doi.org/" + original["doi"],
+                                            href="http://doi.org/" + original["DOI"],
                                             target="_blank",
                                             style=nav_button_style,
                                         )
@@ -958,16 +969,14 @@ def save_submit(submit, save, relevant, data):
     callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
 
     if callback_context == "confirm-submit-button.n_clicks" and submit:
-        logger.debug(f"Submitting {data['gddid']}")
-        data["status"] = "Completed"
-        data["last_updated"] = datetime.now().strftime("%Y-%m-%d")
-        gddid = data["gddid"]
-        data = json.dumps(data)
-        with open(
-            os.path.join("data", "data-review-tool", "processed", f"{gddid}.json"), "w"
-        ) as f:
-            f.write(data)
-            logger.info(f"Submitted {gddid}.json")
+        update_data = {
+            "gddid": data["gddid"],
+            "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "corrected_entities": json.dumps(data["entities"]),
+            "status": "Completed",
+        }
+        update_output(**update_data)
+        logger.info("Entities saved!")
         return dmc.Notification(
             title="Review Complete!",
             id="submit-notification",
@@ -976,17 +985,16 @@ def save_submit(submit, save, relevant, data):
             message="Proceed to home page",
             icon=DashIconify(icon="ic:round-celebration"),
         )
+
     elif callback_context == "confirm-irrelevant-button.n_clicks" and relevant:
-        logger.debug(f"Marking {data['gddid']} as non-relevant")
-        data["status"] = "Non-relevant"
-        data["last_updated"] = datetime.now().strftime("%Y-%m-%d")
-        gddid = data["gddid"]
-        data = json.dumps(data)
-        with open(
-            os.path.join("data", "data-review-tool", "processed", f"{gddid}.json"), "w"
-        ) as f:
-            f.write(data)
-            logger.debug(f"Marked {gddid}.json as non-relevant")
+        update_data = {
+            "gddid": data["gddid"],
+            "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "corrected_entities": "None",
+            "status": "Non-relevant",
+        }
+        update_output(**update_data)
+        logger.info("Article removed from queue")
         return dmc.Notification(
             title="Article Removed!",
             id="remove-notification",
@@ -995,16 +1003,16 @@ def save_submit(submit, save, relevant, data):
             message="Proceed to home page",
             icon=DashIconify(icon="dashicons-remove"),
         )
+
     elif callback_context == "save-button.n_clicks" and save:
-        logger.debug(f"Saving {data['gddid']}")
-        data["status"] = "In Progress"
-        gddid = data["gddid"]
-        data = json.dumps(data)
-        with open(
-            os.path.join("data", "data-review-tool", "processed", f"{gddid}.json"), "w"
-        ) as f:
-            f.write(data)
-            logger.info(f"Saved {gddid}.json")
+        update_data = {
+            "gddid": data["gddid"],
+            "last_updated": datetime.now().strftime("%Y-%m-%d"),
+            "corrected_entities": json.dumps(data["entities"]),
+            "status": "In Progress",
+        }
+        update_output(**update_data)
+        logger.info("Article progress saved!")
         return dmc.Notification(
             title="Progress Saved!",
             id="save-notification",
@@ -1013,6 +1021,7 @@ def save_submit(submit, save, relevant, data):
             message="Don't forget to comeback and finish the review",
             icon=DashIconify(icon="dashicons-saved"),
         )
+
     else:
         return None
 
@@ -1238,48 +1247,108 @@ for overflow in ["submit", "irrelevant"]:
     )(toggle_confirmation_modal)
 
 
-def find_start_end_char(text, entity):
-    """Find the start and end character of an entity in a text.
+def load_data(file_path):
+    """Fetches the extracted entities and metadata for an article
 
-    Args:
-        text (str): Text to search for entity.
-        entity (str): Entity to search for in text.
+    Parameter
+    ---------
+    file_path: str
+        Path to extracted entities for an article
 
-    Returns:
-        start (int): Start character of entity in text.
-        end (int): End character of entity in text.
+    Returns
+    -------
+    dict: entities and metadata for an article
+
     """
-    start = text.find(entity)
-    if start == -1:
-        end = -1
-    else:
-        end = start + len(entity)
-    return start, end
+    entities = json.load(open(file_path, "r"))
+    logger.info(f"Entities extracted from file: {file_path}")
+
+    metadata, corrected_entities = get_article_metadata(entities["gddid"])
+    logger.info(f"Metadata extracted for the article")
+
+    if corrected_entities != "None":
+        entities["entities"] = json.loads(corrected_entities)
+        logger.info("Fetched verified entities from stored output")
+
+    return {**entities, **metadata[entities["gddid"]]}
 
 
-def load_article(directory, gddid):
-    """Load the article from the raw or processed directory
+def get_article_metadata(gddid):
+    """Fetch the article metadata
 
-    Args:
-        directory (str): The directory to load the article from
-        gddid (str): The gddid of the article
+    Parameter
+    ---------
+    gddid: str
+        xDD ID of the current selected article
 
-    returns:
-        dict: The article's data
+    Returns
+    -------
+    dict: dictionary containing the current article's metadata
+    str: dictionary of updated entities in string format
     """
-    logger.info(f"Loading article {gddid}")
-    if os.path.exists(os.path.join(directory, "processed", f"{gddid}.json")):
-        article = open(os.path.join(directory, "processed", f"{gddid}.json"), "r")
+    # Read the Parquet file with pushdown predicate
+    article_metadata = pd.read_parquet(
+        os.path.join("/MetaExtractor", "inputs", os.environ["ARTICLE_RELEVANCE_BATCH"])
+    )
+    filtered_metadata = (
+        article_metadata[article_metadata["gddid"] == gddid][
+            [
+                "DOI",
+                "gddid",
+                "predict_proba",
+                "title",
+                "subtitle",
+                "journal",
+                "status",
+                "last_updated",
+                "corrected_entities",
+            ]
+        ]
+        .set_index("gddid")
+        .to_dict(orient="index")
+    )
+
+    if gddid in filtered_metadata:
+        corrected_entities = filtered_metadata[gddid].get("corrected_entities", "None")
     else:
-        article = open(os.path.join(directory, "raw", f"{gddid}.json"), "r")
+        corrected_entities = "None"
 
-    article = json.loads(article.read())
+    return filtered_metadata, corrected_entities
 
-    logger.debug(f"Article Entity Types {article.keys}")
 
-    # ensure the article has all the entity types
-    assert sorted(article["entities"].keys()) == sorted(
-        ["SITE", "REGION", "TAXA", "GEOG", "ALTI", "AGE", "EMAIL"]
-    ), "Article does not have all the entity types"
+def update_output(**args):
+    """
+    Updates the article relevance parquet file
+    with extracted and verified entities
 
-    return article
+    Parameter
+    ---------
+    args: dict
+        Various keys to update in the file
+
+        gddid: str
+            xDD ID of the article to update
+        last_updated: datetime
+            Datetime stamp when the user updated the article review
+        corrected_entities: str
+            Dictionary of corrected and updated entities in string format
+        status: str
+            Status of the reviewing process
+    """
+
+    article_metadata = pd.read_parquet(
+        os.path.join("/MetaExtractor", "inputs", os.environ["ARTICLE_RELEVANCE_BATCH"])
+    )
+    article_metadata.loc[article_metadata["gddid"] == args["gddid"], "status"] = args[
+        "status"
+    ]
+    article_metadata.loc[
+        article_metadata["gddid"] == args["gddid"], "last_updated"
+    ] = args["last_updated"]
+    article_metadata.loc[
+        article_metadata["gddid"] == args["gddid"], "corrected_entities"
+    ] = args["corrected_entities"]
+
+    article_metadata.to_parquet(
+        os.path.join("/MetaExtractor", "inputs", os.environ["ARTICLE_RELEVANCE_BATCH"])
+    )

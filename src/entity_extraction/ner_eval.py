@@ -5,6 +5,7 @@ from copy import deepcopy
 # ensure src is in the path
 import sys
 import os
+
 SRC_DIR = os.path.join(os.path.dirname(__file__), "..", "..")
 if SRC_DIR not in sys.path:
     sys.path.append(SRC_DIR)
@@ -18,14 +19,23 @@ Entity = namedtuple("Entity", "e_type start_offset end_offset")
 
 
 class Evaluator:
-    def __init__(self, true, pred, tags):
-        """ """
+    def __init__(self, true_labels, pred_labels, tags):
+        """Initializer for the Evaluator class
 
-        if len(true) != len(pred):
+        Parameters
+        ----------
+        true_labels : list
+            A list of true label strings of the form ["B-LOC", "I-LOC", "O"]
+        pred_labels : list
+            A list of predicted label strings of the form ["B-LOC", "I-LOC", "O"]
+        tags : list
+            A list of all possible tags, e.g. ["LOC", "PER", "ORG"]
+        """
+        if len(true_labels) != len(true_labels):
             raise ValueError("Number of predicted documents does not equal true")
 
-        self.true = true
-        self.pred = pred
+        self.true = true_labels
+        self.pred = pred_labels
         self.tags = tags
 
         # Setup dict into which metrics will be stored.
@@ -112,13 +122,21 @@ class Evaluator:
         return self.results, self.evaluation_agg_entities_type
 
 
-def collect_named_entities(tokens):
+def collect_named_entities(tokens: list) -> list[Entity]:
     """
     Creates a list of Entity named-tuples, storing the entity type and the start and end
     offsets of the entity.
 
-    :param tokens: a list of tags
-    :return: a list of Entity named-tuples
+    Parameters
+    ----------
+    tokens : list
+        A list of tokens, where each token is of the form B-LOC
+
+    Returns
+    -------
+    named_entities : list
+        A list of Entity named-tuples, storing the entity type and the start and end
+        offsets of the entity in terms of B- I- tag counts
     """
 
     named_entities = []

@@ -32,8 +32,13 @@ def spacy_extract_all(
     """
 
     if ner_model == None:
-        logger.info("Empty model passed, return 0 labels.")
-        return []
+        try:
+            import en_metaextractor_spacy
+            ner_model = en_metaextractor_spacy.load()
+        except:
+            logger.error(f"Spacy model en_metaextractor_spacy not found.")
+            logger.info("Empty model passed, return 0 labels.")
+            return []
 
     entities = []
     doc = ner_model(text)

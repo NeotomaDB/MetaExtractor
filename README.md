@@ -96,7 +96,7 @@ The Data Review Tool can be launched by running the following command from the r
 docker-compose up --build data-review-tool
 ```
 
-Once the image is built and the container is running, the Data Review Tool can be accessed at http://localhost:8050/. There is a sample "extracted entities" JSON file provided for demo purposes.
+Once the image is built and the container is running, the Data Review Tool can be accessed at <http://localhost:8050/>. There is a sample "extracted entities" JSON file provided for demo purposes.
 
 ### Data Requirements
 
@@ -108,7 +108,7 @@ The article relevance prediction component requires a list of journals that are 
 
 #### Data Extraction Pipeline
 
-As the full text articles provided by the xDD team are not publicly available we cannot create a public link to download the labelled training data. For access requests please contact Ty Andrews at ty.elgin.andrews@gmail.com.
+As the full text articles provided by the xDD team are not publicly available we cannot create a public link to download the labelled training data. For access requests please contact Ty Andrews at <ty.elgin.andrews@gmail.com>.
 
 ### Development Workflow Overview
 
@@ -142,9 +142,6 @@ WIP
 │   │   ├── processed/                  <- Processed data
 │   │   └── interim/                    <- Temporary data location
 │   ├── data-review-tool/               <- Directory for data related to data review tool
-│   │   ├── raw/                        <- Raw unprocessed data
-│   │   ├── processed/                  <- Processed data
-│   │   └── interim/                    <- Temporary data location
 ├── results/                            <- Directory for results
 │   ├── article-relevance/              <- Directory for results related to article relevance prediction
 │   ├── ner/                            <- Directory for results related to named entity recognition

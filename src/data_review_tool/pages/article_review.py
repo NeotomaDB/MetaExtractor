@@ -16,7 +16,10 @@ import dash_mantine_components as dmc
 import dash_bootstrap_components as dbc
 from dash_iconify import DashIconify
 import seaborn as sns
-sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir))
+
+sys.path.append(
+    os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir)
+)
 
 from src.logs import get_logger
 
@@ -35,29 +38,29 @@ color_palette = sns.color_palette("RdYlGn", 100).as_hex()
 
 logger = get_logger(__name__)
 
+
 def layout(gddid=None):
     try:
         logger.info(f"Loading article {gddid}")
         global original
         global results
-        
+
         original = load_data(f"/entity_extraction/{gddid}.json")
         results = copy.deepcopy(original)
 
     except FileNotFoundError:
-        return html.Div([
-            html.H1("Error - gddid Not Found"),
-            html.P("The requested gddid does not exist in the files."),
-            html.P("Please check the article's gddid and try again."),
-            dcc.Link("Go back to Home", href="/"),
-        ])
-    
+        return html.Div(
+            [
+                html.H1("Error - gddid Not Found"),
+                html.P("The requested gddid does not exist in the files."),
+                html.P("Please check the article's gddid and try again."),
+                dcc.Link("Go back to Home", href="/"),
+            ]
+        )
+
     relevance_score = round(original["predict_proba"], 2) * 100
-    
-    logger.info(
-        f"Relevance score for article {gddid} = {relevance_score}"
-    )
-    
+
+    logger.info(f"Relevance score for article {gddid} = {relevance_score}")
 
     sidebar = html.Div(
         [
@@ -202,16 +205,14 @@ def layout(gddid=None):
 
     layout = dmc.NotificationsProvider(
         html.Div(
-            dbc.Row(
-                html.H2(original["title"],
-                        style=h2_style)),
-            dbc.Row(
-                html.H4(original["journal"],
-                        style=h4_style)),
-            dbc.Row(
-                [
-                    dmc.Group([
-                        dbc.Col(
+            [
+                dbc.Row(html.H2(original["title"], style=h2_style)),
+                dbc.Row(html.H4(original["journal"], style=h4_style)),
+                dbc.Row(
+                    [
+                        dmc.Group(
+                            [
+                                dbc.Col(
                                     [
                                         dmc.Button(
                                             dmc.Text("Home", style=nav_text_style),
@@ -331,7 +332,7 @@ def layout(gddid=None):
                                             ),
                                             variant="filled",
                                             active=True,
-                                            href="http://doi.org/" + original["doi"],
+                                            href="http://doi.org/" + original["DOI"],
                                             target="_blank",
                                             style=nav_button_style,
                                         )
@@ -966,60 +967,60 @@ def save_submit(submit, save, relevant, data):
         str: The notification to display
     """
     callback_context = [p["prop_id"] for p in dash.callback_context.triggered][0]
-        
+
     if callback_context == "confirm-submit-button.n_clicks" and submit:
         update_data = {
             "gddid": data["gddid"],
             "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "corrected_entities": json.dumps(data['entities']),
-            "status": "Completed"
+            "corrected_entities": json.dumps(data["entities"]),
+            "status": "Completed",
         }
         update_output(**update_data)
         logger.info("Entities saved!")
-        return  dmc.Notification(
-                    title="Review Complete!",
-                    id="submit-notification",
-                    action="show",
-                    color="green",
-                    message="Proceed to home page",
-                    icon=DashIconify(icon="ic:round-celebration"),
-                )
-        
+        return dmc.Notification(
+            title="Review Complete!",
+            id="submit-notification",
+            action="show",
+            color="green",
+            message="Proceed to home page",
+            icon=DashIconify(icon="ic:round-celebration"),
+        )
+
     elif callback_context == "confirm-irrelevant-button.n_clicks" and relevant:
         update_data = {
             "gddid": data["gddid"],
             "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "corrected_entities": "None",
-            "status": "Non-relevant"
+            "status": "Non-relevant",
         }
         update_output(**update_data)
         logger.info("Article removed from queue")
-        return  dmc.Notification(
-                    title="Article Removed!",
-                    id="remove-notification",
-                    action="show",
-                    color="red",
-                    message="Proceed to home page",
-                    icon=DashIconify(icon="dashicons-remove"),
-                )
-        
+        return dmc.Notification(
+            title="Article Removed!",
+            id="remove-notification",
+            action="show",
+            color="red",
+            message="Proceed to home page",
+            icon=DashIconify(icon="dashicons-remove"),
+        )
+
     elif callback_context == "save-button.n_clicks" and save:
         update_data = {
             "gddid": data["gddid"],
             "last_updated": datetime.now().strftime("%Y-%m-%d"),
-            "corrected_entities": json.dumps(data['entities']),
-            "status": "In Progress"
+            "corrected_entities": json.dumps(data["entities"]),
+            "status": "In Progress",
         }
         update_output(**update_data)
         logger.info("Article progress saved!")
-        return  dmc.Notification(
-                    title="Progress Saved!",
-                    id="save-notification",
-                    action="show",
-                    color="yellow",
-                    message="Don't forget to comeback and finish the review",
-                    icon=DashIconify(icon="dashicons-saved"), 
-                )
+        return dmc.Notification(
+            title="Progress Saved!",
+            id="save-notification",
+            action="show",
+            color="yellow",
+            message="Don't forget to comeback and finish the review",
+            icon=DashIconify(icon="dashicons-saved"),
+        )
 
     else:
         return None
@@ -1076,6 +1077,7 @@ def tabs_control(n_clicks, site, region, taxa, geog, alti, age, email, accordian
     tabs = defaultdict(list)
     logger.debug(f"Accordian: {accordian}")
     relevant_sentences = pd.DataFrame(data["relevant_sentences"])
+    logger.debug(relevant_sentences)
     positive_values = relevant_sentences["sentid"][relevant_sentences["sentid"] > 0]
     # Get all the sentences and corresponding section names
     for entity, values in data["entities"][accordian].items():
@@ -1245,6 +1247,7 @@ for overflow in ["submit", "irrelevant"]:
         prevent_initial_call=True,
     )(toggle_confirmation_modal)
 
+
 def load_data(file_path):
     """Fetches the extracted entities and metadata for an article
 
@@ -1256,56 +1259,61 @@ def load_data(file_path):
     Returns
     -------
     dict: entities and metadata for an article
-        
+
     """
     entities = json.load(open(file_path, "r"))
     logger.info(f"Entities extracted from file: {file_path}")
-    
-    metadata, corrected_entities = get_article_metadata(entities['gddid'])
+
+    metadata, corrected_entities = get_article_metadata(entities["gddid"])
     logger.info(f"Metadata extracted for the article")
-    
+
     if corrected_entities != "None":
         entities["entities"] = json.loads(corrected_entities)
         logger.info("Fetched verified entities from stored output")
-            
-    return {**entities, **metadata[entities['gddid']]}
 
-    
+    return {**entities, **metadata[entities["gddid"]]}
+
+
 def get_article_metadata(gddid):
     """Fetch the article metadata
-    
+
     Parameter
     ---------
     gddid: str
         xDD ID of the current selected article
-        
+
     Returns
     -------
     dict: dictionary containing the current article's metadata
     str: dictionary of updated entities in string format
     """
     # Read the Parquet file with pushdown predicate
-    article_metadata = pd.read_parquet(os.path.join(
-                    "/MetaExtractor",
-                    "inputs",
-                    os.environ["ARTICLE_RELEVANCE_BATCH"]
-                ))    
-    filtered_metadata = (
-        article_metadata[article_metadata['gddid'] == gddid]
-        [[ 
-          'DOI', 'gddid', 'predict_proba', 'title',
-          'subtitle', 'journal', 'status', 'last_updated',
-          'corrected_entities'
-        ]]
-        .set_index("gddid")
-        .to_dict(orient='index')
+    article_metadata = pd.read_parquet(
+        os.path.join("/MetaExtractor", "inputs", os.environ["ARTICLE_RELEVANCE_BATCH"])
     )
-    
+    filtered_metadata = (
+        article_metadata[article_metadata["gddid"] == gddid][
+            [
+                "DOI",
+                "gddid",
+                "predict_proba",
+                "title",
+                "subtitle",
+                "journal",
+                "status",
+                "last_updated",
+                "corrected_entities",
+            ]
+        ]
+        .set_index("gddid")
+        .to_dict(orient="index")
+    )
+
     if gddid in filtered_metadata:
         corrected_entities = filtered_metadata[gddid].get("corrected_entities", "None")
     else:
         corrected_entities = "None"
-    
+
     return filtered_metadata, corrected_entities
 
 
@@ -1313,12 +1321,12 @@ def update_output(**args):
     """
     Updates the article relevance parquet file
     with extracted and verified entities
-    
+
     Parameter
     ---------
     args: dict
         Various keys to update in the file
-        
+
         gddid: str
             xDD ID of the article to update
         last_updated: datetime
@@ -1328,20 +1336,20 @@ def update_output(**args):
         status: str
             Status of the reviewing process
     """
-    
-    article_metadata = pd.read_parquet(os.path.join(
-                    "/MetaExtractor",
-                    "inputs",
-                    os.environ["ARTICLE_RELEVANCE_BATCH"]
-                ))    
-    article_metadata.loc[article_metadata['gddid'] == args['gddid'], 'status'] = args['status']
-    article_metadata.loc[article_metadata['gddid'] == args['gddid'], 'last_updated'] = args['last_updated']
-    article_metadata.loc[article_metadata['gddid'] == args['gddid'], 'corrected_entities'] = args['corrected_entities']
-    
-    article_metadata.to_parquet(os.path.join(
-        "/MetaExtractor",
-        "inputs",
-        os.environ["ARTICLE_RELEVANCE_BATCH"]
-    ))
-        
 
+    article_metadata = pd.read_parquet(
+        os.path.join("/MetaExtractor", "inputs", os.environ["ARTICLE_RELEVANCE_BATCH"])
+    )
+    article_metadata.loc[article_metadata["gddid"] == args["gddid"], "status"] = args[
+        "status"
+    ]
+    article_metadata.loc[
+        article_metadata["gddid"] == args["gddid"], "last_updated"
+    ] = args["last_updated"]
+    article_metadata.loc[
+        article_metadata["gddid"] == args["gddid"], "corrected_entities"
+    ] = args["corrected_entities"]
+
+    article_metadata.to_parquet(
+        os.path.join("/MetaExtractor", "inputs", os.environ["ARTICLE_RELEVANCE_BATCH"])
+    )

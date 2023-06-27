@@ -7,11 +7,15 @@ COPY ./docker/data-review-tool/requirements.txt .
 # Install the Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-RUN git clone https://github.com/NeotomaDB/MetaExtractor
-
 WORKDIR MetaExtractor/
 
-RUN git switch dev
+ENV LOG_LEVEL=DEBUG
+# Copy the entire repository folder into the container
+COPY src ./src
+
+# RUN git clone https://github.com/NeotomaDB/MetaExtractor
+# WORKDIR MetaExtractor/
+# RUN git switch dev
 
 # Expose the port your Dash app is running on
 EXPOSE 8050

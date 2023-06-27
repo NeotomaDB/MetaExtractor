@@ -247,7 +247,7 @@ An original sample of 300+ full text articles related to Neotoma was provided. S
 
 ### Data Preprocessing and Labelling
 
-For the development of the NER models a sample of 39 articles relevant to Neotoma were preprocessed and labelled by the research team using LabelStudio. Preprocessing steps involved chunking the articles, varying in length drastically, into bite-sized pieces and replacing special tokens with their English equivalent symbol. Other text preprocessing techniques like stemming, lemmatization and converting text to lower case were not used for this project as the aim was to preserve the original text and ensure that the model understands contextual information. The Label Studio interface hosted on HuggingFace was used for labeling purposes as it provides an out-of-the-box collaborative environment for several ML tagging tasks, including named entity recognition. Input and output files were efficiently synced with buckets on the Azure cloud, with scope of onboarding a larger team in the future to carry on model development. The SITE entity proved difficult to label as differentiating between obscure location names or an acronym of a core sample was difficult for the team. Similarly, correctly identifying TAXA and where on TAXA label began and another ends proved challenging. A significant improvement in results is expected by improving the quality of labeling with the help of data stewards with subject matter expertise.
+For the development of the NER models a sample of 39 articles relevant to Neotoma were preprocessed and labelled by the research team using Label Studio[@LabelStudio]. Preprocessing steps involved chunking the articles, varying in length drastically, into bite-sized pieces and replacing special tokens with their English equivalent symbol. Other text preprocessing techniques like stemming, lemmatization and converting text to lower case were not used for this project as the aim was to preserve the original text and ensure that the model understands contextual information. The Label Studio interface hosted on HuggingFace was used for labeling purposes as it provides an out-of-the-box collaborative environment for several ML tagging tasks, including named entity recognition. Input and output files were efficiently synced with buckets on the Azure cloud, with scope of onboarding a larger team in the future to carry on model development. The SITE entity proved difficult to label as differentiating between obscure location names or an acronym of a core sample was difficult for the team. Similarly, correctly identifying TAXA and where on TAXA label began and another ends proved challenging. A significant improvement in results is expected by improving the quality of labeling with the help of data stewards with subject matter expertise.
 
 The labelled articles were split into train/validation/test sets by full article with splits of 70%/15%/15% respectively. The data splitting was done based upon whole articles to prevent data leakage into the model learning certain articles patterns before evaluation. This resulted in the entity distributions between train/validation/test as shown in @fig-entity-dists.
 
@@ -463,7 +463,7 @@ Final hyper parameters used to train the spaCy models along with comments on eac
 
 Interesting difference to note here are the architectures of the NER models. Both the models use a base model to tokenize the input sentence and generate word embeddings, but the HuggingFace NER model fine-tunes a token classification head to it, which consists of a set of linear layer and soft max, whereas, the spaCy NER model chunks and labels a sequence of inputs using an algorithm similar to transition-based dependency parsing using Stack-LSTMs.
 
-The workflow in @fig-training_pipeline shows the primary steps for training with the Entity Extraction models with intermediate files and processes.
+The workflow in @fig-training-pipeline shows the primary steps for training with the Entity Extraction models with intermediate files and processes.
 
 ```{mermaid}
 %%| label: fig-training-pipeline
@@ -537,17 +537,11 @@ In order to create an interactive tool that would be appropriate and efficient f
 | **Requirement**                                       | **Target**                                       |
 | ----------------------------------------------------- | ------------------------------------------------ |
 | Options for reviewing extracted data                  | Accept, Reject, Edit then Accept                 |
-| ----------------------------------------------------- | ------------------------------------------------ |
 | Other data made available to the user                 | Article DOI, Journal Name, Hyperlink to Article  |
-| ----------------------------------------------------- | ------------------------------------------------ |
 | Displaying text from where the data was extracted     | Current sentence and 1-2 sentences before/after. |
-| ----------------------------------------------------- | ------------------------------------------------ |
 | User skill to run                                     | Non-Technical (e.g. no code/CLI)                 |
-| ----------------------------------------------------- | ------------------------------------------------ |
 | Number of mouse clicks to review single piece of data | 1-2                                              |
-| ----------------------------------------------------- | ------------------------------------------------ |
 | Reviewing workflow                                    | Able to save/resume progress.                    |
-| ----------------------------------------------------- | ------------------------------------------------ |
 | Output file format                                    | JSON                                             |
 
 : Data Review Tool Target Metrics {#tbl-review_metrics}
@@ -665,7 +659,6 @@ The token based recall for each model on the test set by entity type are shown i
 #| label: tbl-token-recall
 #| tbl-cap: 'Entity extraction model results for token based recall, overall and by entity type'
 #| tbl-cap-location: bottom
-#| tbl-colwidths: [0.2,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]
 #| output: markdown
 
 # render the token_recall, token_precision, and token_f1 scores for each model and each entity type
@@ -730,7 +723,7 @@ An important observation to make here is that even the top models have a lower p
 
 ## Data Review Tool
 
-The final data review tool that was created was a multi-page Plotly Dash application. The tool can be replicated by launching Docker containers, enabling anyone within the Neotoma community to easily launch and utilize the tool for reviewing outputs from the entity extraction pipeline. This approach ensures accessibility and convenience for users who wish to review the pipeline outputs within the Neotoma project.
+The final data review tool that was created was a multi-page Plotly Dash application. The tool can be replicated by launching Docker[@docker] containers, enabling anyone within the Neotoma community to easily launch and utilize the tool for reviewing outputs from the entity extraction pipeline. This approach ensures accessibility and convenience for users who wish to review the pipeline outputs within the Neotoma project.
 
 ![Data Review Tool](assets/data_review.png){#fig-review_tool_snap}
 
@@ -741,17 +734,11 @@ The output of this data review tool is a JSON object that stores the originally 
 | **Requirement**                                         | **Results**                                   |
 | ------------------------------------------------------- | --------------------------------------------- |
 | Options for reviewing extracted data                    | Accept, Reject, Edit, Add then Accept         |
-| ----------------------------------------------------- | ------------------------------------------------ |
 | Other data made available to the user                   | Article DOI, Hyperlink to Article             |
-| ----------------------------------------------------- | ------------------------------------------------ |
 | Displaying text from where the data was extracted       | Current sentence and 1 sentence before/after. |
-| ----------------------------------------------------- | ------------------------------------------------ |
 | User skill to run                                       | Non-Technical (e.g. no code/CLI)              |
-| ----------------------------------------------------- | ------------------------------------------------ |
 | Number of mouse clicks to review a single piece of data | 3 clicks from launch                          |
-| ----------------------------------------------------- | ------------------------------------------------ |
 | Reviewing workflow                                      | Able to save/resume progress.                 |
-| ----------------------------------------------------- | ------------------------------------------------ |
 | Output file format                                      | JSON                                          |
 
 : Data Review Tool Mertic Results {#tbl-review_results}
@@ -760,7 +747,7 @@ As @tbl-review_results shows, all of the requirements that were originally laid 
 
 ## Product Deployment
 
-The end goal of this project is to have each data product running in a semi/un-supervised fashion. The article relevance prediction pipeline is containerized using Docker. It is expected to run on a daily daily or weekly basis by the Neotoma and gets the latest published articles from the public xDD API, runs the article relevance prediction, and finally submits relevant articles to xDD to have their full text processed. 
+The end goal of this project is to have each data product running in a semi/un-supervised fashion. The article relevance prediction pipeline is containerized using Docker[@docker]. It is expected to run on a daily daily or weekly basis by the Neotoma and gets the latest published articles from the public xDD API [@xDD], runs the article relevance prediction, and finally submits relevant articles to xDD to have their full text processed. 
 
 The Article Data Extraction pipeline is containerized using Docker and contains the entity extraction model within it. It is run on the xDD servers as xDD is not legally allowed to send full text articles off their servers. The container accepts full text articles, extracts the entities, and outputs a single JSON object for each article which is then exported by xDD back to the Neotoma team. The extracted entity JSON objects are combined with the article relevance prediction results and this is what is loaded by the Data Review Tool. @fig-deployment_pipeline depicts the work flow.
 

@@ -168,7 +168,7 @@ The UBC MDS project team consists of:
 
 - **Ty Andrews**
 - **Kelly Wu**
-- **Jenit Jain**
+- [![ORCID](https://img.shields.io/badge/orcid-0009--0007--8913--2403-brightgreen.svg)](https://orcid.org/0000-0002-7926-4935) [Jenit Jain](https://ht-data.com/)
 - **Shaun Hutchinson**
 
 Sponsors from Neotoma supporting the project are:

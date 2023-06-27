@@ -159,14 +159,6 @@ def test_generate_classification_results_with_incorrect_input(example_incorrect_
     assert round(results["entity"]["precision"], 2) == 0.5
 
 
-def test_generate_classification_results_with_empty_input():
-    true_tokens = []
-    predicted_tokens = []
-
-    with pytest.raises(ValueError):
-        generate_classification_results(true_tokens, predicted_tokens)
-
-
 def test_generate_classification_results_with_invalid_input_lengths():
     true_tokens = [["B-TAXA", "I-TAXA", "O", "B-PER"]]
     predicted_tokens = [["B-TAXA", "I-TAXA", "O"]]

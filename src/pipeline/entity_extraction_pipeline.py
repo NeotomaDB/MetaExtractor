@@ -1,13 +1,11 @@
 # Author: Ty Andrews
 # Date: 2023-06-05
 """
-Usage: entity_extraction.py --article_text_path=<article_text_path> --output_path=<output_path> [--max_sentences=<max_sentences>] [--max_articles=<max_articles>]
+Usage: entity_extraction_pipeline.py --article_text_path=<article_text_path> --output_path=<output_path>
 
 Options:
 --article_text_path=<article_text_path> The path to the article text data file.
 --output_path=<output_path> The path to export the extracted entities to.
---max_sentences=<max_sentences> The maximum number of sentences to extract entities from. [default: -1]
---max_articles <max_articles> The maximum number of articles to extract entities from. [default: -1]
 """
 
 import os
@@ -37,6 +35,8 @@ load_dotenv(find_dotenv())
 HF_NER_MODEL_NAME = os.getenv("HF_NER_MODEL_NAME", "finding-fossils/metaextractor")
 SPACY_NER_MODEL_NAME = os.getenv("SPACY_NER_MODEL_NAME", "en_metaextractor_spacy")
 USE_NER_MODEL_TYPE = os.getenv("USE_NER_MODEL_TYPE", "huggingface")
+MAX_SENTENCES = os.getenv("MAX_SENTENCES", "20")
+MAX_ARTICLES = os.getenv("MAX_ARTICLES", "1")
 
 logger = get_logger(__name__)
 
@@ -553,19 +553,19 @@ def main():
 
         article_text_data = load_article_text_data(file_path)
 
-        if opt["--max_articles"] is not None and int(opt["--max_articles"]) != -1:
+        if MAX_ARTICLES is not None and int(MAX_ARTICLES) != -1:
             article_text_data = article_text_data[
                 # 7 index used for testing with entities in first couple sentences of article 7
                 article_text_data["gddid"].isin(
                     article_text_data["gddid"].unique()[
-                        0 : 0 + int(opt["--max_articles"])
+                        0 : 0 + int(MAX_ARTICLES)
                     ]
                 )
             ]
 
         # if max_sentences is not -1 then only use the first max_sentences sentences
-        if opt["--max_sentences"] is not None and int(opt["--max_sentences"]) != -1:
-            article_text_data = article_text_data.head(int(opt["--max_sentences"]))
+        if MAX_SENTENCES is not None and int(MAX_SENTENCES) != -1:
+            article_text_data = article_text_data.head(int(MAX_SENTENCES))
 
         for article_gdd in article_text_data["gddid"].unique():
             logger.info(f"Processing GDD ID: {article_gdd}")

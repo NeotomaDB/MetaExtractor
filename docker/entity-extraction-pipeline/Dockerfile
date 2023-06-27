@@ -26,8 +26,4 @@ VOLUME ["/inputs", "/outputs"]
 # Set the entry point and command to run the script
 USER extraction-user  
 RUN ls -alp /app
-ENTRYPOINT python src/pipeline/entity_extraction_pipeline.py \
-    --article_text_path /inputs/ \
-    --output_path /outputs/ \
-    --max_articles ${MAX_ARTICLES} \
-    --max_sentences ${MAX_SENTENCES}
+ENTRYPOINT python src/pipeline/entity_extraction_pipeline.py --article_text_path /inputs/ --output_path /outputs/

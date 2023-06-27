@@ -14,6 +14,9 @@ services:
     build: 
       dockerfile: ./docker/entity-extraction-pipeline/Dockerfile
       context: .
+      args:
+        MAX_SENTENCES: 20
+        MAX_ARTICLES: 1
     ports:
       - "5000:5000"
     volumes:
@@ -24,5 +27,3 @@ services:
       - SPACY_NER_MODEL_NAME=en_metaextractor_spacy
       - USE_NER_MODEL_TYPE=huggingface
       - LOG_OUTPUT_DIR=/outputs/
-      - MAX_SENTENCES=20
-      - MAX_ARTICLES=1 

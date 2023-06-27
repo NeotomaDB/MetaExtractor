@@ -6,15 +6,15 @@ services:
       dockerfile: ./docker/data-review-tool/Dockerfile
       context: .
     environment:
-      - ARTICLE_RELEVANCE_BATCH=article_relevance_output.parquet
-      - ENTITY_EXTRACTION_BATCH=entity_extraction_output.zip
+      - ARTICLE_RELEVANCE_BATCH=article-relevance-output.parquet
+      - ENTITY_EXTRACTION_BATCH=entity-extraction-output.zip
     ports:
       - "8050:8050"
     volumes:
       - ./data/data-review-tool:/MetaExtractor/inputs:rw
   entity-extraction-pipeline:
     image: metaextractor-entity-extraction-pipeline:v0.0.2
-    build: 
+    build:
       dockerfile: ./docker/entity-extraction-pipeline/Dockerfile
       context: .
       args:
@@ -23,10 +23,10 @@ services:
     ports:
       - "5000:5000"
     volumes:
-    - ./data/entity-extraction/raw/original_files/:/inputs/
-    - ./data/entity-extraction/processed/processed_articles/:/outputs/
+      - ./data/entity-extraction/raw/original_files/:/inputs/
+      - ./data/entity-extraction/processed/processed_articles/:/outputs/
     environment:
       - USE_NER_MODEL_TYPE=huggingface
       - LOG_OUTPUT_DIR=/outputs/
       - MAX_SENTENCES=20
-      - MAX_ARTICLES=1 
+      - MAX_ARTICLES=1

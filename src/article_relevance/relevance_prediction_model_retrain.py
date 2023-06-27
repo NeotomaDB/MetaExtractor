@@ -18,6 +18,7 @@
 # - All new articles's reviewed data outputted from data review tool are stored in one folder, with subfolders for each batch.
 # - Each parquet file contains doi, metadata, sentence embeddings, i.e. all info required for retraining
 
+import os
 import numpy as np
 import pandas as pd
 from sentence_transformers import SentenceTransformer
@@ -34,14 +35,27 @@ from sklearn.compose import make_column_transformer, ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler, OrdinalEncoder, FunctionTransformer
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
+from logs import get_logger
+logger = get_logger(__name__) # this gets the object with the current modules name
 
 
-def train_data_load_split(train_raw_path):
+def train_data_load_split(train_raw_csv_path):
+    '''
+    Load the old sample used in the original model training.
+    Return the train, validation, and test split as three dataframes.
+
+    Args:
+        train_raw_csv_path (str)    The path to the original training data file metadata_processed.csv.
+
+    Return:
+        Three pandas Data frames: train_df, valid_df, test_df
+
+    Example:
+        train_data_load_split(train_raw_csv_path = "../../data/article-relevance/processed/metadata_processed.csv")
     '''
 
-    '''
     # load original training sample
-    metadata_df = pd.read_csv("../../data/article-relevance/processed/metadata_processed.csv", index_col=0)
+    metadata_df = pd.read_csv(train_raw_csv_path, index_col=0)
     training_keepcol = [
        'is-referenced-by-count', 
        'has_abstract', 
@@ -54,6 +68,9 @@ def train_data_load_split(train_raw_path):
     metadata_df_cleaned['subject_clean'] = metadata_df_cleaned['subject_clean'].fillna(value='')
 
     # add specter2 embeddings
+    logger.info(f'Loading - Original sample has {metadata_df_cleaned.shape[0]} examples. ')
+    logger.info(f'Embedding - Adding embeddings to these examples.')
+
     model = SentenceTransformer('allenai/specter2')
     embeddings = metadata_df_cleaned['text_with_abstract'].apply(model.encode)
     embeddings_df = pd.DataFrame(embeddings.tolist())
@@ -61,23 +78,60 @@ def train_data_load_split(train_raw_path):
     # Join embeddings with metadata
     embeddings_df.columns = embeddings_df.columns.astype(str) # require column names as strings for modelling
     metadata_with_embedding = pd.concat([metadata_df_cleaned, embeddings_df], axis = 1)
+    logger.info(f'Embedding - Embedding merged with metadata.')
 
     # Split into train/valid/test sets
     train_df, val_test_df = train_test_split(metadata_with_embedding, test_size=0.8, random_state=123)
     valid_df, test_df = train_test_split(val_test_df, test_size=0.5, random_state=123)
+    logger.info(f'Result - Original sample has {train_df.shape[0]}/{valid_df.shape[0]}/{test_df.shape[0]} in train/valid/test splits.')
 
     return train_df, valid_df, test_df
 
-    
 
-def retrain_data_load_split(reviewed_data_path):
+def retrain_data_load_split(reviewed_parquet_folder_path):
     '''
-    
+    Get a DOI list of reviewed articles (i.e. status is completed/irrelevant).
+    Retrieve their metadata and split into train/valid/test sets.
+    Return the train, validation, and test splits as three dataframes.
+
+    Args:
+        reviewed_parquet_folder_path (str)  The path to the folder storing reviewed articles parquet files.
+
+    Return:
+        Three pandas Data frames: train_df, valid_df, test_df
     '''
+    result_df = []
 
-    pass
+    # Get a list of parquet files in the folder
+    parquet_list = os.listdir(reviewed_parquet_folder_path)
 
-def retrain_data_merge(old_train):
+    # Loop thorugh all parquet files and extract the rows with status "Non-relevant" or "Completed"
+    for file_name in parquet_list:
+        if file_name.endswith('.parquet'):
+            # Construct the file path
+            file_path = os.path.join(reviewed_parquet_folder_path, file_name)
+
+            # Read the parquet file into a dataframe
+            onefile_df = pd.read_parquet(file_path)
+
+            # Filter rows based on the "status" column
+            filtered_df = onefile_df[onefile_df['status'].isin(['non-relevant', 'completed'])]
+
+            # Append the filtered dataframe to the list
+            result_df.append(filtered_df)
+
+    # Concatenate all dataframes into a single dataframe
+    return_df = pd.concat(result_df, ignore_index=True)
+
+    # Reindex
+    
+    # Create reviewed_target column using status column
+
+
+    return return_df
+
+
+def retrain_data_merge(old_train, new_train, old_valid, new_valid,old_test, new_test):
     '''
     
     '''
@@ -94,6 +148,13 @@ def model_train(train_df, model_c = 0.01563028103558011):
     pass
 
 def model_export(model, output_dir):
+    '''
+    
+    '''
+
+    pass
+
+def model_eval(model, valid_df, test_df, report_dir):
     '''
     
     '''

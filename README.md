@@ -53,7 +53,6 @@ Articles predicted to be relevant will then be submitted to the Data Extraction 
    <img src="assets/article_prediction_flow.png"  width="800">  
 </p>
 
-
 To run the Docker image for article relevance prediction pipeline, please refer to the instructions [here](docker/article-relevance/README.md)
 
 ### Data Extraction Pipeline
@@ -91,11 +90,13 @@ Finally, the extracted data is loaded into the Data Review Tool where members of
 First, begin by installing the requirements.
 
 For pip:
+
 ```bash
 pip install -r requirements.txt
 ```
 
-For conda: 
+For conda:
+
 ```bash
 conda install environment.yml
 ```
@@ -110,8 +111,7 @@ The Data Review Tool can be launched by running the following command from the r
 docker-compose up --build data-review-tool
 ```
 
-Once the image is built and the container is running, the Data Review Tool can be accessed at <http://localhost:8050/>. There is a sample "extracted entities" JSON file provided for demo purposes.
-
+Once the image is built and the container is running, the Data Review Tool can be accessed at <http://localhost:8050/>. There is a sample `article-relevance-output.parquet` and `entity-extraction-output.zip` provided for demo purposes.
 
 ### Article Relevance & Entity Extraction Model
 
@@ -127,15 +127,26 @@ The article relevance prediction component requires a list of journals that are 
 
 #### Data Extraction Pipeline
 
-As the full text articles provided by the xDD team are not publicly available we cannot create a public link to download the labelled training data. For access requests please contact Simon Goring at goring@wisc.edu or Ty Andrews at ty.elgin.andrews@gmail.com.
+As the full text articles provided by the xDD team are not publicly available we cannot create a public link to download the labelled training data. For access requests please contact Simon Goring at <goring@wisc.edu> or Ty Andrews at <ty.elgin.andrews@gmail.com>.
+
+#### Data Review Tool
+
+Once the article relevance prediction and data extraction pipeline have been run, the output files can be used as input for the Data Review Tool. The Data Review Tool requires the following files:
+
+- `article-relevance-output.parquet` - output file from the article relevance prediction pipeline
+- `entity-extraction-output.zip` - output file from the data extraction pipeline
+
+These files should be added to the `data/data-review-tool` directory.
 
 ### System Requirements
 
 The project has been developed and tested on the following system:
+
 - macOS Monterey 12.5.1
 - Windows 11 Pro Version: 22H2
 
 The pre-built Docker images were built using Docker version 4.20.0 but should work with any version of Docker since 4.
+
 ## Directory Structure and Description
 
 ```

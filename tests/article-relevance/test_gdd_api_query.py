@@ -14,7 +14,6 @@ import json
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(os.path.dirname(current_dir))
 script_dir = os.path.join(parent_dir, "src", "article_relevance")
-print(script_dir)
 
 sys.path.append(script_dir)
 

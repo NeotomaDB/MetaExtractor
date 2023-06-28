@@ -14,7 +14,6 @@ import warnings
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(os.path.dirname(current_dir))
 script_dir = os.path.join(parent_dir, "src", "article_relevance")
-print(script_dir)
 
 sys.path.append(script_dir)
 
@@ -22,6 +21,10 @@ from relevance_prediction_parquet import (crossref_extract,
                                               data_preprocessing, 
                                               add_embeddings, 
                                               relevance_prediction)
+
+# Locate test files
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(current_dir)
 
 def test_crossref_extract():
     

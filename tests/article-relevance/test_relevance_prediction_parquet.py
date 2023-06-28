@@ -49,8 +49,8 @@ def test_crossref_extract(tmp_path):
     assert output_df.shape == expected_df.shape
     # write a test to compare two series to check if they are equal
     assert_series_equal(
-        output_df['gdd_id'], 
-        expected_df['gdd_id'],
+        output_df['gddid'], 
+        expected_df['gddid'],
         check_index_type=False,
         check_dtype=False
     ) 

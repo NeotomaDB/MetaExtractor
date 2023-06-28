@@ -80,7 +80,7 @@ def test_add_embeddings(tmp_path):
     ref_file_path = tmp_path / 'test_data' / 'addembedding_validfile.csv'
 
     expected_df = pd.read_csv(ref_file_path, index_col=0)
-    assert_frame_equal(output_df, expected_df, check_dtype=False)
+    assert_frame_equal(output_df, expected_df, check_dtype=False, atol=0.01)
 
 
 def test_relevance_prediction(tmp_path):

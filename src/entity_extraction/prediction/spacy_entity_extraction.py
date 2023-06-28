@@ -6,7 +6,7 @@ import sys
 import spacy
 
 # ensure that the parent directory is on the path for relative imports
-sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
+sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir))
 
 from src.logs import get_logger
 # logger = logging.getLogger(__name__)

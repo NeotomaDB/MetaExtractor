@@ -8,6 +8,8 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 import warnings
 
+import shutil
+from pathlib import Path
 
 
 # ensure that the parent directory is on the path for relative imports
@@ -23,61 +25,74 @@ from relevance_prediction_parquet import (crossref_extract,
                                               relevance_prediction)
 
 # Locate test files
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(current_dir)
+@pytest.fixture(autouse=True)
+def setup_test_data(tmp_path):
+    # Path to the test data folder in your local environment
+    local_test_data_path = Path(__file__).resolve().parent / 'test_data'
 
-def test_crossref_extract():
+    # Copy the test data files to the temporary directory
+    shutil.copytree(local_test_data_path, tmp_path / 'test_data')
+
+
+def test_crossref_extract(tmp_path):
     
     # Test if result match with sample file
-    doi_file_path = "test_data/gdd_api_return_forpredictiontest.json"
-    crossref_extract(doi_file_path).to_csv('test_data/crossref_generated.csv')
+    doi_file_path = tmp_path / 'test_data' / 'gdd_api_return_forpredictiontest.json'
+    generated_file_path = tmp_path / 'test_data' / 'crossref_generated.csv'
+    reference_file_path = tmp_path / 'test_data' / 'crossref_validfile.csv'
 
-    output_df = pd.read_csv('test_data/crossref_generated.csv', index_col=0)
-    expected_df = pd.read_csv('test_data/crossref_validfile.csv', index_col=0)
+    crossref_extract(doi_file_path).to_csv(generated_file_path)
+
+    output_df = pd.read_csv(generated_file_path, index_col=0)
+    expected_df = pd.read_csv(reference_file_path, index_col=0)
 
     assert_frame_equal(output_df, expected_df, check_dtype=False)
 
-    # Delete the temp file
-    file_path = 'test_data/crossref_generated.csv'
-    os.remove(file_path)
 
-
-def test_data_preprocessing():
+def test_data_preprocessing(tmp_path):
 
     # Ignore all DeprecationWarnings
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-
         # Test if result match with sample file
-        doi_file_path = "test_data/gdd_api_return_forpredictiontest.json"
+        doi_file_path = tmp_path / 'test_data' / 'gdd_api_return_forpredictiontest.json'
         input_df = crossref_extract(doi_file_path)
-        data_preprocessing(input_df).to_csv('test_data/preprocess_generated.csv')
+        generated_file_path = tmp_path / 'test_data' / 'preprocess_generated.csv'
+        reference_file_path = tmp_path / 'test_data' / 'preprocess_validfile.csv'
 
-        output_df = pd.read_csv('test_data/preprocess_generated.csv', index_col=0)
-        expected_df = pd.read_csv('test_data/preprocess_validfile.csv', index_col=0)
+        data_preprocessing(input_df).to_csv(generated_file_path)
+
+        output_df = pd.read_csv(generated_file_path, index_col=0)
+        expected_df = pd.read_csv(reference_file_path, index_col=0)
+
         assert_frame_equal(output_df, expected_df, check_dtype=False)
-    
-    # Delete the temp file
-    file_path = 'test_data/preprocess_generated.csv'
-    os.remove(file_path)
 
-def test_add_embeddings():
+
+def test_add_embeddings(tmp_path):
+    
+    input_file_path = tmp_path / 'test_data' / 'preprocess_validfile.csv'
 
     # Test if result match with sample file
-    input_df = pd.read_csv('test_data/preprocess_validfile.csv', index_col=0)
+    input_df = pd.read_csv(input_file_path, index_col=0)
     output_df = add_embeddings(input_df, 'text_with_abstract', model='allenai/specter2')
+    
+    ref_file_path = tmp_path / 'test_data' / 'addembedding_validfile.csv'
 
-    expected_df = pd.read_csv('test_data/addembedding_validfile.csv', index_col=0)
+    expected_df = pd.read_csv(ref_file_path, index_col=0)
     assert_frame_equal(output_df, expected_df, check_dtype=False)
 
 
-def test_relevance_prediction():
+def test_relevance_prediction(tmp_path):
 
     # Test if result match with sample file
-    input_df = pd.read_csv('test_data/addembedding_validfile.csv', index_col=0)
-    model_path = "test_data/logistic_regression_model.joblib"
-    output_df = relevance_prediction(input_df, model_path, predict_thld=0.5)
+    input_file_path = tmp_path / 'test_data' / 'addembedding_validfile.csv'
+    input_df = pd.read_csv(input_file_path, index_col=0)
 
-    expected_df = pd.read_csv('test_data/predicted_validfile.csv', index_col=0)
+    model_path = tmp_path / 'test_data' / 'logistic_regression_model.joblib'
+    output_df = relevance_prediction(input_df, model_path, predict_thld=0.5)
+    
+    ref_file_path = tmp_path / 'test_data' / 'predicted_validfile.csv'
+
+    expected_df = pd.read_csv(ref_file_path, index_col=0)
     assert_frame_equal(output_df, expected_df, check_dtype=False)

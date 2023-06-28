@@ -9,7 +9,7 @@ import pytest
 # ensure that the parent directory is on the path for relative imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from src.entity_extraction.baseline_entity_extraction import (
+from src.entity_extraction.prediction.baseline_entity_extraction import (
     extract_geographic_coordinates,
     extract_region_names,
     extract_taxa,

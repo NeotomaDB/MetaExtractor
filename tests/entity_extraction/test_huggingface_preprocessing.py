@@ -9,7 +9,7 @@ import pytest
 # ensure that the parent directory is on the path for relative imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from src.entity_extraction.training.hf_token_classification.huggingface_preprocess import (
+from src.entity_extraction.preprocessing.huggingface_preprocess import (
     convert_labelled_data_to_hf_format,
 )
 

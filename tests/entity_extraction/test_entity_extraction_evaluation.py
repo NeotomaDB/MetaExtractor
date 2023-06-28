@@ -9,7 +9,7 @@ import pytest
 # ensure that the parent directory is on the path for relative imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from src.entity_extraction.entity_extraction_evaluation import (
+from src.entity_extraction.evaluation.entity_extraction_evaluation import (
     get_token_labels,
     calculate_entity_classification_metrics,
     plot_token_classification_report,

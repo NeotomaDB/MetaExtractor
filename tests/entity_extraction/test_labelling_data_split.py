@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 # ensure that the parent directory is on the path for relative imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from src.preprocessing.labelling_data_split import separate_labels_to_train_val_test
+from src.entity_extraction.preprocessing.labelling_data_split import separate_labels_to_train_val_test
 
 
 # testing setup inspiration from: https://stackoverflow.com/questions/29627341/pytest-where-to-store-expected-data

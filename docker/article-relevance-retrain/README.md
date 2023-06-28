@@ -15,7 +15,6 @@ Running this docker image will:
 3. Train a new logistic regression model using the expanded data.
 4. Key model evaluation are outputted in the specified results directory.
 
-
 ## Additional Options Enabled by Environment Variables
 
 The following environment variables can be set to change the behavior of the pipeline:
@@ -40,7 +39,7 @@ services:
       - TRAIN_DATA_PATH=data/article-relevance/processed/metadata_processed_embedded.csv
       - MODEL_FOLDER=/outputs/model/
       - RESULT_DIR=/outputs/model_eval/
-      - REVIEWED_FOLDER_PATH=data/data-review-tool/processed/
+      - REVIEWED_FOLDER_PATH=data/data-review-tool/
 
     volumes:
       - ./data/article-relevance/retrain-outputs:/outputs/

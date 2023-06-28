@@ -19,7 +19,7 @@ SRC_PATH = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
 if SRC_PATH not in sys.path:
     sys.path.append(SRC_PATH)
 
-from src.entity_extraction.ner_eval import Evaluator
+from src.entity_extraction.evaluation.ner_eval import Evaluator
 from src.logs import get_logger
 
 logger = get_logger(__name__)

@@ -41,20 +41,20 @@ The project Finding Fossils in Literature is sponsored by the Neotoma database (
 
 # Introduction
 
-The Neotoma database (Neotoma) [@NeotomaDB] serves as a valuable resource for researchers investigating ecological transformations spanning the last 5 million years. Nevertheless, the collection of data heavily relies on manual submissions from researchers, presenting challenges in data entry and impeding collaborative endeavors aimed at achieving a comprehensive understanding of ecological changes. This project aims to automate the extraction of data from relevant journal articles which can be added to Neotoma. This can be completed in three parts. First, article relevancy for the Neotoma database is predicted. Relevant articles are then parsed using natural language processing techniques. Finally, an interactive data review tool is built to review and correct the extracted data before it is submitted to Neotoma. The outputs of this data review tool are then used to retrain the two data models in the future.
+The Neotoma database (Neotoma) [@NeotomaDB] serves as a valuable resource for researchers investigating ecological transformations spanning the last 5 million years. Nevertheless, the collection of data heavily relies on manual submissions from researchers, presenting challenges in data entry and impeding collaborative endeavors. This project aims to automate the extraction of data from relevant journal articles which can be added to Neotoma. This is completed in three parts. First, relevancy to the Neotoma database is predicted. Relevant articles are then parsed using natural language processing techniques. Finally, a data review tool is used to review and correct the extracted data before it is submitted to Neotoma. The outputs of this data review tool are then used to improve the two models in the future.
 \newpage
 
 # Data Science Methods
 
 ## Article Relevance Prediction
 
-The article relevance prediction was posed as a binary classification problem. Based on the available article metadata, the model was able to predict how likely the article was relevant to the Neotoma paleoecology/paleoenvironment database. If the article was deemed likely relevant, the article will proceed to the next stage for article data extraction.
+The article relevance prediction was posed as a binary classification problem using article metadata to predict whether the article is relevant to Neotoma.
 
 ### Approach
 
 #### Building the Training Data
 
-To train the supervised classification model, a sample of labelled articles has been compiled as shown in @tbl-relevance_sample.
+To train the supervised classification model, a sample of labelled articles was compiled as shown in @tbl-relevance_sample.
 
 | **Label** | **Sample Size** | **Description**                                                                                                                                                                                                                                      |
 |:--:|:--:|:---------|
@@ -64,11 +64,11 @@ To train the supervised classification model, a sample of labelled articles has 
 
 : Labelled Sampled Article {#tbl-relevance_sample} {tbl-colwidths="[25,25,75]"}
 
-The labelled articles were split into train/validation/test sets with splits of 0.7/0.15/0.15, which correspond to 3103/665/666 articles. Due to the relatively small total sample size, 70% of the articles were included in the training set so that there are more examples provided during training.
+The labelled articles were split into train/validation/test sets with splits of 70%/15%/15%, which correspond to 3103/665/666 articles respectively. 
 
 #### Preprocessing & Feature Selection
 
-The article's metadata were obtained from the CrossRef API [@crossref], which provided over 50 types of metadata. To reduce dimensionality, feature selection was conducted, guided by @tbl-feature_selection.
+The article's metadata were obtained from the CrossRef API [@crossref], which provided over 50 types of metadata. To reduce dimensionality, feature selection was conducted with results in @tbl-feature_selection.
 
 | **Feature**                                | **Decision**                                                                                                                                                                                                                                                                                                                                                                  |
 |:----|:--------|
@@ -91,9 +91,9 @@ The features selected include a descriptive text feature (concatenation of title
 
 #### Feature Engineering: Text representation
 
-The descriptive text feature provides crucial contextual information for the model to predict if the topic was related to paleoecology or not. Feature engineering was conducted to represent this descriptive text feature in numeric forms. The following text representations were explored and tested to identify the most effective approach.
+The descriptive text feature provides crucial contextual information for the model to predict if the topic was related to paleoecology or not. Feature engineering was conducted to represent this descriptive text feature in numeric form. The following text representations were explored and tested to identify the most effective approach.
 
-**Bag of words representation (Baseline):** word-frequency based method. While the model with bag of words feature achieved a decent performance, the limitation is that the semantic aspect of the text could not be well represented. This method was chosen to be used in the baseline model.
+**Bag of words representation (Baseline):** word-frequency based method. This achieved moderate results but is limited by not containing contextual information.
 
 **Sentence embedding (Final):** Sentence embedding is the state-of-the-art approach for text representation. Three sentence embedding models were experimented and allenai/specter2 model resulted in the best overall performance as documented in @tbl-sent_embedding.
 
@@ -111,19 +111,19 @@ The descriptive text feature provides crucial contextual information for the mod
 
 The following selection of Probability Classifiers, Analogy-based and Tree-based & Gradient-boosted models were experimented with.
 
-**Probability classifiers:** Traditional probability classifiers provide fast training and prediction time, which could be beneficial when processing and retraining large numbers of new articles. Its simplicity also could provide favorable model transparency and interpretability for model evaluation. Logistic regression and naive Bayes were experimented during model selection.
+**Probability classifiers:** Traditional probability classifiers provide fast training, high interpretability, and prediction time. Logistic regression and naive Bayes were experimented during model selection.
 
-**Analogy-based models:** The nature of the article relevance prediction problem could be framed as looking for articles that were similar to the positive examples. Analogy-based models could be suitable for this problem. K-nearest neighbour and Support Vector Machine with RBF kernel were experimented.
+**Analogy-based models:** The article relevance prediction problem can be framed as looking for articles that are similar to the positive examples. K-nearest neighbour and Support Vector Machine with RBF kernel were experimented.
 
-**Tree-based & Gradient-boosted models:** Tree-based classifiers could use different feature subsets at various steps during the prediction, which can be suitable for our relatively high dimensional data problem. Decision Tree, Random Forest Model, LightGBM, XGBoost and CatBoost were experimented. 
+**Tree-based & Gradient-boosted models:** Tree-based classifiers use different feature subsets during the prediction, which can be suitable for high dimensional data problem. Decision Tree, Random Forest Model, LightGBM, XGBoost and CatBoost were experimented. 
 
-The choice of the final model was primarily based on model performance on recall score. The chosen model went through further hyperparameter tuning to optimise the performance.
+The chosen model went through further hyperparameter tuning to optimise the performance.
 
 ### Model Evaluation
 
-The main goal of article relevance prediction is to identify potentially as many useful articles as possible from the article repository so that valuable research data can be discovered. The cost of false negatives will be high because if the model does not catch a relevant article, this article will unlikely be discovered by the Neotoma community and its data will be missed. On the other hand, the cost of false positives will be more manageable. Hence, recall was the metric that was optimized. During data validation, Data Stewards are able to easily mark an article as not relevant using our data review tool.
+The main goal of article relevance prediction is to identify as many relevant articles as possible so that valuable research data can be discovered. The cost of false negatives will be high because missed articles are unlikely to be discovered by the Neotoma community where as false positives are lower cost with easy rejection in the data review tool. For this reason recall was optimized for.
 
-Another consideration was model interpretation. The positive examples were gathered using articles that currently exist in the Neotoma database, and it was difficult to tell if there are existing biases in the training data. A more interpretable model would help identify model biases and make corrections in the long run.
+Model interpretability was also important because the data likely has biases due to positive examples coming from existing articles in Neotoma. A more interpretable model would help identify model biases and make corrections in the long run.
 
 ## Article Data Extraction
 
@@ -525,11 +525,11 @@ In order to create an interactive tool that would be appropriate and efficient f
 
 ![Model Performance Comparison using Cross-Validation Scores](assets/relevance-model-comparison.png){#fig-relevance_performance}
 
-Among all the models trained, Naive Bayes had the highest recall score (96.7%), but its precision score was low (70.1%) and would introduce false positives. Among all gradient boosted models, LGBM had the highest precision (93.9%), but its recall score (89.3%) did not outperform logistic regression (94.8%). Among the analogy-based models, SVM with RBF kernel achieve a recall performance (94.8%) that's comparable to logistic regression (95.0%), and both had sufficiently high precision (@fig-relevance_performance). The final decision was to use logistic regression with tuned hyperparameters for its good performance and better interpretability. On the test data set, the final model achieved a recall score of 96.5%, and a precision score of 85.2%. To put this into actual article counts, among the 666 articles in the test set, there are 5 false negatives and 24 false positives.
+Among all the models trained, Naive Bayes had the highest recall score (96.7%), but its precision score was low (70.1%). Among all gradient boosted models, LGBM had the highest precision (93.9%), but its recall score (89.3%) did not outperform logistic regression (94.8%). Among the analogy-based models, SVM with RBF kernel achieved a recall performance (94.8%) that's comparable to logistic regression (95.0%), and both had sufficiently high precision (@fig-relevance_performance). The final decision was to use logistic regression with tuned hyperparameters for its high performance and better interpretability. On the test data set, the final model achieved a recall score of 96.5%, and a precision score of 85.2%. To put this into actual article counts, among the 666 articles in the test set, there are 5 false negatives and 24 false positives.
 
 ## Article Data Extraction
 
-From training spaCy and Hugging Face models there are two candidate models proposed to be used. The first is the Hugging Face finetuned RoBERTa based model which performed best of the Hugging Face models. The second is spaCy's transformer based model. The reason for proposing two models moving forward is the spaCy transformer model had better entity based recall along with better precision, meaning the extracted data was more often correctly extracted. Whereas the Hugging Face RoBERTa model achieves better token recall but has lower precision, meaning it detects more of the overall entities but contains more false detections which must be deleted by the reviewers. The differences in the recall and precision can be attributed to the different NER models leveraging the RoBERTa-base transformer embeddings differently.
+From training spaCy and Hugging Face models there are two candidate models proposed. The first is the Hugging Face finetuned RoBERTa based model which performed best of the Hugging Face models. The second is spaCy's transformer based model. The rationale for two models moving forward is the spaCy transformer model had better entity based recall along with better precision, meaning the extracted data was more often correctly extracted. Whereas the Hugging Face RoBERTa model achieves better token recall but has lower precision, meaning it detects more of the overall entities but contains more false detections which must be deleted by the reviewers. The differences in the recall and precision can be attributed to the different NER models leveraging the RoBERTa-base transformer embeddings differently.
 
 @fig-extraction-recall-results shows the primary candidate models token and entity based recall.
 
@@ -696,13 +696,13 @@ An important observation to make here is that the top models had a lower precisi
 
 ## Data Review Tool
 
-The final data review tool that was created was a multi-page Plotly Dash application. The tool can be replicated by launching Docker containers, enabling anyone within the Neotoma community to easily utilize the tool for reviewing outputs from the pipeline. 
+The final data review tool that was created is a multi-page Plotly Dash [@dash] application. The tool can be replicated by launching Docker containers, enabling anyone within the Neotoma community to easily utilize the tool for reviewing outputs from the pipeline. 
 
 ![Data Review Tool](assets/data_review.png){#fig-review_tool_snap}
 
-This web application enables users to review the extracted entities from articles, make changes, add additional missed entities and remove incorrectly extracted entities. The application includes a button to launch the article in an external browser tab so that the reviewer can verify beyond the current sentence and sentence preceding/following that was provided as output. The entire review process does not require any coding knowledge, and reviewers can navigate through the review workflow in three clicks or fewer from the Article Review page @fig-review_tool_snap.
+This web application enables users to review the extracted entities from articles, make changes, add additional missed entities and remove incorrectly extracted entities. The entire review process does not require any coding knowledge, and reviewers can navigate through the review workflow in three clicks or fewer from the Article Review page @fig-review_tool_snap.
 
-The output of this data review tool is a JSON object that stores the originally extracted entities as well as the corrected entities. The Neotoma organization can utilize these entities to add new paleoecology articles to the database. In addition, the reviewed entities can be fed back to model using our model retraining pipeline, contributing to the continuous improvement of the quality of extraction of entities as outlined in @tbl-review_results.
+The output of this data review tool is a parquet file that stores the originally extracted entities as well as the corrected entities. The Neotoma organization can utilize these entities to add new paleoecology articles to the database. In addition, the reviewed entities can be fed back to model using our model retraining pipeline, contributing to the continuous improvement of the quality of extraction of entities as outlined in @tbl-review_results.
 
 | **Requirement**                                         | **Results**                                   |
 | ------------------------------------------------------- | --------------------------------------------- |
@@ -725,9 +725,9 @@ The output of this data review tool is a JSON object that stores the originally 
 
 ## Product Deployment
 
-The end goal of this project is to have each data product running in a semi/un-supervised fashion. The article relevance prediction pipeline was containerized using Docker. It is expected to run on a daily or a weekly basis by the Neotoma and to fetch the latest published articles from the public xDD API, run the article relevance prediction, and finally submits relevant articles to xDD to have their full text processed. 
+The end goal of this project is to have each data product running unsupervised. The article relevance prediction pipeline was containerized using Docker. It is expected to run on a daily or a weekly basis by Neotoma to run the article relevance prediction and submit relevant articles to xDD to have their full text processed. 
 
-The Article Data Extraction pipeline is containerized using Docker and contains the entity extraction model within it. It is to be run on the xDD servers as xDD is not legally allowed to send full text articles off their servers. The container accepts full text articles, extracts the entities, and outputs a single JSON object for each article which is then exported by xDD back to the Neotoma team. The extracted entity JSON objects were combined with the article relevance prediction results and loaded into the Data Review Tool. @fig-deployment_pipeline depicts the work flow.
+The Article Data Extraction pipeline was containerized using Docker and contains the entity extraction model within it. It will be run on the xDD servers as xDD is not legally allowed to send full text articles off their servers. The container accepts full text articles, extracts the entities, and outputs a single JSON object for each article. The JSON objects are combined with the article relevance prediction results and loaded into the Data Review Tool. @fig-deployment_pipeline depicts the work flow.
 
 ```{mermaid}
 %%| label: fig-deployment_pipeline
@@ -781,19 +781,17 @@ class entity_docker,relevance_docker docker;
 
 ## Conclusions
 
-The Neotoma database plays a crucial role in paleoecological research by providing data on ecological changes over the past 5 million years. However, the reliance on manual submissions by researchers has led to difficulties in data entry and possibly hindered collaborative efforts to fully understand these ecological changes. The implementation of our pipeline brings significant benefits to the Neotoma community and paleoecological research. Firstly, by automating the search for submissions of new research articles that are relevant to the Neotoma database through the Article Relevance Prediction this process will growth of the Neotoma community, attracting more researchers and fostering collaboration in ecological research. Secondly, researchers will experience reduced time and effort required for data uploads, as the manual submission process is replaced with automated data extraction and entry through both the Article Entity Extraction and Data Review Tool. Finally, with the addition of access to the data, researchers in the Neotoma community may be able to answer questions about ecological changes that were previously unknown
+The Neotoma database plays a crucial role in paleoecological research by providing data on ecological changes over the past 5 million years. However, the reliance on manual submissions by researchers has led to difficulties in data entry and possibly hindered collaborative efforts to fully understand these ecological changes. The implementation of our pipeline brings significant benefits to the Neotoma community and paleoecological research. Firstly, by automating the search for relevant articles through the Article Relevance Prediction this process will grow the Neotoma community, attracting more researchers and fostering collaboration in ecological research. Secondly, researchers will experience reduced time and effort required for data uploads, as some of the manual submission process is replaced by the Article Entity Extraction and Data Review Tool. Finally, with the addition of more data, researchers in the Neotoma community may be able to answer questions about ecological changes that were previously unknown.
 
 ## Recommendations
 
-Due to time constraints, improvements were identified but could not be implemented within the project's timeframe. To provide a concise summary for future project contributors, four essential features have been identified that would significantly enhance the overall pipeline.
+Due to time constraints, improvements were identified but could not be implemented within the project's timeframe. Three essential features have been identified that would enhance the overall pipeline.
 
 1.  **Relevance Review Page:** incorporating an article review page would allow for a thorough assessment of article relevance, reducing both false positives and false negatives in the predictions. It will also reduce the bias in the training dataset that currently exists due to our data collection strategy.
 
-2.  **Adding new entities:** Although the focus was primarily on accurately extracting the required entities, there are additional entities that are considered beneficial but not mandatory by the Neotoma team. To address this, the Label Studio setup that was created through the project enables future contributors to easily add additional entities to benefit the Neotoma community at large.
+2.  **Adding new entities:** There are additional entities that were considered beneficial but not mandatory by the Neotoma team. Adding additional entities can be done in LabelStudio and could benefit the Neotoma community at large.
 
-3.  **Correction Modal** There are likely many corrections that will be performed frequently on the data review tool by the Neotoma Data Stewards. Therefore, a model could be implemented to learn these corrections and preprocess these corrections in future improving efficiency and reducing time spent reviewing.
-
-4.  **Computer Vision:** Using PDF images and OCR technology to extract figures and table data for richer information extraction and inclusion of higher quality data into the Neotoma database.
+3.  **Correction Model** There are likely many corrections that will be performed frequently on the data review tool. Therefore, a model could be implemented to learn these corrections and preprocess these corrections to reduce time spent reviewing.
 
 \newpage
 

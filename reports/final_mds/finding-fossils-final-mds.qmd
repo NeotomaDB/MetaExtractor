@@ -752,7 +752,6 @@ The output of this data review tool is a JSON object that stores the originally 
 
 : Data Review Tool Metric Results {#tbl-review_results}
 
-The implemented Dash application fulfills all the requirements stated in the proposal (as shown by @tbl-review_results). However, with more time available, there are potential improvements that can be made. One crucial enhancement would be to add an extra page to the dashboard, allowing users to review the results of the Article Relevance Prediction model. This page would display both positive predictions (relevant articles to Neotoma) and negative predictions (articles deemed irrelevant). By enabling Neotoma data stewards to review and correct these predictions, the Article Relevance model's accuracy can be enhanced through retraining. Currently, the data review tool includes a button to mark an article as irrelevant, facilitating model retraining by labeling it as not relevant to Neotoma. However, there is no existing mechanism to make corrections for negative predictions. Addressing this issue in the future would minimize bias from the training data sample, resulting in improved model performance.
 
 ## Product Deployment
 
@@ -816,7 +815,7 @@ The Neotoma database plays a crucial role in paleoecological research by providi
 
 ## Recommendations
 
-Due to time constraints, improvements were identified but could not be implemented within the project's timeframe. To provide a concise summary for future project contributors, three essential features have been identified that would significantly enhance the overall pipeline.
+Due to time constraints, improvements were identified but could not be implemented within the project's timeframe. To provide a concise summary for future project contributors, four essential features have been identified that would significantly enhance the overall pipeline.
 
 1.  **Relevance Review Page:** incorporating an article review page would allow for a thorough assessment of article relevance, reducing both false positives and false negatives in the predictions. It will also reduce the bias in the training dataset that currently exists due to our data collection strategy.
 

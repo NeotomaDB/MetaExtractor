@@ -16,7 +16,7 @@ services:
       - AUTO_CHECK_DUP=False
       - OUTPUT_PATH=/outputs/
       - SEND_XDD=False
-      - DOI_FILE_PATH=data/article-relevance/raw/gdd_api_return.json
+      - DOI_FILE_PATH=/raw/gdd_api_return.json
     volumes:
       - ./data/article-relevance/outputs:/output
       - ./data/article-relevance/processed/prediction_parquet:/parquet

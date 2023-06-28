@@ -31,7 +31,7 @@ This project aims to identify research articles which are relevant to the [_Neot
 There are 3 primary components to this project:
 
 1. **Article Relevance Prediction** - get the latest articles published, predict which ones are relevant to Neotoma and submit for processing.
-2. **MetaData Extraction Pipeline** - extract relevant entities from the article including geographic locations, taxa, etc.
+2. **Data Extraction Pipeline** - extract relevant entities from the article including geographic locations, taxa, etc.
 3. **Data Review Tool** - this takes the extracted data and allows the user to review and correct it for submission to Neotoma.
 
 <p align="center">
@@ -41,6 +41,7 @@ There are 3 primary components to this project:
 ## **About**
 
 Information on each component is outlined below.
+
 ### **Article Relevance Prediction**
 
 The goal of this component is to monitor and identify new articles that are relevant to Neotoma. This is done by using the public [xDD API](https://geodeepdive.org/) to regularly get recently published articles. Article metadata is queried from the [CrossRef API](https://www.crossref.org/documentation/retrieve-metadata/rest-api/) to obtain data such as journal name, title, abstract and more. The article metadata is then used to predict whether the article is relevant to Neotoma or not.

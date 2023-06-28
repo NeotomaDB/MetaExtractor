@@ -24,7 +24,7 @@ from docopt import docopt
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
 
 from src.logs import get_logger
-from src.preprocessing.labelling_preprocessing import get_hash
+from src.entity_extraction.preprocessing.labelling_preprocessing import get_hash
 
 logger = get_logger(__name__)
 

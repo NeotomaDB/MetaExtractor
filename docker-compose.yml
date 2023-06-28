@@ -1,12 +1,11 @@
 version: "3.9"
 services:
-  article-relevance:
+  article-relevance-prediction:
     image: metaextractor-article-relevance:v0.0.1
     build:
       dockerfile: ./docker/article-relevance/Dockerfile
       context: .
       args:
-      - DOI_FILE_PATH=data/article-relevance/raw/gdd_api_return.json
       - MODEL_PATH=models/article-relevance/logistic_regression_model.joblib
     environment:
       - N_RECENT=10
@@ -17,6 +16,7 @@ services:
       - AUTO_CHECK_DUP=False
       - OUTPUT_PATH=/outputs/
       - SEND_XDD=False
+      - DOI_FILE_PATH=data/article-relevance/raw/gdd_api_return.json
     volumes:
       - ./data/article-relevance/outputs:/output
       - ./data/article-relevance/processed/prediction_parquet:/parquet

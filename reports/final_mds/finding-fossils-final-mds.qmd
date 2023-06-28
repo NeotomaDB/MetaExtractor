@@ -228,14 +228,14 @@ def load_model_evaluation_results(results_path: str, results_type: str = "val"):
 
 ```
 
-The article data extraction was posed as a Named Entity Recognition (NER) problem. The NER tasks teaches the model to predict the correct label for each word where each word is assigned a label.
+The article data extraction was posed as a Named Entity Recognition (NER) problem. NER is done by using models to predict the correct label for each word in the text.
 
 ### Data Description
 
-An original sample of 300+ full text articles related to Neotoma was provided. Some articles were non-english and were removed from the dataset. The data of interest to be extracted and thus labelled in the articles using NER are as follows:
+An original sample of 300+ full text articles related to Neotoma was provided. Some articles were non-english and were removed from the dataset. The data of interest to be extracted and thus labelled in the articles using NER were as follows:
 
 -   **SITE**: the specific site name given to the items studied
--   **REGION**: general geographic regions around the site to give general context to locations
+-   **REGION**: general geographic regions around the site to give context to sites
 -   **GEOG**: geographic coordinates of sites or samples
 -   **TAXA**: the taxa uncovered and researched in the article
 -   **AGE**: any ages relevant to the samples
@@ -244,7 +244,7 @@ An original sample of 300+ full text articles related to Neotoma was provided. S
 
 ### Data Preprocessing and Labelling
 
-For the development of the NER models, a sample of 39 articles relevant to Neotoma were preprocessed and labelled by the research team using LabelStudio[@LabelStudio]. Preprocessing steps involved chunking the articles into bite-sized pieces and replacing special tokens with their English equivalent symbol. Other text preprocessing techniques were not used for this project as the aim was to preserve the original text and ensure that the model understands contextual information. The LabelStudio interface hosted on HuggingFace[@huggingface] was used for labeling purposes as it provides an out-of-the-box collaborative environment for several ML tagging tasks, including named entity recognition. The SITE entity proved difficult to label as differentiating between obscure location names or an acronym of a core sample was difficult for the team. Similarly, correctly identifying TAXA and where on TAXA label began and another ends proved challenging.
+For the development of the NER models, a sample of 39 articles relevant to Neotoma were preprocessed and labelled by the research team using LabelStudio[@LabelStudio]. Other text preprocessing techniques such as lemmatization were not used due to text quality issues from OCR making it difficult to identify the correct lemma. The SITE entities were difficcult to identify and label due to obscure location names or an acronym of a core sample being used. Similarly, correctly identifying where one TAXA entity ends and the next begins proved challenging.
 
 The labelled articles were split into train/validation/test sets by full article with splits of 70%/15%/15% respectively. The data splitting was done based upon whole articles to prevent data leakage into the model learning certain articles patterns before evaluation. This resulted in the entity distributions between train/validation/test as shown in @fig-entity-dists.
 
@@ -351,7 +351,7 @@ plot_distribution_of_entities(
 
 ### Approach
 
-NER tasks are dominated by transformer based models. The best performing non-transformer based models are a transition-based stack long-short term memory (S-LSTM) model used in the spaCy package.
+NER tasks are dominated by transformer based models [@transformer-train-tips]. The best performing non-transformer based models are transition-based stack long-short term memory (S-LSTM) models used in the spaCy package [@spacy].
 
 The approaches considered along with the rationale for their inclusion/rejection from development are outlined in @tbl-ner-approaches.
 
@@ -359,15 +359,15 @@ The approaches considered along with the rationale for their inclusion/rejection
 | :------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Rule Based Models                      | This served as the baseline using regex to extract known entities but was not developed further due to the known issues with text quality due to OCR issues and infeasibility for entities like SITE. |
 | <br/>                                  | <br/>                                                                                                                                                                                                 |
-| Transition Based Model                 | Has lower computational cost ideal for low-compute resource deployment                                                                                                                                |
+| Transition Based Model                 | Low computational cost, ideal for low-compute resource deployment                                                                                                                                     |
 | <br/>                                  | <br/>                                                                                                                                                                                                 |
-| BERT Based Models                      | These are achieving state of the art results and have multiple base models pre-trained on different domains                                                                                           |
+| BERT Based Models                      | Many state of the art apporaches use BERT, multiple base models pre-trained on different domains are available                                                                                        |
 | <br/>                                  | <br/>                                                                                                                                                                                                 |
-| Text to Text Transfer Transformer (T5) | T5 models turn every problem into a text to text problem which for NER requires significant pre/post processing to work and was excluded for this reason.                                             |
+| Text to Text Transfer Transformer (T5) | T5 models make each problem text to text based, for NER this requires significant pre/post processing to work and is excluded for this reason.                                                        |
 
 : NER Approaches {#tbl-ner-approaches tbl-colwidths="[30,70]"}
 
-For the transformer based models two approaches were used for training, spaCy command line interface (CLI) [@spacy] and HuggingFace's Training application programming interface (API) [@huggingface]. Each have advantages and disadvantages outlined in @tbl-spacy-pros-cons.
+For the transformer based models two approaches were used for training, spaCy command line interface (CLI) [@spacy] and HuggingFace's Training application programming interface (API) [@huggingface]. Each have advantages and disadvantages which are outlined in @tbl-spacy-pros-cons.
 
 +--------------------------+-----------------------------------------------------------------------------------------------------+------------------------------------------+
 |                          | Pro                                                                                                 | Con                                      |
@@ -375,7 +375,7 @@ For the transformer based models two approaches were used for training, spaCy co
 | spaCy Config Training    | -   Can integrate with any transformer hosted on HuggingFace                                        | -   Knowledge of bash scripting required |
 |                          | -   Prebuilt config scripts that require minimal changes                                            | -   Limited configuration options        |
 |                          | -   Access to spaCy's unique transition-based NER model                                             |                                          |
-|                          | -   Ability to integrate multiple ML models in an ensemble -Integrates with visualization libraries |                                          |
+|                          | -   Ability to integrate multiple ML models in an ensemble                                          |                                          |
 +--------------------------+-----------------------------------------------------------------------------------------------------+------------------------------------------+
 | Hugging Face Trainer API | -   Able to use non-NER models and add classification head easily                                   | -   More code required                   |
 |                          | -   Able to easily integrate custom tracking of metrics and external logging to MLflow              |                                          |
@@ -383,7 +383,7 @@ For the transformer based models two approaches were used for training, spaCy co
 
 : spaCy CLI andHugging Face's Training API Advantages and Disadvantages {#tbl-spacy-pros-cons tbl-colwidths="[15,50,35]"}
 
-Using the Hugging Face training API multiple models were trained and evaluated. The model along with the hypothesis behind it's selection is outlined in @tbl-hf-model-hypoth.
+Using the Hugging Face training API multiple models were trained and evaluated. Each base model along with the hypothesis behind it's selection is outlined in @tbl-hf-model-hypoth.
 
 
 | Model              | Hypothesis                                                                                                                                                  |
@@ -405,16 +405,16 @@ Final hyper parameters used to train the models are outlined in @tbl-hf-train-hy
 +-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Parameters              | Notes                                                                                                                                                                                                            |
 +=========================+==================================================================================================================================================================================================================+
-| Batch size              | -   Maximized to utilize all available GPU memory, 8 for RoBERTa based models, 4 for large models                                                                                                                |
+| Batch size              | -   Maximized to utilize all available GPU memory, 8 for RoBERTa based models                                                                                                                                    |
 +-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Gradient Accumulation   | -   Used to mimic larger batch sizes, this value was chosen to achieve batch sizes of \~12k tokens based on existing research \[SOURCE\]                                                                         |
+| Gradient Accumulation   | -   Used to mimic larger batch sizes, this value was chosen to achieve batch sizes of \~12k tokens based on best practices \[@transformer-train-tips]                                                            |
 +-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Epochs                  | -   Initial runs with 10-20 epochs, observed evaluation loss minima occurring in first 2-8 depending on learning rate below                                                                                      |
+| Epochs                  | -   Initial runs with 10-20 epochs, observed evaluation loss minima occurring in first 2-8, settled on 10                                                                                     |
 +-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Learning Rate           | -   Initially 5e-5 was used and observed rapid over fitting with eval loss reaching a minimum around 2-4 epochs then increasing for the next 5-10                                                                |
-|                         | -   Moved to 2e-5 as well as introducing gradient accumulation of 3 epochs to increase effective batch size, the eval loss didn't reach a minimum for a bit longer while recall continued to improve             |
+|                         | -   Moved to 2e-5 as well as introducing gradient accumulation of 3 epochs to increase effective batch size                                                                                                      |
 +-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Learning Rate Scheduler | -   All initial training has been done with a linear learning rate scheduler which linearly decreases learning rate across epochs                                                                                |
+| Learning Rate Scheduler | -   All training was done with a linear learning rate scheduler which linearly decreases learning rate across epochs                                                                                             |
 +-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Warmup Ratio            | -   How many steps of training to increase LR from 0 to LR, shown to improve with Adam optimizer - [@borealisai2023tutorial] Set to 10% initially                                                                |
 +-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -448,7 +448,7 @@ Final hyper parameters used to train the spaCy models along with comments on eac
 | <br/> | <br/> |
 | **Learning Rate**           | -   Initial learning rate of 5e-5                                                                                          |
 | <br/> | <br/> |
-| **Learning Rate Scheduler** | -   Warmup for 250 steps followed by a linear learning rate scheduler which linearly decreases learning rate across epochs |
+| **Learning Rate Scheduler** | -   Warmup for 250 steps followed by a linear learning rate scheduler  |
 | <br/> | <br/> |
 | **Regularization**          | -   L2 (lambda = 0.01) with weight decay                                                                                   |
 | <br/> | <br/> |
@@ -458,7 +458,7 @@ Final hyper parameters used to train the spaCy models along with comments on eac
 
 : spaCy CLI Final Hyperparameters {#tbl-spacy-hyperparams tbl-colwidths="[30,70]"}
 
-An interesting difference were the architectures of the NER models. Both the models use a RoBERTa-base model to tokenize the input sentence and generate word embeddings, but the HuggingFace NER model fine-tunes a token classification head, which consists of a set of linear layer and soft max, whereas, the spaCy NER model chunks and labels a sequence of inputs using an algorithm similar to transition-based dependency parsing using (Stack-LSTMs)[@S-LSTM].
+Both the spaCy and HuggingFace models used RoBERTa as the base model. The spaCy model labels a sequence of inputs using an algorithm similar to transition-based dependency parsing using (Stack-LSTMs)[@S-LSTM]. Whereas the HuggingFace transformer model added a linear layer with softmax on top of the RoBERTa embeddings to perform the token classification.
 
 The workflow in @fig-training_pipeline shows the primary steps for training with the Entity Extraction models with intermediate files and processes.
 
@@ -486,37 +486,7 @@ C3 --> F5(Evaluation results\nJSON)
 
 ### Model Evaluation
 
-The target for the data extraction is to maximize extracted data recall as the cost of a data reviewer deleting a piece of data is much lower than having to go and read the article to add missed entities. Similarly, token based recall is chosen as the target metric which measures partial matches of data extracted. Entity based recall which measures exact matches of all parts of a word is considered as it reduces data reviewers time to review articles but the emphasis is placed on token recall for evaluating models.
-
-For more in depth analysis of results four primary methods are used to evaluate each model as outlined in @tbl-ner-model-eval-methods.
-
-| **Method**  | **Description**                                                                                      |
-|:------------|:-----------------------------------------------------------------------------------------------------|
-| **Strict**  | Exact boundary of extracted string and entity type matches the annotation.                           |
-| <br/> | <br/> |
-| **Exact**   | Exact boundary of extracted string matches but does not discriminate by correct entity label         |
-| <br/> | <br/> |
-| **Partial** | A partial boundary overlap of the extracted string and does not discriminate by correct entity label |
-| <br/> | <br/> |
-| **Type**    | Any overlap of the correct entity type is considered correct.                                        |
-
-: Model Evaluation Methods {#tbl-ner-model-eval-methods tbl-colwidths="[25,75]"} 
-
-For each method in @tbl-ner-model-eval-methods a set of detailed metrics are used during evaluation as outlined in @tbl-ner-specific-metrics.
-
-| **Metric**          | **Description**                                                       |
-|:--------------------|:----------------------------------------------------------------------|
-| **Correct (COR)**   | Both the labelled entity and predicted entity are the same            |
-| <br/> | <br/> |
-| **Incorrect (INC)** | The labelled entity and predicted entity do not match                 |
-| <br/> | <br/> |
-| **Partial (PAR)**   | The labelled entity and predicted entity are similar but not the same |
-| <br/> | <br/> |
-| **Missing (MIS)**   | A labelled entity is not captured by the model                        |
-| <br/> | <br/> |
-| **Spurius (SPU)**   | The model predicts an entity where there is none in the labelled text |
-
-: Model Evaluation Metrics {#tbl-ner-specific-metrics tbl-colwidths="[25,75]"}
+The target for the data extraction is to maximize recall. This was chosen as it maximizes the amount of entities extracted and minimizes the amount of time a reviewer needs to read the full article during review. Entity and token based recall are used as the primary metrics for model evaluation. Entity based recall checks all tokens of an entity matching are correct. Token based recall allows for partial matches of entities which contain multiple words. Higher token based recall is preferred as it maximizes data extracted and utilizes the data review process to correct any false positives.
 
 
 ## Data Review Tool
@@ -559,7 +529,7 @@ Among all the models trained, Naive Bayes had the highest recall score (96.7%), 
 
 ## Article Data Extraction
 
-Of the two approaches developed using the spaCy and Hugging Face model training systems there were two candidate models proposed to be used. The first was the Hugging Face finetuned RoBERTa based model which performed best of the Hugging Face models. The second is spaCy's transformer based model. The reason for proposing two models moving forward is the spaCy transformer model had better entity based recall along with better precision, meaning the extracted data was more often correctly extracted. Whereas the Hugging Face RoBERTa model achieves better token recall but has lower precision, meaning it detects more of the overall entities but contains more false detections which must be deleted by the reviewers. The slight differences in the accuracies and varying strengths can be attributed to the different NER models leveraging the RoBERTa-base transformer embeddings differently.
+From training spaCy and Hugging Face models there are two candidate models proposed to be used. The first is the Hugging Face finetuned RoBERTa based model which performed best of the Hugging Face models. The second is spaCy's transformer based model. The reason for proposing two models moving forward is the spaCy transformer model had better entity based recall along with better precision, meaning the extracted data was more often correctly extracted. Whereas the Hugging Face RoBERTa model achieves better token recall but has lower precision, meaning it detects more of the overall entities but contains more false detections which must be deleted by the reviewers. The differences in the recall and precision can be attributed to the different NER models leveraging the RoBERTa-base transformer embeddings differently.
 
 @fig-extraction-recall-results shows the primary candidate models token and entity based recall.
 
@@ -720,7 +690,7 @@ render_df = render_df[
 Markdown(render_df.to_markdown())
 ```
 
-An important observation to make here is that even the top models had a lower precision score for the SITE names and REGION names. The models got confused when deciding whether an entity should be classified as a SITE or a REGION. This was partially due to quality of labeling entities as well as the fact that both these types correspond to the name of a place or a wider area. See @fig-confusion_matrix for a confusion matrix generated using the test set assets highlights the issue.
+An important observation to make here is that the top models had a lower precision score for the SITE names and REGION names. The models got confused when deciding whether an entity should be classified as a SITE or a REGION. This was partially due to quality of labeling entities as well as the fact that both these types correspond to the name of a place or a wider area. See @fig-confusion_matrix for a confusion matrix generated using the test set assets highlights the issue.
 
 ![Confusion Matrix for RoBERTa Model](../../results/ner/roberta-finetuned-v3/roberta-finetuned-v3_test_confusion_matrix.png){#fig-confusion_matrix}
 

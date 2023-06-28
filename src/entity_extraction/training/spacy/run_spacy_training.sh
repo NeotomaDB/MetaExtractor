@@ -17,9 +17,9 @@ VAL_SPLIT=0.15
 TEST_SPLIT=0.15
 
 
-rm -f src/entity_extraction/training/spacy_ner/spacy_transformer_$VERSION.cfg
+rm -f src/entity_extraction/training/spacy/spacy_transformer_$VERSION.cfg
 
-python3 src/preprocessing/labelling_data_split.py \
+python3 src/entity_extraction/preprocessing/labelling_data_split.py \
         --raw_label_path $DATA_PATH \
         --output_path $DATA_OUTPUT_PATH \
         --train_split $TRAIN_SPLIT \
@@ -33,12 +33,12 @@ if [ -z "$MODEL_PATH" ]; then
 
     # Fill configuration with required fields
     python -m spacy init fill-config \
-            src/entity_extraction/training/spacy_ner/spacy_transformer_train.cfg \
-            src/entity_extraction/training/spacy_ner/spacy_transformer_$VERSION.cfg
+            src/entity_extraction/training/spacy/spacy_transformer_train.cfg \
+            src/entity_extraction/training/spacy/spacy_transformer_$VERSION.cfg
 
     # Execute the training job by pointing to the new config file
     python -m spacy train \
-        src/entity_extraction/training/spacy_ner/spacy_transformer_$VERSION.cfg \
+        src/entity_extraction/training/spacy/spacy_transformer_$VERSION.cfg \
         --paths.train $DATA_OUTPUT_PATH/train.spacy \
         --paths.dev $DATA_OUTPUT_PATH/val.spacy \
         --output $MODEL_OUTPUT_PATH \
@@ -46,12 +46,12 @@ if [ -z "$MODEL_PATH" ]; then
 
 else
     # Else create a new config file to resume training
-    python src/entity_extraction/training/spacy_ner/create_config.py \
+    python src/entity_extraction/training/spacy/create_config.py \
         --model_path $MODEL_PATH \
-        --output_path src/entity_extraction/training/spacy_ner/spacy_transformer_$VERSION.cfg
+        --output_path src/entity_extraction/training/spacy/spacy_transformer_$VERSION.cfg
 
     python -m spacy train \
-        src/entity_extraction/training/spacy_ner/spacy_transformer_$VERSION.cfg \
+        src/entity_extraction/training/spacy/spacy_transformer_$VERSION.cfg \
         --paths.train $DATA_OUTPUT_PATH/train.spacy \
         --paths.dev $DATA_OUTPUT_PATH/val.spacy \
         --components.ner.source $MODEL_PATH \

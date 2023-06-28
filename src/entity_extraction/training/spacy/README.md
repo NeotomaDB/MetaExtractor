@@ -22,11 +22,11 @@ A bash script is used to initialize a training job. Model training is fully cust
    - `--gpu-id`: While executing the `spacy train` command, GPU can be used, if available, by setting this flag to **0**.
 3. Make the training script executable: 
 ```bash
-chmod +x src/entity_extraction/training/spacy_ner/run_spacy_training.sh
+chmod +x src/entity_extraction/training/spacy/run_spacy_training.sh
 ```
 4. Execute the training script from the : 
 ```bash
-./src/entity_extraction/training/spacy_ner/run_spacy_training.sh
+./src/entity_extraction/training/spacy/run_spacy_training.sh
 ```
 
 ## Evaluation Workflow
@@ -40,11 +40,11 @@ To run full evaluation of the trained model to get detailed metrics and plots, f
    5. `GPU` - whether to use GPU or not.
 2. Make the evaluation script executable: 
 ```bash
-chmod +x src/entity_extraction/training/spacy_ner/run_evaluation.sh
+chmod +x src/entity_extraction/training/spacy/run_evaluation.sh
 ```
 3. Run the evaluation script results will be generated in the `OUTPUT_DIR` folder. **This may take while on CPU and even GPU.**
 ```bash
-./src/entity_extraction/training/spacy_ner/run_evaluation.sh
+./src/entity_extraction/training/spacy/run_evaluation.sh
 ```
 
 ## Overall Process Diagram
@@ -93,7 +93,7 @@ This notebook sets up the NER model training on Google Colab with GPU. Use the f
 3. Create a `data` folder inside the folder you just created and upload the `train.spacy` and `val.spacy` files into it
 4. Create a `models` folder, this is where checkpoints will be saved during training
 5. Create an `evaluation-results` folder, this is where the evaluation results will be saved
-6. Create a copy of the `run_spacy_training.sh` and `run_evaluation.sh` files from `src/entity_extraction/training/spacy_ner` and place it in training run folder
+6. Create a copy of the `run_spacy_training.sh` and `run_evaluation.sh` files from `src/entity_extraction/training/spacy` and place it in training run folder
 7. Your folder structure should now look like:
    ```
    spacy-transformer-v1

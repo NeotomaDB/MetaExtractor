@@ -5,10 +5,10 @@ channels:
 dependencies:
   - python=3.10
   - sentence-transformers=2.2*
-  - seaborn=0.12*
+  - seaborn=0.11*
   - dash=2.11*
   - dash-bootstrap-components=1.4*
-  - mlflow=1.2*
+  - mlflow=2.4*
   - lightgbm=3.3*
   - python-dotenv=1.0*
   - flake8=6.0*
@@ -26,7 +26,6 @@ dependencies:
       - datasets~=2.13
       - docopt-ng~=0.8
       - evaluate==0.4.0
-      - mlflow_skinny~=2.3
       - pytest-cov~=4.0
       - https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.5.0/en_core_web_lg-3.5.0-py3-none-any.whl
 

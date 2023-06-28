@@ -41,7 +41,7 @@ The project Finding Fossils in Literature is sponsored by the Neotoma database (
 
 # Introduction
 
-The Neotoma database (Neotoma) [@NeotomaDB] serves as a valuable resource for researchers investigating ecological transformations spanning the last 5 million years. Nevertheless, the collection of data heavily relies on manual submissions from researchers, presenting challenges in data entry and impeding collaborative endeavors aimed at achieving a comprehensive understanding of ecological changes.This project aims to automate the extraction of data from relevant journal articles which can be added to Neotoma. This can be completed in three parts. First, article relevancy for the Neotoma database is predicted. Relevant articles are then parsed using natural language processing techniques. Finally, an interactive data review tool is built to review and correct the extracted data before it is submitted to Neotoma. The outputs of this data review tool are then used to retrain the two data models in the future.
+The Neotoma database (Neotoma) [@NeotomaDB] serves as a valuable resource for researchers investigating ecological transformations spanning the last 5 million years. Nevertheless, the collection of data heavily relies on manual submissions from researchers, presenting challenges in data entry and impeding collaborative endeavors aimed at achieving a comprehensive understanding of ecological changes. This project aims to automate the extraction of data from relevant journal articles which can be added to Neotoma. This can be completed in three parts. First, article relevancy for the Neotoma database is predicted. Relevant articles are then parsed using natural language processing techniques. Finally, an interactive data review tool is built to review and correct the extracted data before it is submitted to Neotoma. The outputs of this data review tool are then used to retrain the two data models in the future.
 \newpage
 
 # Data Science Methods
@@ -68,7 +68,7 @@ The labelled articles were split into train/validation/test sets with splits of 
 
 #### Preprocessing & Feature Selection
 
-Article's metadata were retrieved from the CrossRef API [@crossref]. There were over 50 types of metadata provided by the CrossRef API. Since many of them are related to the publication aspect of the article, feature selection was performed to reduce dimensionality. @tbl-feature_selection explains the key decisions made during the feature selection step.
+The article's metadata were obtained from the CrossRef API [@crossref], which provided over 50 types of metadata. To reduce dimensionality, feature selection was conducted, guided by @tbl-feature_selection.
 
 | **Feature**                                | **Decision**                                                                                                                                                                                                                                                                                                                                                                  |
 |:----|:--------|
@@ -121,9 +121,9 @@ The choice of the final model was primarily based on model performance on recall
 
 ### Model Evaluation
 
-The main goal of article relevance prediction is to identify potentially as many useful articles as possible from the article repository so that valuable research data can be discovered. The cost of false negatives is high because if the model does not catch a relevant article, this article will unlikely be discovered by the Neotoma community and its data will be missed. On the other hand, the cost of false positives is more manageable. Hence, recall was the metric that was optimized. During data validation, Data Stewards are able to easily mark an article as not relevant using our data review tool.
+The main goal of article relevance prediction is to identify potentially as many useful articles as possible from the article repository so that valuable research data can be discovered. The cost of false negatives will be high because if the model does not catch a relevant article, this article will unlikely be discovered by the Neotoma community and its data will be missed. On the other hand, the cost of false positives will be more manageable. Hence, recall was the metric that was optimized. During data validation, Data Stewards are able to easily mark an article as not relevant using our data review tool.
 
-Another key consideration was model interpretation. The positive examples were gathered using articles that currently exist in the Neotoma database, and it was difficult to tell if there are existing biases in the training data. A more interpretable model would help identify model biases and make corrections in the long run.
+Another consideration was model interpretation. The positive examples were gathered using articles that currently exist in the Neotoma database, and it was difficult to tell if there are existing biases in the training data. A more interpretable model would help identify model biases and make corrections in the long run.
 
 ## Article Data Extraction
 
@@ -244,7 +244,7 @@ An original sample of 300+ full text articles related to Neotoma was provided. S
 
 ### Data Preprocessing and Labelling
 
-For the development of the NER models, a sample of 39 articles relevant to Neotoma were preprocessed and labelled by the research team using LabelStudio. Preprocessing steps involved chunking the articles into bite-sized pieces and replacing special tokens with their English equivalent symbol. Other text preprocessing techniques were not used for this project as the aim was to preserve the original text and ensure that the model understands contextual information. The Label Studio interface hosted on HuggingFace was used for labeling purposes as it provides an out-of-the-box collaborative environment for several ML tagging tasks, including named entity recognition. The SITE entity proved difficult to label as differentiating between obscure location names or an acronym of a core sample was difficult for the team. Similarly, correctly identifying TAXA and where on TAXA label began and another ends proved challenging. A significant improvement in results is expected by improving the quality of labeling with the help of data stewards with subject matter expertise.
+For the development of the NER models, a sample of 39 articles relevant to Neotoma were preprocessed and labelled by the research team using LabelStudio[@LabelStudio]. Preprocessing steps involved chunking the articles into bite-sized pieces and replacing special tokens with their English equivalent symbol. Other text preprocessing techniques were not used for this project as the aim was to preserve the original text and ensure that the model understands contextual information. The LabelStudio interface hosted on HuggingFace[@huggingface] was used for labeling purposes as it provides an out-of-the-box collaborative environment for several ML tagging tasks, including named entity recognition. The SITE entity proved difficult to label as differentiating between obscure location names or an acronym of a core sample was difficult for the team. Similarly, correctly identifying TAXA and where on TAXA label began and another ends proved challenging.
 
 The labelled articles were split into train/validation/test sets by full article with splits of 70%/15%/15% respectively. The data splitting was done based upon whole articles to prevent data leakage into the model learning certain articles patterns before evaluation. This resulted in the entity distributions between train/validation/test as shown in @fig-entity-dists.
 
@@ -732,7 +732,7 @@ The final data review tool that was created was a multi-page Plotly Dash applica
 
 This web application enables users to review the extracted entities from articles, make changes, add additional missed entities and remove incorrectly extracted entities. The application includes a button to launch the article in an external browser tab so that the reviewer can verify beyond the current sentence and sentence preceding/following that was provided as output. The entire review process does not require any coding knowledge, and reviewers can navigate through the review workflow in three clicks or fewer from the Article Review page @fig-review_tool_snap.
 
-The output of this data review tool is a JSON object that stores the originally extracted entities as well as the corrected entities. The Neotoma organization can utilize these entities to add new paleoecology articles to the database. In addition, the reviewed entities can be fed back to model using our model retraining pipeline, contributing to the continuous improvement of the quality of extraction of entities.
+The output of this data review tool is a JSON object that stores the originally extracted entities as well as the corrected entities. The Neotoma organization can utilize these entities to add new paleoecology articles to the database. In addition, the reviewed entities can be fed back to model using our model retraining pipeline, contributing to the continuous improvement of the quality of extraction of entities as outlined in @tbl-review_results.
 
 | **Requirement**                                         | **Results**                                   |
 | ------------------------------------------------------- | --------------------------------------------- |
@@ -755,9 +755,9 @@ The output of this data review tool is a JSON object that stores the originally 
 
 ## Product Deployment
 
-The end goal of this project is to have each data product running in a semi/un-supervised fashion. The article relevance prediction pipeline is containerized using Docker. It is expected to run on a daily or a weekly basis by the Neotoma and to fetch the latest published articles from the public xDD API, run the article relevance prediction, and finally submits relevant articles to xDD to have their full text processed. 
+The end goal of this project is to have each data product running in a semi/un-supervised fashion. The article relevance prediction pipeline was containerized using Docker. It is expected to run on a daily or a weekly basis by the Neotoma and to fetch the latest published articles from the public xDD API, run the article relevance prediction, and finally submits relevant articles to xDD to have their full text processed. 
 
-The Article Data Extraction pipeline is containerized using Docker and contains the entity extraction model within it. It is run on the xDD servers as xDD is not legally allowed to send full text articles off their servers. The container accepts full text articles, extracts the entities, and outputs a single JSON object for each article which is then exported by xDD back to the Neotoma team. The extracted entity JSON objects were combined with the article relevance prediction results and loaded into the Data Review Tool. @fig-deployment_pipeline depicts the work flow.
+The Article Data Extraction pipeline is containerized using Docker and contains the entity extraction model within it. It is to be run on the xDD servers as xDD is not legally allowed to send full text articles off their servers. The container accepts full text articles, extracts the entities, and outputs a single JSON object for each article which is then exported by xDD back to the Neotoma team. The extracted entity JSON objects were combined with the article relevance prediction results and loaded into the Data Review Tool. @fig-deployment_pipeline depicts the work flow.
 
 ```{mermaid}
 %%| label: fig-deployment_pipeline

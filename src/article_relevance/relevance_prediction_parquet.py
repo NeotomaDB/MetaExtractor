@@ -426,7 +426,9 @@ def main():
     send_xdd = opt['--send_xdd']
     
     # /models directory is a mounted volume, containing the model object
-    models = os.lsitdir("/models")
+    models = os.listdir("/models")
+    models = [f for f in models if f.endswith(".joblib")]
+    
     if models:
         model_path = os.path.join("/models", models[0])
     else:

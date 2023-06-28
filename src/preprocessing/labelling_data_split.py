@@ -28,7 +28,6 @@ from src.preprocessing.labelling_preprocessing import get_hash
 
 logger = get_logger(__name__)
 
-
 def separate_labels_to_train_val_test(
     labelled_file_path: str,
     output_path: str,
@@ -239,8 +238,16 @@ def separate_labels_to_train_val_test(
         json.dump(data_metrics, f, indent=2)
 
     logger.info("Finished separating files into train, val and test sets.")
-
-
+    logger.info(
+        f"Found {data_metrics['train']['entity_counts']} entities in {data_metrics['train']['article_count']} articles in train set."
+    )
+    logger.info(
+        f"Found {data_metrics['val']['entity_counts']} entities in {data_metrics['val']['article_count']} articles in val set."
+    )
+    logger.info(
+        f"Found {data_metrics['test']['entity_counts']} entities in {data_metrics['test']['article_count']} articles in test set."
+    )
+    
 def get_article_gdd_ids(labelled_file_path: str):
     """
     Parameters

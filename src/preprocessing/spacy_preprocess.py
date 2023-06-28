@@ -20,9 +20,6 @@ from spacy.tokens import DocBin
 # ensure that the parent directory is on the path for relative imports
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
 
-from src.logs import get_logger
-logger = get_logger(__name__)
-
 def preprocess_data(data_path: str):
     """Creates data artifacts used by the Spacy model for training
 
@@ -38,11 +35,6 @@ def preprocess_data(data_path: str):
     val_files = glob.glob(os.path.join(data_path, "val", "*.txt"))
     train_files.extend(glob.glob(os.path.join(data_path, "train", "*.json")))
     val_files.extend(glob.glob(os.path.join(data_path, "val", "*.json")))
-    
-    logger.info(
-        f"Number of files found under the train dir: {len(train_files)}")
-    logger.info(
-        f"Number of files found under the val dir: {len(val_files)}")
                 
     train_doc_bin = get_doc(nlp, train_files)
     train_doc_bin.to_disk(os.path.join(data_path, "train.spacy"))

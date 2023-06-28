@@ -1,20 +1,6 @@
 #!/usr/bin/env sh 
 
-# Copyright 2020 The HuggingFace Team. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-# if running with conda envs, comment out if not
+# if running with conda envs, remove if not
 conda activate ffossils
 
 echo python.__version__ = $(python -c 'import sys; print(sys.version)')
@@ -25,13 +11,14 @@ echo "Current working directory: $(pwd)"
 # see https://huggingface.co/models for options
 export MODEL_NAME_OR_PATH="roberta-base"
 # what the end model should be called, this is used for logging and saving
-export FINAL_MODEL_NAME="MetaExtractor"
+export FINAL_MODEL_NAME="metaextractor"
 
 # set the location of the labelled data, ideally this is run from root of repo
 # leave test_split at non_zero value to ensure test set is created for evaluation
-export LABELLED_FILE_LOCATION="$(pwd)/data/entity-extraction/processed/2023-05-31_label-export_39-articles/"
-export OUTPUT_DIR="/models/ner/test-finetuning/"
-export LOG_DIR="/models/ner/test-finetuning/logs/"
+export RAW_LABELLED_FILE_LOCATION="/data/entity-extraction/raw/sample-labelstudio-output/"
+export PROCESSED_LABELS_LOCATION="/data/entity-extraction/processed/sample-processed-labelstudio/"
+export MODEL_OUTPUT_DIR="/models/ner/test-finetuning/"
+export MODEL_LOG_DIR="/models/ner/test-finetuning/logs/"
 
 # comment the following in/out if MLflow server is available/.env file setup
 # export MLFLOW_EXPERIMENT_NAME="test-hf-token-classification"
@@ -42,16 +29,33 @@ export HF_MLFLOW_LOG_ARTIFACTS="0"
 export MLFLOW_FLATTEN_PARAMS="2" # azure mlflow has a limit of 200 params, leveing this nested gets around it
 export AZUREML_ARTIFACTS_DEFAULT_TIMEOUT="3600" # large file upload times reuqire longer time out
 
+# split up the labelled data by GDD ID and create train/val/test splits
+python src/preprocessing/labelling_data_split.py \
+    --raw_label_path "$(pwd)$RAW_LABELLED_FILE_LOCATION" \
+    --output_path "$(pwd)$PROCESSED_LABELS_LOCATION" \
+    --train_split 0.7 \
+    --val_split 0.15 \
+    --test_split 0.15 
+
+# split labelled files into training chunks
+# max_seq_length - how many words are in each chunk, ensures once tokenized each is less than 512
+# stride - how many words overlap between chunks, ensures context is maximized
+python src/entity_extraction/training/hf_token_classification/huggingface_preprocess.py \
+    --label_files "$(pwd)$PROCESSED_LABELS_LOCATION" \
+    --max_seq_length 256 \
+    --stride 196
+
+# Kick off the training script. Use max_train_samples and max_eval_samples for local CPU testing
 python src/entity_extraction/training/hf_token_classification/ner_training.py \
     --seed 42 \
     --load_best_model_at_end True \
-    --metric_for_best_model recall \
+    --metric_for_best_model overall_recall \
     --run_name finetuning-logging \
     --model_name_or_path "$MODEL_NAME_OR_PATH" \
-    --output_dir "$(pwd)$OUTPUT_DIR" \
-    --logging_dir "$(pwd)$LOG_DIR" \
-    --train_file "$LABELLED_FILE_LOCATION/train.json" \
-    --validation_file "$LABELLED_FILE_LOCATION/val.json" \
+    --output_dir "$(pwd)$MODEL_OUTPUT_DIR" \
+    --logging_dir "$(pwd)$MODEL_LOG_DIR" \
+    --train_file "$(pwd)$PROCESSED_LABELS_LOCATION/train.json" \
+    --validation_file "$(pwd)$PROCESSED_LABELS_LOCATION/val.json" \
     --text_column_name tokens \
     --label_column_name ner_tags \
     --label_all_tokens True \
@@ -70,12 +74,12 @@ python src/entity_extraction/training/hf_token_classification/ner_training.py \
     --num_train_epochs 2 \
     --per_device_train_batch_size 8 \
     --gradient_accumulation_steps 8 \
+    --warmup_steps 100 \
     --max_train_samples 1 \
-    --max_eval_samples 1 \
-    --warmup_steps 100 
+    --max_eval_samples 1 
 
 
-# all options, see here for hugginface description of all arguments: https://huggingface.co/docs/transformers/main_classes/trainer#transformers.TrainingArguments
+# all options, see here for huggingface description of all arguments: https://huggingface.co/docs/transformers/main_classes/trainer#transformers.TrainingArguments
 # usage: run_ner.py [-h] 
 #                   --model_name_or_path MODEL_NAME_OR_PATH 
 #                   [--config_name CONFIG_NAME] 

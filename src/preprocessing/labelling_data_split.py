@@ -15,7 +15,6 @@ Options:
 import os, sys
 import pandas as pd
 import numpy as np
-import logging
 import shutil
 import json
 
@@ -23,9 +22,8 @@ from docopt import docopt
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
 
-logger = logging.getLogger(__name__)
-# set logging level to display info and above
-logger.setLevel(logging.INFO)
+from src.logs import get_logger
+logger = get_logger(__name__)
 
 
 def separate_labels_to_train_val_test(
@@ -70,13 +68,15 @@ def separate_labels_to_train_val_test(
         logger.info(f"Creating folder {output_path} and train/val/test subfolders")
         os.mkdir(output_path)
     else:
-        logger.info(f"Folder {output_path} already exists.")
+        logger.info(f"Folder {output_path} already exists, overwriting contents.")
 
     os.makedirs(os.path.join(output_path, "train"), exist_ok=True)
     os.makedirs(os.path.join(output_path, "val"), exist_ok=True)
     os.makedirs(os.path.join(output_path, "test"), exist_ok=True)
 
     gdd_ids = get_article_gdd_ids(labelled_file_path)
+
+    logger.info(f"Found {len(gdd_ids)} unique GDD IDs in the labelled data.")
 
     # set seed for reproducibility
     np.random.seed(seed)
@@ -95,6 +95,8 @@ def separate_labels_to_train_val_test(
         remaining_gdd_ids, size=round(test_split * len(gdd_ids)), replace=False
     )
     remaining_gdd_ids = np.setdiff1d(remaining_gdd_ids, test_gdd_ids)
+
+    logger.info(f"Data split by GDD ID: train - {len(train_gdd_ids)}, val - {len(val_gdd_ids)}, test - {len(test_gdd_ids)}")
 
     # check no gdd_ids' left over due to split rounding errors and if they are assign to train
     if len(np.setdiff1d(remaining_gdd_ids, test_gdd_ids)) > 0:
@@ -218,6 +220,10 @@ def separate_labels_to_train_val_test(
                 else:
                     data_metrics["test"]["entity_counts"][entity_name] += count
 
+    # make directory if output does not exist
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+        logger.info(f"Created folder {output_path}.")
     # save the data metrics to json indented
     with open(os.path.join(output_path, "data_metrics.json"), "w") as f:
         json.dump(data_metrics, f, indent=2)

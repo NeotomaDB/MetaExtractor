@@ -407,7 +407,7 @@ Final hyper parameters used to train the models are outlined in @tbl-hf-train-hy
 +=========================+==================================================================================================================================================================================================================+
 | Batch size              | -   Maximized to utilize all available GPU memory, 8 for RoBERTa based models                                                                                                                                    |
 +-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Gradient Accumulation   | -   Used to mimic larger batch sizes, this value was chosen to achieve batch sizes of \~12k tokens based on best practices \[@transformer-train-tips]                                                            |
+| Gradient Accumulation   | -   Used to mimic larger batch sizes, this value was chosen to achieve batch sizes of ~12k tokens based on best practices [@transformer-train-tips]                                                            |
 +-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Epochs                  | -   Initial runs with 10-20 epochs, observed evaluation loss minima occurring in first 2-8, settled on 10                                                                                     |
 +-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -460,7 +460,7 @@ Final hyper parameters used to train the spaCy models along with comments on eac
 
 Both the spaCy and HuggingFace models used RoBERTa as the base model. The spaCy model labels a sequence of inputs using an algorithm similar to transition-based dependency parsing using (Stack-LSTMs)[@S-LSTM]. Whereas the HuggingFace transformer model added a linear layer with softmax on top of the RoBERTa embeddings to perform the token classification.
 
-The workflow in @fig-training_pipeline shows the primary steps for training with the Entity Extraction models with intermediate files and processes.
+The workflow in @fig-training-pipeline shows the primary steps for training with the Entity Extraction models with intermediate files and processes.
 
 ```{mermaid}
 %%| label: fig-training-pipeline

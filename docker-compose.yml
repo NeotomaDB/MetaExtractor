@@ -1,5 +1,27 @@
 version: "3.9"
 services:
+  article-relevance:
+    image: metaextractor-article-relevance:v0.0.1
+    build:
+      dockerfile: ./docker/article-relevance/Dockerfile
+      context: .
+      args:
+      - DOI_FILE_PATH=data/article-relevance/raw/gdd_api_return.json
+      - MODEL_PATH=models/article-relevance/logistic_regression_model.joblib
+    environment:
+      - N_RECENT=10
+      - MIN_DATE=
+      - MAX_DATE=
+      - TERM=
+      - AUTO_MIN_DATE=False
+      - AUTO_CHECK_DUP=False
+      - OUTPUT_PATH=/outputs/
+      - SEND_XDD=False
+    volumes:
+      - ./data/article-relevance/outputs:/output
+      - ./data/article-relevance/processed/prediction_parquet:/parquet
+      - ./data/article-relevance/raw:/raw
+
   data-review-tool:
     image: metaextractor-data-review-tool:v0.0.1
     build:

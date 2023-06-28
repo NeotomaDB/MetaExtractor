@@ -11,7 +11,7 @@ python src/article_relevance/gdd_api_query.py \
   --auto_check_dup="$AUTO_CHECK_DUP"
 
 python src/article_relevance/relevance_prediction_parquet.py \
-  --doi_file_path="$DOI_FILE_PATH" \
+  --doi_file_path="$ENV_DOI_FILE_PATH" \
   --model_path="$MODEL_PATH" \
   --output_path="$OUTPUT_PATH" \
   --send_xdd="$SEND_XDD"

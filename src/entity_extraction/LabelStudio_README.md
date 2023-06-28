@@ -11,6 +11,7 @@ The finding fossils team setup a privately hosted version of LabelStudio using H
     - [**Create Azure Blob Storage**](#create-azure-blob-storage)
     - [**Setup PostgreSQL Database**](#setup-postgresql-database)
     - [**Setup Label Studio External Storage**](#setup-label-studio-external-storage)
+    - [**Downloading Labelled Files for Training**](#downloading-labelled-files-for-training)
   - [**Label Studio Usage**](#label-studio-usage)
     - [**Account creation**](#account-creation)
     - [**Navigation**](#navigation)
@@ -68,6 +69,18 @@ Inside the Label Studio instance
   - `findingfossilsdev`
 - **Account key**: from Azure storage page --> Access keys
 
+---
+
+### Downloading Labelled Files for Training
+
+To download all currently labelled files follow the following steps:
+1. Navigate to the Azure blob storage account and locate the `labelled` folder setup above.
+2. All files in `labelled` are numbered according to the LabelStudio task ID and are JSON files even though they don't have the extension.
+3. Expand the window and scroll all the way to the bottom of all files to ensure they're all in view.
+4. At the top select the radio button that selects all the files and in the menu bar at the top right select the download button, this will begin downloading all files one by one (yes, it's not perfect).
+5. From your downloads folder select all the files and move into a folder `data/entity-extraction/raw/<DATE>_label-export/`
+6. Now the NER model training can have this folder entered as the raw label input path.
+   
 ---
 
 ## **Label Studio Usage**

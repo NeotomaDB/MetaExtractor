@@ -15,6 +15,9 @@ Running this docker image will:
 3. Train a new logistic regression model using the expanded data.
 4. Key model evaluation are outputted in the specified results directory.
 
+**Data Requirement**
+The original training data is required so that the retraining process can be built based on both old and new examples. To run the retrain pipeline, download [metadata_embeded_specter2.csv](https://drive.google.com/file/d/1vIiTryi-BDoLYSQlCWrgoKlV3t9joiTO/view?usp=drive_link) and save it under the path provided in the environment variable TRAIN_DATA_PATH (see below for a sample docker compose).
+
 ## Additional Options Enabled by Environment Variables
 
 The following environment variables can be set to change the behavior of the pipeline:
@@ -36,7 +39,7 @@ services:
     image: metaextractor-article-relevance-retrain:v0.0.1
     environment:
       - USE_REVIEWED_DATA=True
-      - TRAIN_DATA_PATH=data/article-relevance/processed/metadata_processed_embedded.csv
+      - TRAIN_DATA_PATH=data/article-relevance/processed/metadata_embeded_specter2.csv
       - MODEL_FOLDER=/outputs/model/
       - RESULT_DIR=/outputs/model_eval/
       - REVIEWED_FOLDER_PATH=data/data-review-tool/

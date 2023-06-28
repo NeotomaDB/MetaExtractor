@@ -18,6 +18,8 @@ COPY models/article-relevance ./models/article-relevance
 
 # Copy the data folder into the container
 COPY data/article-relevance ./data/article-relevance
+COPY data/data-review-tool/processed ./data/data-review-tool/processed
+
 
 # Copy the shell script to the container
 COPY docker/article-relevance-retrain/run-retrain.sh .

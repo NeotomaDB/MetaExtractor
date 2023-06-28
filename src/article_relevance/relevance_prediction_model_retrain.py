@@ -72,7 +72,7 @@ def train_data_load_split(train_raw_csv_path):
         Three pandas Data frames: train_df, valid_df, test_df
 
     Example:
-        train_data_load_split(train_raw_csv_path = "../../data/article-relevance/processed/metadata_processed_embedded.csv")
+        train_data_load_split(train_raw_csv_path = "../../data/article-relevance/processed/metadata_embeded_specter2.csv")
     '''
 
     # load original training sample
@@ -81,14 +81,15 @@ def train_data_load_split(train_raw_csv_path):
     metadata_df['text_with_abstract'].fillna("", inplace=True)
     metadata_df['subject_clean'].fillna("", inplace=True)
     
-    if metadata_df['has_abstract'].isna().any():
-        raise ValueError(f"Column 'has_abstract' contains NaN values.")
-    if metadata_df['is-referenced-by-count'].isna().any():
-        raise ValueError(f"Column 'is-referenced-by-count' contains NaN values.")
+    
     if metadata_df['text_with_abstract'].isna().any():
         raise ValueError(f"Column 'text_with_abstract' contains NaN values.")
     if metadata_df['target'].isna().any():
         raise ValueError(f"Column 'target' contains NaN values.")
+    if metadata_df['has_abstract'].isna().any():
+        raise ValueError(f"Column 'has_abstract' contains NaN values.")
+    if metadata_df['is-referenced-by-count'].isna().any():
+        raise ValueError(f"Column 'is-referenced-by-count' contains NaN values.")
 
 
     # Split into train/valid/test sets
@@ -251,6 +252,9 @@ def model_train(train_df, model_dir, model_c = 0.01563028103558011):
     now = datetime.datetime.now()
     formatted_datetime = now.strftime("%Y-%m-%dT%H-%M-%S")
 
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
+
     model_file_name = os.path.join(model_dir, f"retrained_model_{formatted_datetime}.joblib")
     joblib.dump(logreg_model, model_file_name)
 
@@ -276,6 +280,9 @@ def model_eval(model, valid_df, test_df, report_dir):
     Return:
         None
     '''
+    
+    if not os.path.exists(report_dir):
+        os.makedirs(report_dir)
 
     # ======= Only keep feature columns ==========
     keep_col = ['target', 'has_abstract', 'subject_clean', 'is-referenced-by-count'] + [str(i) for i in range(0,768)]
@@ -350,6 +357,7 @@ def model_eval(model, valid_df, test_df, report_dir):
     logger.info(f'Evaluation - test precision = {round(TP / (TP + FP), 3)}')
     
     # convert to Json file and export
+
     report_file_path = os.path.join(report_dir, f"retrained_model_{formatted_datetime}_metrics.json")
 
     with open(report_file_path, 'w') as json_file:

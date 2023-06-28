@@ -11,7 +11,7 @@ The finding fossils team setup a privately hosted version of LabelStudio using H
     - [**Create Azure Blob Storage**](#create-azure-blob-storage)
     - [**Setup PostgreSQL Database**](#setup-postgresql-database)
     - [**Setup Label Studio External Storage**](#setup-label-studio-external-storage)
-    - [**Downloading Labelled Files for Training**](#downloading-labelled-files-for-training
+    - [**Downloading Labelled Files for Training**](#downloading-labelled-files-for-training)
   - [**Label Studio Usage**](#label-studio-usage)
     - [**Account creation**](#account-creation)
     - [**Navigation**](#navigation)

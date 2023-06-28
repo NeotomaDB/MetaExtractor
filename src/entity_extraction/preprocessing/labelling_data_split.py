@@ -17,14 +17,16 @@ import pandas as pd
 import numpy as np
 import shutil
 import json
-
+from collections import defaultdict
+from datetime import datetime
 from docopt import docopt
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
 
 from src.logs import get_logger
-logger = get_logger(__name__)
+from src.preprocessing.labelling_preprocessing import get_hash
 
+logger = get_logger(__name__)
 
 def separate_labels_to_train_val_test(
     labelled_file_path: str,
@@ -74,6 +76,9 @@ def separate_labels_to_train_val_test(
     os.makedirs(os.path.join(output_path, "val"), exist_ok=True)
     os.makedirs(os.path.join(output_path, "test"), exist_ok=True)
 
+    # Checks for parquet files and extracts them 
+    extract_parquet_file(labelled_file_path)
+    
     gdd_ids = get_article_gdd_ids(labelled_file_path)
 
     logger.info(f"Found {len(gdd_ids)} unique GDD IDs in the labelled data.")
@@ -156,20 +161,24 @@ def separate_labels_to_train_val_test(
         },
     }
 
-    # iterate through the files in the folder and convert them to the hf format
     for file in os.listdir(labelled_file_path):
         # if file doesn't end with txt skip it
-        if not file.endswith(".txt"):
-            continue
-
-        with open(os.path.join(labelled_file_path, file), "r") as f:
-            task = json.load(f)
-
-        try:
-            gdd_id = task["task"]["data"]["gdd_id"]
-            raw_text = task["task"]["data"]["text"]
-            annotation_result = task["result"]
-
+        try:    
+            if file.endswith(".txt"):
+                with open(os.path.join(labelled_file_path, file), "r") as f:
+                    task = json.load(f)
+                annotation_result = task["result"]
+                gdd_id = task["task"]["data"]["gdd_id"]
+                raw_text = task["task"]["data"]["text"]
+            elif file.endswith(".json"):
+                with open(os.path.join(labelled_file_path, file), "r") as f:
+                    task = json.load(f)
+                annotation_result = task["result"]
+                gdd_id = task["data"]["gdd_id"]
+                raw_text = task["data"]["text"]
+            else:
+                continue      
+            
             # get the number of words in the article
             num_words = len(raw_text.split())
 
@@ -229,8 +238,16 @@ def separate_labels_to_train_val_test(
         json.dump(data_metrics, f, indent=2)
 
     logger.info("Finished separating files into train, val and test sets.")
-
-
+    logger.info(
+        f"Found {data_metrics['train']['entity_counts']} entities in {data_metrics['train']['article_count']} articles in train set."
+    )
+    logger.info(
+        f"Found {data_metrics['val']['entity_counts']} entities in {data_metrics['val']['article_count']} articles in val set."
+    )
+    logger.info(
+        f"Found {data_metrics['test']['entity_counts']} entities in {data_metrics['test']['article_count']} articles in test set."
+    )
+    
 def get_article_gdd_ids(labelled_file_path: str):
     """
     Parameters
@@ -256,24 +273,96 @@ def get_article_gdd_ids(labelled_file_path: str):
 
     # iterate through the files and get the unique gdd_ids
     gdd_ids = []
+    
     for file in os.listdir(labelled_file_path):
-        # if file doesn't end with txt skip it
-        if not file.endswith(".txt"):
-            continue
-
-        with open(os.path.join(labelled_file_path, file), "r") as f:
-            task = json.load(f)
-
+        
         try:
-            gdd_id = task["task"]["data"]["gdd_id"]
+            if file.endswith(".txt"):
+                with open(os.path.join(labelled_file_path, file), "r") as f:
+                    task = json.load(f)
+                    gdd_id = task["task"]["data"]["gdd_id"]
+            elif file.endswith(".json"):
+                with open(os.path.join(labelled_file_path, file), "r") as f:
+                    task = json.load(f)
+                    gdd_id = task["data"]["gdd_id"]
+            else:
+                continue
         except Exception as e:
             logger.warning(f"Issue with file data: {file}, {e}")
-
+            continue
+        
         if gdd_id not in gdd_ids:
             gdd_ids.append(gdd_id)
 
     return gdd_ids
 
+def extract_parquet_file(labelled_file_path: str):
+    """Checks the directory for parquet files and extracts the corrected entities
+
+    Parameter
+    ---------
+    labelled_file_path: str
+        Directory containing the data files
+    """
+    
+    files = os.listdir(labelled_file_path)
+    
+    # Iterate through the files and check if they are parquet files
+    for fin in files:
+        if fin.endswith(".parquet"):
+            df = pd.read_parquet(os.path.join(labelled_file_path, fin))
+            
+            logger.info(f"Read parquet file {fin} with {len(df)} rows.")
+            
+            for index, row in df.iterrows():
+                
+                output_files = defaultdict(list)
+                all_sentences = {}
+                gdd_id = row["gddid"]
+                if row["corrected_entities"] != "None":
+                    
+                    logger.info(f"Entities found in xDD ID: {gdd_id}")
+                    
+                    corrected_entities = json.loads(row["corrected_entities"])
+                    
+                    for ent_type in corrected_entities.keys():
+                        for entity in corrected_entities[ent_type].keys():
+                            for sentence in corrected_entities[ent_type][entity]['sentence']:
+                                if (sentence['char_index']['start'] != -1 and
+                                    sentence['char_index']['end'] != -1):
+                                    all_sentences[sentence['sentid']] = sentence['text']
+                                    output_files[sentence['sentid']].append({
+                                        "value": {
+                                            "text": corrected_entities[ent_type][entity]['corrected_name'],
+                                            "start": sentence['char_index']['start'],
+                                            "end": sentence['char_index']['end'],
+                                            "labels": [ent_type]
+                                        }          
+                                    })
+                
+                    logger.info(f"Number of sentences extracted for training: {len(output_files)}")
+                
+                # Iterate through each sentence and create a json file
+                for sentid in output_files.keys():
+                    text = all_sentences[sentid]
+                    article_data = {
+                        "text": text,
+                        "global_index": sentid,
+                        "local_index": sentid,
+                        "gdd_id": gdd_id,
+                        "doi": row['DOI'],
+                        "timestamp": str(datetime.today()),
+                        "chunk_hash": get_hash(text),
+                        "article_hash": get_hash(text),
+                    }
+                    output_data = {
+                        "data": article_data,
+                        "result": output_files[sentid]
+                    }
+                    file_name = os.path.join(labelled_file_path, f"{gdd_id}_{sentid}.json")
+                    # Save the dictionary as a json file
+                    with open(file_name, "w") as f:
+                        json.dump(output_data, f, indent=2)
 
 def main():
     opt = docopt(__doc__)

@@ -94,7 +94,7 @@ This script takes labelled dataset in JSONLines format as input and splits it in
 The resulting train, validation, and test sets can be used for training and evaluating machine learning models.
 
 #### **Options**
-- `--raw_label_path=<raw_label_path>`: Specify the path to the directory where the raw label files are located.
+- `--raw_label_path=<raw_label_path>`: Specify the path to the directory where the raw label files exported from LabelStudio and the parquet files containing the reviewed entities are located.
 
 - `--output_path=<output_path>`: Specify the path to the directory where the output files will be written.
 
@@ -126,4 +126,4 @@ This script manages the creation of custom data artifacts required for training 
 4. Creates the custom data artifacts that can be used for training or fine-tuning spaCy models.
 
 #### **Options**
-- `--data_path=<data_path>`: Specify the path to the folder containing files in JSONLines format.
+- `--data_path=<data_path>`: Specify the path to the folder containing JSON files in txt/json format.

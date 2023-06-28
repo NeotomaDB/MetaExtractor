@@ -20,7 +20,7 @@ format:
     colorlinks: true
 params: 
   output_file: "reports"
-fig-cap-location: top
+fig-cap-location: bottom
 ---
 
 **Executive Summary**
@@ -325,7 +325,7 @@ train_results_df = load_model_evaluation_results(
 )
 plot_distribution_of_entities(
     train_results_df,
-    "Roberta Finetuned V3",
+    "Roberta Finetuned V6",
     title="Entity Distribution for Train Set",
 )
 
@@ -335,7 +335,7 @@ val_results_df = load_model_evaluation_results(
 )
 plot_distribution_of_entities(
     val_results_df,
-    "Roberta Finetuned V3",
+    "Roberta Finetuned V6",
     title="Entity Distribution for Validation Set",
 )
 
@@ -344,7 +344,7 @@ test_results_df = load_model_evaluation_results(
     results_type="test",
 )
 plot_distribution_of_entities(
-    test_results_df, "Roberta Finetuned V3", title="Entity Distribution for Test Set"
+    test_results_df, "Roberta Finetuned V6", title="Entity Distribution for Test Set"
 )
 ```
 
@@ -491,7 +491,7 @@ The target for the data extraction is to maximize recall. This was chosen as it 
 
 ## Data Review Tool
 
-To facilitate the review and improve the efficiency of Neotoma data stewards, an interactive dashboard was developed as the final data product. This dashboard enables manual review of the Article Relevance Prediction and Article Data Extraction results. Users can compare extracted entities to sentences or access the full-text articles to make corrections. They also have the ability to delete incorrect entities and add any missed entities. The Data Review Tool generates a JSON object as output, which can be used to retrain the Article Entity Extraction model and update the Neotoma database. This process promotes enhanced information sharing and improved results, reducing the time required for data stewards to review extracted entities in articles.
+To facilitate the review and improve the efficiency of Neotoma data stewards, an interactive dashboard was developed as the final data product. This dashboard enables manual review of the Article Relevance Prediction and Article Data Extraction results. Users can compare extracted entities to sentences or access the full-text articles to make corrections. They also have the ability to delete incorrect entities and add any missed entities. The Data Review Tool generates a parquet object as output, which can be used to retrain the Article Entity Extraction model and update the Neotoma database. This process promotes enhanced information sharing and improved results, reducing the time required for data stewards to review extracted entities in articles.
 
 ### Approach
 
@@ -515,7 +515,7 @@ In order to create an interactive tool that would be appropriate and efficient f
 | ----------------------------------------------------- | ------------------------------------------------ |
 | Reviewing workflow                                    | Able to save/resume progress.                    |
 | ----------------------------------------------------- | ------------------------------------------------ |
-| Output file format                                    | JSON                                             |
+| Output file format                                    | Parquet                                          |
 
 : Data Review Tool Target Metrics {#tbl-review_metrics}
 
@@ -692,7 +692,7 @@ Markdown(render_df.to_markdown())
 
 An important observation to make here is that the top models had a lower precision score for the SITE names and REGION names. The models got confused when deciding whether an entity should be classified as a SITE or a REGION. This was partially due to quality of labeling entities as well as the fact that both these types correspond to the name of a place or a wider area. See @fig-confusion_matrix for a confusion matrix generated using the test set assets highlights the issue.
 
-![Confusion Matrix for RoBERTa Model](../../results/ner/roberta-finetuned-v3/roberta-finetuned-v3_test_confusion_matrix.png){#fig-confusion_matrix}
+![Confusion Matrix for RoBERTa Model](../../results/ner/roberta-finetuned-v6/roberta-finetuned-v6_test_confusion_matrix.png){#fig-confusion_matrix}
 
 ## Data Review Tool
 
@@ -718,7 +718,7 @@ The output of this data review tool is a parquet file that stores the originally
 | ----------------------------------------------------- | ------------------------------------------------ |
 | Reviewing workflow                                      | Able to save/resume progress.                 |
 | ----------------------------------------------------- | ------------------------------------------------ |
-| Output file format                                      | JSON                                          |
+| Output file format                                      | Parquet                                          |
 
 : Data Review Tool Metric Results {#tbl-review_results}
 
@@ -727,7 +727,7 @@ The output of this data review tool is a parquet file that stores the originally
 
 The end goal of this project is to have each data product running unsupervised. The article relevance prediction pipeline was containerized using Docker. It is expected to run on a daily or a weekly basis by Neotoma to run the article relevance prediction and submit relevant articles to xDD to have their full text processed. 
 
-The Article Data Extraction pipeline was containerized using Docker and contains the entity extraction model within it. It will be run on the xDD servers as xDD is not legally allowed to send full text articles off their servers. The container accepts full text articles, extracts the entities, and outputs a single JSON object for each article. The JSON objects are combined with the article relevance prediction results and loaded into the Data Review Tool. @fig-deployment_pipeline depicts the work flow.
+The Article Data Extraction pipeline is containerized using Docker and contains the entity extraction model within it. It will be run on the xDD servers as xDD is not legally allowed to send full text articles off their servers. The container accepts full text articles, extracts the entities, and outputs a single JSON object for each article. The JSON objects are combined with the article relevance prediction results and loaded into the Data Review Tool. @fig-deployment_pipeline depicts the work flow.
 
 ```{mermaid}
 %%| label: fig-deployment_pipeline

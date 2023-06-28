@@ -12,11 +12,10 @@ This folder contains the training and evaluation scripts for the SpaCy Transform
 ## Training Workflow
 
 A bash script is used to initialize a training job. Model training is fully customizable and users are encouraged to update the parameters in the `run_spacy_training.sh` and `spacy_transfomer_train.cfg` files prior to training. The training workflow is as follows:
-1. Create a new data directory and dump all the TXT files (contains annotations in the JSONLines format) from Label Studio.
+1. Create a new data directory and dump all the JSON files containing annotations from Label Studio and any reviewed parquet files.
 2. Most parameters can be used with the default value, open the `run_spacy_training.sh` bash script and update the following fields with absolute paths or relative paths from the root of the repository:
    - `DATA_PATH`: path to directory with Label Studio labelled data
    - `DATA_OUTPUT_PATH`: path to directory to store the split dataset (train/val/test) as well as other data artifacts required for training.
-   - `MODEL_PATH`: If retraining, specify path to model artifacts. If training a model from scratch, pass empty string `""`
    - `MODEL_OUTPUT_PATH`: path to store new model artifacts
    - `VERSION`: Version can be updated to keep track of different training runs.
    - `--gpu-id`: While executing the `spacy train` command, GPU can be used, if available, by setting this flag to **0**.

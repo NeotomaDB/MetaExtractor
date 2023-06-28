@@ -20,7 +20,7 @@ format:
     colorlinks: true
 params: 
   output_file: "reports"
-fig-cap-location: top
+fig-cap-location: bottom
 ---
 
 **Executive Summary**
@@ -100,7 +100,7 @@ The descriptive text feature provides crucial contextual information for the mod
 
 **Sentence embedding (Final):** Sentence embedding is the state-of-the-art approach for text representation. Three sentence embedding models were experimented and allenai/specter2 model resulted in the best overall performance as documented in @tbl-sent_embedding.
 
-| Model                       | Result                                                                                                                                                                                   |
+| **Model**                   | **Result**                                                                                                                                                                                   |
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | bert-tiny-finetuned-squadv2 | This model was of a small scale so that the embedding process would be quick.                                                                                                              |
 | --------------------------- | -------------------------------------------------------------------------------------- |
@@ -328,7 +328,7 @@ train_results_df = load_model_evaluation_results(
 )
 plot_distribution_of_entities(
     train_results_df,
-    "Roberta Finetuned V3",
+    "Roberta Finetuned V6",
     title="Entity Distribution for Train Set",
 )
 
@@ -338,7 +338,7 @@ val_results_df = load_model_evaluation_results(
 )
 plot_distribution_of_entities(
     val_results_df,
-    "Roberta Finetuned V3",
+    "Roberta Finetuned V6",
     title="Entity Distribution for Validation Set",
 )
 
@@ -347,7 +347,7 @@ test_results_df = load_model_evaluation_results(
     results_type="test",
 )
 plot_distribution_of_entities(
-    test_results_df, "Roberta Finetuned V3", title="Entity Distribution for Test Set"
+    test_results_df, "Roberta Finetuned V6", title="Entity Distribution for Test Set"
 )
 ```
 
@@ -358,7 +358,7 @@ The state of the art methods for NER tasks is currently dominated by transformer
 
 The approaches considered along with the rationale for their inclusion/rejection from development are outlined in @tbl-ner-approaches.
 
-| Approach                               | Rationale                                                                                                                                                                                             |
+| **Approach**                               | **Rationale**                                                                                                                                                                                             |
 | :------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Rule Based Models                      | This served as the baseline using regex to extract known entities but was not developed further due to the known issues with text quality due to OCR issues and infeasibility for entities like SITE. |
 | <br/>                                  | <br/>                                                                                                                                                                                                 |
@@ -373,7 +373,7 @@ The approaches considered along with the rationale for their inclusion/rejection
 For the transformer based models two approaches were used for training, spaCy command line interface (CLI) [@spacy] and HuggingFace's Training application programming interface (API) [@huggingface]. Each had advantages and disadvantages outlined in @tbl-spacy-pros-cons.
 
 +--------------------------+-----------------------------------------------------------------------------------------------------+------------------------------------------+
-|                          | Pro                                                                                                 | Con                                      |
+|                          | **Pro**                                                                                             | **Con**                                  |
 +==========================+=====================================================================================================+==========================================+
 | spaCy Config Training    | -   Can integrate with any transformer hosted on HuggingFace                                        | -   Knowledge of bash scripting required |
 |                          | -   Prebuilt config scripts that require minimal changes                                            | -   Limited configuration options        |
@@ -389,7 +389,7 @@ For the transformer based models two approaches were used for training, spaCy co
 Using the Hugging Face training API multiple models were trained and evaluated. The model along with the hypothesis behind it's selection is outlined in @tbl-hf-model-hypoth.
 
 
-| Model              | Hypothesis                                                                                                                                                  |
+| **Model**           | **Hypothesis**                                                                                                                                                  |
 |:--------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | RoBERTa-base       | One of the typically best performing models for NER [@roberta-ner-wang]                                                                                     |
 | <br /> | <br /> |
@@ -405,29 +405,29 @@ Using the Hugging Face training API multiple models were trained and evaluated. 
 
 Final hyper parameters used to train the models are outlined in @tbl-hf-train-hyperparams.
 
-+-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Parameters              | Notes                                                                                                                                                                                                            |
-+=========================+==================================================================================================================================================================================================================+
-| Batch size              | -   Maximized to utilize all available GPU memory, 8 for RoBERTa based models, 4 for large models                                                                                                                |
-+-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Gradient Accumulation   | -   Used to mimic larger batch sizes, this value was chosen to achieve batch sizes of \~12k tokens based on existing research \[SOURCE\]                                                                         |
-+-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Epochs                  | -   Initial runs with 10-20 epochs, observed evaluation loss minima occurring in first 2-8 depending on learning rate below                                                                                      |
-+-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Parameters**          | **Notes**                                                                                                                                                                                                        |
+|:------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Batch size              | -   Maximized to utilize all available GPU memory, 8 for RoBERTa based models                                                                                                                                    |
+| <br/> | <br/> |
+| Gradient Accumulation   | -   Used to mimic larger batch sizes, this value was set at 4 to achieve batch sizes of ~12k tokens based on best practices [@transformer-train-tips]                                                              |
+| <br/> | <br/> |
+| Epochs                  | -   Initial runs with 10-20 epochs, observed evaluation loss minima occurring in first 2-8, settled on 10                                                                                                        |
+| <br/> | <br/> |
 | Learning Rate           | -   Initially 5e-5 was used and observed rapid over fitting with eval loss reaching a minimum around 2-4 epochs then increasing for the next 5-10                                                                |
-|                         | -   Moved to 2e-5 as well as introducing gradient accumulation of 3 epochs to increase effective batch size, the eval loss didn't reach a minimum for a bit longer while recall continued to improve             |
-+-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Learning Rate Scheduler | -   All initial training has been done with a linear learning rate scheduler which linearly decreases learning rate across epochs                                                                                |
-+-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Warmup Ratio            | -   How many steps of training to increase LR from 0 to LR, shown to improve with Adam optimizer - [@borealisai2023tutorial] Set to 10% initially                                                                |
-+-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                         | -   Moved to 2e-5 as well as introducing gradient accumulation of 3 epochs to increase effective batch size                                                                                                      |
+| <br/> | <br/> |
+| Learning Rate Scheduler | -   All training was done with a linear learning rate scheduler which linearly decreases learning rate across epochs                                                                                             |
+| <br/> | <br/> |
+| Warmup Ratio            | -   How many steps of training to increase LR from 0 to LR, shown to improve with Adam optimizer - [@borealisai2023tutorial] Set to 100 steps initially                                                                |
+| <br/> | <br/> |
+| Early Stopping          | -   Early stopping is based upon overall F1 score not improving for 5 steps, referred to as patience in training scripts |
 
 : Hugging Face Model Training Hyperparameters {#tbl-hf-train-hyperparams tbl-colwidths="[30,70]"}
 
 Using the spaCy CLI, the two models were trained and evaluated with each models advantages and disadvanctages outlined in @tbl-spacy-model-pros-cons.
 
 +------------------+----------------------------------------------------------------------+------------------------------------------------------+
-| Model            | Advantages                                                           | Disadvantages                                        |
+| **Model**        | **Advantages**                                                       | **Disadvantages**                                    |
 +==================+======================================================================+======================================================+
 | RoBERTa-base     | -   State-of-the-art pretrained transformer for NLP tasks in English | -   Computationally expensive to train and inference |
 |                  | -   Context rich embeddings                                          | -   Cannot fine-tune                                 |
@@ -445,19 +445,19 @@ Final hyper parameters used to train the spaCy models along with comments on eac
 
 | **Parameters**              | **Notes**                                                                                                                  |
 |:----------------------------|:---------------------------------------------------------------------------------------------------------------------------|
-| **Batch size**              | -   Maximized to utilize all available GPU memory, 128 for transformer based model and 512 for word vector based model     |
+| Batch size              | -   Maximized to utilize all available GPU memory, 128 for transformer based model and 512 for word vector based model     |
 | <br/> | <br/> |
-| **Epochs**                  | -   Initial runs with 15 epochs, observed evaluation loss minima occurring in first 7-13 depending on learning rate        |
+| Epochs                  | -   Initial runs with 15 epochs, observed evaluation loss minima occurring in first 7-13 depending on learning rate        |
 | <br/> | <br/> |
-| **Learning Rate**           | -   Initial learning rate of 5e-5                                                                                          |
+| Learning Rate           | -   Initial learning rate of 5e-5                                                                                          |
 | <br/> | <br/> |
-| **Learning Rate Scheduler** | -   Warmup for 250 steps followed by a linear learning rate scheduler which linearly decreases learning rate across epochs |
+| Learning Rate Scheduler | -   Warmup for 250 steps followed by a linear learning rate scheduler which linearly decreases learning rate across epochs |
 | <br/> | <br/> |
-| **Regularization**          | -   L2 (lambda = 0.01) with weight decay                                                                                   |
+| Regularization          | -   L2 (lambda = 0.01) with weight decay                                                                                   |
 | <br/> | <br/> |
-| **Optimizer**               | -   Adam (beta1 = 0.9, beta2=0.999)                                                                                        |
+| Optimizer               | -   Adam (beta1 = 0.9, beta2=0.999)                                                                                        |
 | <br/> | <br/> |
-| **Early stopping**          | -   1600 steps                                                                                                             |
+| Early stopping          | -   1600 steps                                                                                                             |
 
 : spaCy CLI Final Hyperparameters {#tbl-spacy-hyperparams tbl-colwidths="[30,70]"}
 
@@ -471,7 +471,7 @@ The workflow in @fig-training-pipeline shows the primary steps for training with
 %%| fig-height: 6
 %%{init: {'theme':'base','themeVariables': {'fontFamily': 'arial','primaryColor': '#BFDFFF','primaryTextColor': '#000','primaryBorderColor': '#4C75A3','lineColor': '#000','secondaryColor': '#006100','tertiaryColor': '#fff'}, 'flowchart' : {'curve':'monotoneY'}}}%%
 flowchart TD
-F8(Labelled JSON files\nfrom LabelStudio) --> C2(Split into Train/Val/Test\nSets by xDD ID)
+F8(Labelled JSON files <br> from LabelStudio) --> C2(Split into Train/Val/Test\nSets by xDD ID)
 C2 --> C5(Convert to artifacts \nfor training)
 C5 --> F1(test)
 C5 --> F3(val artifact)
@@ -484,7 +484,7 @@ C4 --> F7(Log Metrics &\nCheckpoints)
 C4 --> F4(Log Final\nTrained Model)
 F4 --> C3
 C3 --> F6(Evaluation Plots)
-C3 --> F5(Evaluation results\nJSON)
+C3 --> F5(Evaluation results <br> JSON)
 ```
 
 ### Model Evaluation
@@ -495,13 +495,13 @@ For more in depth analysis of results four primary methods are used to evaluate 
 
 | **Method**  | **Description**                                                                                      |
 |:------------|:-----------------------------------------------------------------------------------------------------|
-| **Strict**  | Exact boundary of extracted string and entity type matches the annotation.                           |
+| Strict  | Exact boundary of extracted string and entity type matches the annotation.                           |
 | <br/> | <br/> |
-| **Exact**   | Exact boundary of extracted string matches but does not discriminate by correct entity label         |
+| Exact   | Exact boundary of extracted string matches but does not discriminate by correct entity label         |
 | <br/> | <br/> |
-| **Partial** | A partial boundary overlap of the extracted string and does not discriminate by correct entity label |
+| Partial | A partial boundary overlap of the extracted string and does not discriminate by correct entity label |
 | <br/> | <br/> |
-| **Type**    | Any overlap of the correct entity type is considered correct.                                        |
+| Type    | Any overlap of the correct entity type is considered correct.                                        |
 
 : Model Evaluation Methods {#tbl-ner-model-eval-methods tbl-colwidths="[25,75]"} 
 
@@ -509,22 +509,23 @@ For each method in @tbl-ner-model-eval-methods a set of detailed metrics were us
 
 | **Metric**          | **Description**                                                       |
 |:--------------------|:----------------------------------------------------------------------|
-| **Correct (COR)**   | Both the labelled entity and predicted entity are the same            |
+| Correct (COR)   | Both the labelled entity and predicted entity are the same            |
 | <br/> | <br/> |
-| **Incorrect (INC)** | The labelled entity and predicted entity do not match                 |
+| Incorrect (INC) | The labelled entity and predicted entity do not match                 |
 | <br/> | <br/> |
-| **Partial (PAR)**   | The labelled entity and predicted entity are similar but not the same |
+| Partial (PAR)   | The labelled entity and predicted entity are similar but not the same |
 | <br/> | <br/> |
-| **Missing (MIS)**   | A labelled entity is not captured by the model                        |
+| Missing (MIS)   | A labelled entity is not captured by the model                        |
 | <br/> | <br/> |
-| **Spurius (SPU)**   | The model predicts an entity where there is none in the labelled text |
+| Spurius (SPU)   | The model predicts an entity where there is none in the labelled text |
 
 : Model Evaluation Metrics {#tbl-ner-specific-metrics tbl-colwidths="[25,75]"}
 
+A detailed comparison of each candidate model in terms of the metrics in @tbl-ner-model-eval-methods and @tbl-ner-specific-metrics can be found in the repository under `notebooks/entity-extraction/1.2-NER-model-comparison.ipynb`.
 
 ## Data Review Tool
 
-In order to for the Neotoma data stewards to view the results of the Article Relevance Prediction and the Article Data Extraction, the final data product required was an interactive dashboard. The goal of this data product is to manually review the output of the entire natural language processing pipeline. The users are able to make corrections to the extracted entities by comparing the extracted entity to the sentence or opening the full-text article. In addition, the user is able to delete incorrectly extracted entities or add additional entities that the extraction model missed. The output of the Data Review Tool is a JSON object that can then be used to retrain the Article Entity Extraction model and populate the Neotoma database. This will lead to more information sharing and better results in the future, which will decrease the time required by the data stewards while reviewing the extracted entities of an article.
+In order to for the Neotoma data stewards to view the results of the Article Relevance Prediction and the Article Data Extraction, the final data product required was an interactive dashboard. The goal of this data product is to manually review the output of the entire natural language processing pipeline. The users are able to make corrections to the extracted entities by comparing the extracted entity to the sentence or opening the full-text article. In addition, the user is able to delete incorrectly extracted entities or add additional entities that the extraction model missed. The output of the Data Review Tool is a parquet object that can then be used to retrain the Article Entity Extraction model and populate the Neotoma database. This will lead to more information sharing and better results in the future, which will decrease the time required by the data stewards while reviewing the extracted entities of an article.
 
 ### Approach
 
@@ -542,7 +543,7 @@ In order to create an interactive tool that would be appropriate and efficient f
 | User skill to run                                     | Non-Technical (e.g. no code/CLI)                 |
 | Number of mouse clicks to review single piece of data | 1-2                                              |
 | Reviewing workflow                                    | Able to save/resume progress.                    |
-| Output file format                                    | JSON                                             |
+| Output file format                                    | Parquet                                          |
 
 : Data Review Tool Target Metrics {#tbl-review_metrics}
 
@@ -720,7 +721,7 @@ Markdown(render_df.to_markdown())
 
 An important observation to make here is that even the top models have a lower precision score for the SITE names and REGION names. The models gets confused when deciding whether an entity should be classified as a SITE or a REGION. This is partially due to quality of labeling entities as well as the fact that both these types correspond to the name of a place or a wider area. See @fig-confusion_matrix for a confusion matrix generated using the test set assets highlights the issue.
 
-![Confusion Matrix for RoBERTa Model](../../results/ner/roberta-finetuned-v3/roberta-finetuned-v3_test_confusion_matrix.png){#fig-confusion_matrix}
+![Confusion Matrix for RoBERTa Model](../../results/ner/roberta-finetuned-v6/roberta-finetuned-v6_test_confusion_matrix.png){#fig-confusion_matrix}
 
 ## Data Review Tool
 
@@ -730,7 +731,7 @@ The final data review tool that was created was a multi-page Plotly Dash applica
 
 This web application enables users to review the extracted entities from articles, make changes, add additional missed entities and remove inaccurately extracted entities. The application includes a button to launch the article in an external browser tab so that the reviewer can verify beyond the current sentence and sentence preceding/following that was provided as output. The entire review process does not require any coding knowledge, and reviewers can navigate through the review workflow in three clicks or fewer from the Article Review page @fig-review_tool_snap.
 
-The output of this data review tool is a JSON object that stores the originally extracted entities as well as the corrected entities. The Neotoma organization can utilize these entities to add new paleoecology articles to the database. In addition, the reviewed entities can be fed back to model using our model retraining pipeline, contributing to the continuous improvement of the quality of extraction of entities.
+The output of this data review tool is a parquet object that stores the originally extracted entities as well as the corrected entities. The Neotoma organization can utilize these entities to add new paleoecology articles to the database. In addition, the reviewed entities can be fed back to model using our model retraining pipeline, contributing to the continuous improvement of the quality of extraction of entities.
 
 | **Requirement**                                         | **Results**                                   |
 | ------------------------------------------------------- | --------------------------------------------- |
@@ -740,7 +741,7 @@ The output of this data review tool is a JSON object that stores the originally 
 | User skill to run                                       | Non-Technical (e.g. no code/CLI)              |
 | Number of mouse clicks to review a single piece of data | 3 clicks from launch                          |
 | Reviewing workflow                                      | Able to save/resume progress.                 |
-| Output file format                                      | JSON                                          |
+| Output file format                                      | parquet                                       |
 
 : Data Review Tool Mertic Results {#tbl-review_results}
 
@@ -783,7 +784,7 @@ B -----> |Parquet File| G
 B --> |API Put Request| C
 C --> D
 D --> E
-E --> |JSON Per Article,\nLog File| H
+E --> |JSON Per Article,<br>Log File| H
 G --> I
 H --> I
 I --> |Parquet| J

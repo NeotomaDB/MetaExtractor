@@ -12,6 +12,5 @@ python src/article_relevance/gdd_api_query.py \
 
 python src/article_relevance/relevance_prediction_parquet.py \
   --doi_file_path="$DOI_FILE_PATH" \
-  --model_path="$MODEL_PATH" \
   --output_path="$OUTPUT_PATH" \
   --send_xdd="$SEND_XDD"

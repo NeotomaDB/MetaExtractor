@@ -1,12 +1,8 @@
 # Use the official Python 3.10 image as the base image
 FROM python:3.10
 
-ARG MODEL_PATH
-ARG DOI_FILE_PATH
-
 ENV DOI_PATH="/raw"
 ENV PARQUET_PATH="/parquet"
-ENV ENV_DOI_FILE_PATH=$DOI_FILE_PATH
 # Set the working directory inside the container
 WORKDIR /app/
 
@@ -19,9 +15,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the entire repository folder into the container
 COPY src ./src
 
-# Copy the model folder into the container
-COPY $MODEL_PATH ./models/article-relevance
-
 # Copy the shell script to the container
 COPY docker/article-relevance/run-prediction.sh .
 
@@ -32,7 +25,8 @@ RUN chmod +x run-prediction.sh
 RUN mkdir -p /output
 RUN mkdir -p /raw
 RUN mkdir -p /parquet
-VOLUME ["/output", "/parquet", "/raw"]
+RUN mkdir -p /models
+VOLUME ["/output", "/parquet", "/raw", "/models"]
 
 # Set the entry point for the Docker container
 ENTRYPOINT ["./run-prediction.sh"]

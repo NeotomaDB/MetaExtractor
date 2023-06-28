@@ -355,7 +355,7 @@ NER tasks are dominated by transformer based models [@transformer-train-tips]. T
 
 The approaches considered along with the rationale for their inclusion/rejection from development are outlined in @tbl-ner-approaches.
 
-| Approach                               | Rationale                                                                                                                                                                                             |
+| **Approach**                           | **Rationale**                                                                                                                                                                                         |
 | :------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Rule Based Models                      | This served as the baseline using regex to extract known entities but was not developed further due to the known issues with text quality due to OCR issues and infeasibility for entities like SITE. |
 | <br/>                                  | <br/>                                                                                                                                                                                                 |
@@ -370,7 +370,7 @@ The approaches considered along with the rationale for their inclusion/rejection
 For the transformer based models two approaches were used for training, spaCy command line interface (CLI) [@spacy] and HuggingFace's Training application programming interface (API) [@huggingface]. Each have advantages and disadvantages which are outlined in @tbl-spacy-pros-cons.
 
 +--------------------------+-----------------------------------------------------------------------------------------------------+------------------------------------------+
-|                          | Pro                                                                                                 | Con                                      |
+|                          | **Pro**                                                                                             | **Con**                                  |
 +==========================+=====================================================================================================+==========================================+
 | spaCy Config Training    | -   Can integrate with any transformer hosted on HuggingFace                                        | -   Knowledge of bash scripting required |
 |                          | -   Prebuilt config scripts that require minimal changes                                            | -   Limited configuration options        |
@@ -386,45 +386,44 @@ For the transformer based models two approaches were used for training, spaCy co
 Using the Hugging Face training API multiple models were trained and evaluated. Each base model along with the hypothesis behind it's selection is outlined in @tbl-hf-model-hypoth.
 
 
-| Model              | Hypothesis                                                                                                                                                  |
-|:--------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Model**           | **Hypothesis**                                                                                                                                             |
+|:--------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------|
 | RoBERTa-base       | One of the typically best performing models for NER [@roberta-ner-wang]                                                                                     |
-| <br /> | <br /> |
+| <br/> | <br/> |
 | RoBERTa-large      | A larger model than the base version with potential to learn more complex relationships with the downside of larger compute times.                          |
-| <br /> | <br /> |
+| <br/> | <br/> |
 | BERT-multilanguage | The known OCR issues and scientific nature of the text may mean the larger vocabulary of this multi-language model may deal with issues better.             |
-| <br /> | <br /> |
+| <br/> | <br/> |
 | XLM-RoBERTa-base   | Another cross language model (XLM) but using the RoBERTa base architecture and pre-training.                                                                |
-| <br /> | <br /> |
+| <br/> | <br/> |
 | Specter2           | This model is BERT based and finetuned on 6M+ scientific articles with it’s own scientific vocabulary making it well suited to analyzing research articles. |
 
 : Hugging Face Model Hypotheses {#tbl-hf-model-hypoth tbl-colwidths="[25,75]"}
 
 Final hyper parameters used to train the models are outlined in @tbl-hf-train-hyperparams.
 
-+-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Parameters              | Notes                                                                                                                                                                                                            |
-+=========================+==================================================================================================================================================================================================================+
+
+| **Parameters**          | **Notes**                                                                                                                                                                                                        |
+|:------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Batch size              | -   Maximized to utilize all available GPU memory, 8 for RoBERTa based models                                                                                                                                    |
-+-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Gradient Accumulation   | -   Used to mimic larger batch sizes, this value was chosen to achieve batch sizes of ~12k tokens based on best practices [@transformer-train-tips]                                                            |
-+-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Epochs                  | -   Initial runs with 10-20 epochs, observed evaluation loss minima occurring in first 2-8, settled on 10                                                                                     |
-+-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| <br/> | <br/> |
+| Gradient Accumulation   | -   Used to mimic larger batch sizes, this value was set at 4 to achieve batch sizes of ~12k tokens based on best practices [@transformer-train-tips]                                                              |
+| <br/> | <br/> |
+| Epochs                  | -   Initial runs with 10-20 epochs, observed evaluation loss minima occurring in first 2-8, settled on 10                                                                                                        |
+| <br/> | <br/> |
 | Learning Rate           | -   Initially 5e-5 was used and observed rapid over fitting with eval loss reaching a minimum around 2-4 epochs then increasing for the next 5-10                                                                |
 |                         | -   Moved to 2e-5 as well as introducing gradient accumulation of 3 epochs to increase effective batch size                                                                                                      |
-+-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| <br/> | <br/> |
 | Learning Rate Scheduler | -   All training was done with a linear learning rate scheduler which linearly decreases learning rate across epochs                                                                                             |
-+-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| <br/> | <br/> |
 | Warmup Ratio            | -   How many steps of training to increase LR from 0 to LR, shown to improve with Adam optimizer - [@borealisai2023tutorial] Set to 10% initially                                                                |
-+-------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 : Hugging Face Model Training Hyperparameters {#tbl-hf-train-hyperparams tbl-colwidths="[30,70]"}
 
 Using the spaCy CLI, the two models were trained and evaluated with each models advantages and disadvanctages outlined in @tbl-spacy-model-pros-cons.
 
 +------------------+----------------------------------------------------------------------+------------------------------------------------------+
-| Model            | Advantages                                                           | Disadvantages                                        |
+| **Model**        | **Advantages**                                                       | **Disadvantages**                                    |
 +==================+======================================================================+======================================================+
 | RoBERTa-base     | -   State-of-the-art pretrained transformer for NLP tasks in English | -   Computationally expensive to train and inference |
 |                  | -   Context rich embeddings                                          | -   Cannot fine-tune                                 |
@@ -442,19 +441,19 @@ Final hyper parameters used to train the spaCy models along with comments on eac
 
 | **Parameters**              | **Notes**                                                                                                                  |
 |:----------------------------|:---------------------------------------------------------------------------------------------------------------------------|
-| **Batch size**              | -   Maximized to utilize all available GPU memory, 128 for transformer based model and 512 for word vector based model     |
+| Batch size              | -   Maximized to utilize all available GPU memory, 128 for transformer based model and 512 for word vector based model     |
 | <br/> | <br/> |
-| **Epochs**                  | -   Initial runs with 15 epochs, observed evaluation loss minima occurring in first 7-13 depending on learning rate        |
+| Epochs                  | -   Initial runs with 15 epochs, observed evaluation loss minima occurring in first 7-13 depending on learning rate        |
 | <br/> | <br/> |
-| **Learning Rate**           | -   Initial learning rate of 5e-5                                                                                          |
+| Learning Rate           | -   Initial learning rate of 5e-5                                                                                          |
 | <br/> | <br/> |
-| **Learning Rate Scheduler** | -   Warmup for 250 steps followed by a linear learning rate scheduler  |
+| Learning Rate Scheduler | -   Warmup for 250 steps followed by a linear learning rate scheduler  |
 | <br/> | <br/> |
-| **Regularization**          | -   L2 (lambda = 0.01) with weight decay                                                                                   |
+| Regularization          | -   L2 (lambda = 0.01) with weight decay                                                                                   |
 | <br/> | <br/> |
-| **Optimizer**               | -   Adam (beta1 = 0.9, beta2=0.999)                                                                                        |
+| Optimizer               | -   Adam (beta1 = 0.9, beta2=0.999)                                                                                        |
 | <br/> | <br/> |
-| **Early stopping**          | -   1600 steps                                                                                                             |
+| Early stopping          | -   1600 steps                                                                                                             |
 
 : spaCy CLI Final Hyperparameters {#tbl-spacy-hyperparams tbl-colwidths="[30,70]"}
 
@@ -696,7 +695,7 @@ An important observation to make here is that the top models had a lower precisi
 
 ## Data Review Tool
 
-The final data review tool that was created is a multi-page Plotly Dash [@dash] application. The tool can be replicated by launching Docker containers, enabling anyone within the Neotoma community to easily utilize the tool for reviewing outputs from the pipeline. 
+The final data review tool that was created is a multi-page Plotly Dash [@dash] application. The tool can be replicated by launching Docker [@docker] containers, enabling anyone within the Neotoma community to easily utilize the tool for reviewing outputs from the pipeline. 
 
 ![Data Review Tool](assets/data_review.png){#fig-review_tool_snap}
 
@@ -725,13 +724,13 @@ The output of this data review tool is a parquet file that stores the originally
 
 ## Product Deployment
 
-The end goal of this project is to have each data product running unsupervised. The article relevance prediction pipeline was containerized using Docker. It is expected to run on a daily or a weekly basis by Neotoma to run the article relevance prediction and submit relevant articles to xDD to have their full text processed. 
+The end goal of this project is to have each data product running unsupervised. The article relevance prediction pipeline was containerized using Docker [@docker]. It is expected to run on a daily or a weekly basis by Neotoma to run the article relevance prediction and submit relevant articles to xDD [@xdd] to have their full text processed. 
 
 The Article Data Extraction pipeline is containerized using Docker and contains the entity extraction model within it. It will be run on the xDD servers as xDD is not legally allowed to send full text articles off their servers. The container accepts full text articles, extracts the entities, and outputs a single JSON object for each article. The JSON objects are combined with the article relevance prediction results and loaded into the Data Review Tool. @fig-deployment_pipeline depicts the work flow.
 
 ```{mermaid}
 %%| label: fig-deployment_pipeline
-%%| fig-cap: "This is how the MetaExtractor pipeline flows between the different components."
+%%| fig-cap: "How the MetaExtractor pipeline flows between the different components."
 %%| fig-height: 6
 graph TD
 subgraph neotoma [Neotoma Servers]

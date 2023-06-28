@@ -48,7 +48,7 @@ The Neotoma database (Neotoma) [@NeotomaDB] serves as a valuable resource for re
 
 ## Article Relevance Prediction
 
-The article relevance prediction is posed as a binary classification problem. Based on the available article metadata, the model is able to predict how likely the article is relevant to the Neotoma paleoecology/paleoenvironment database. If the article is deemed likely relevant, the article will proceed to the next stage for article data extraction.
+The article relevance prediction was posed as a binary classification problem. Based on the available article metadata, the model was able to predict how likely the article was relevant to the Neotoma paleoecology/paleoenvironment database. If the article was deemed likely relevant, the article will proceed to the next stage for article data extraction.
 
 ### Approach
 
@@ -91,7 +91,7 @@ The features selected include a descriptive text feature (concatenation of title
 
 #### Feature Engineering: Text representation
 
-The descriptive text feature provides crucial contextual information for the model to predict if the topic is related to paleoecology or not. Feature engineering was conducted to represent this descriptive text feature in numeric forms. The following text representations were explored and tested to identify the most effective approach.
+The descriptive text feature provides crucial contextual information for the model to predict if the topic was related to paleoecology or not. Feature engineering was conducted to represent this descriptive text feature in numeric forms. The following text representations were explored and tested to identify the most effective approach.
 
 **Bag of words representation (Baseline):** word-frequency based method. While the model with bag of words feature achieved a decent performance, the limitation is that the semantic aspect of the text could not be well represented. This method was chosen to be used in the baseline model.
 
@@ -99,11 +99,11 @@ The descriptive text feature provides crucial contextual information for the mod
 
 | Model                       | Result                                                                                                                                                                                   |
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| bert-tiny-finetuned-squadv2 | This model is of a small scale so that the embedding process will be quick.                                                                                                              |
+| bert-tiny-finetuned-squadv2 | This model was of a small scale so that the embedding process would be quick.                                                                                                              |
 | --------------------------- | -------------------------------------------------------------------------------------- |
-| Biobert                     | This model is pre-trained based on large-scale biomedical corpora, thus it could be better at understanding biology-related jargons that frequently appear in the field of paleoecology. |
+| Biobert                     | This model was pre-trained based on large-scale biomedical corpora, thus it could be better at understanding biology-related jargons that frequently appear in the field of paleoecology. |
 | --------------------------- | --------------------------------------------------------------------------------------- |
-| specter2                    | This model is pre-trained using over 6 million scientific articles, thus it could be better at understanding the language style and pattern in scientific articles.                      |
+| specter2                    | This model was pre-trained using over 6 million scientific articles, thus it could be better at understanding the language style and pattern in scientific articles.                      |
 
 : Sentence Embedding Models {#tbl-sent_embedding} {tbl-colwidths="[25,75]"}
 
@@ -111,9 +111,9 @@ The descriptive text feature provides crucial contextual information for the mod
 
 The following selection of Probability Classifiers, Analogy-based and Tree-based & Gradient-boosted models were experimented with.
 
-**Probability classifiers:** Traditional probability classifiers provide fast training and prediction time, which is a plus when processing and retraining large numbers of new articles. Its simplicity also provide good model transparency and interpretability for model evaluation. Logistic regression and naive Bayes were experimented during model selection.
+**Probability classifiers:** Traditional probability classifiers provide fast training and prediction time, which could be beneficial when processing and retraining large numbers of new articles. Its simplicity also could provide favorable model transparency and interpretability for model evaluation. Logistic regression and naive Bayes were experimented during model selection.
 
-**Analogy-based models:** The nature of the article relevance prediction problem could be framed as looking for articles that are similar to the positive examples. Analogy-based models can be suitable for this problem. K-nearest neighbour and Support Vector Machine with RBF kernel were experimented.
+**Analogy-based models:** The nature of the article relevance prediction problem could be framed as looking for articles that were similar to the positive examples. Analogy-based models could be suitable for this problem. K-nearest neighbour and Support Vector Machine with RBF kernel were experimented.
 
 **Tree-based & Gradient-boosted models:** Tree-based classifiers could use different feature subsets at various steps during the prediction, which can be suitable for our relatively high dimensional data problem. Decision Tree, Random Forest Model, LightGBM, XGBoost and CatBoost were experimented. 
 
@@ -121,9 +121,9 @@ The choice of the final model was primarily based on model performance on recall
 
 ### Model Evaluation
 
-The main goal of article relevance prediction is to identify potentially as many useful articles as possible from the article repository so that valuable research data can be discovered. The cost of false negatives is high because if the model does not catch a relevant article, this article will unlikely be discovered by the Neotoma community and its data will be missed. On the other hand, the cost of false positives is more manageable. Hence, recall is the metric that was optimized. to optimiseDuring data validation, Data Stewards can easily mark an article as not relevant using our data review tool.
+The main goal of article relevance prediction is to identify potentially as many useful articles as possible from the article repository so that valuable research data can be discovered. The cost of false negatives is high because if the model does not catch a relevant article, this article will unlikely be discovered by the Neotoma community and its data will be missed. On the other hand, the cost of false positives is more manageable. Hence, recall was the metric that was optimized. During data validation, Data Stewards are able to easily mark an article as not relevant using our data review tool.
 
-Another key consideration is model interpretation. The positive examples were gathered using articles that currently exist in the Neotoma database, and it is difficult to tell if there are existing biases in the training data. A more interpretable model would help identify model biases and make corrections in the long run.
+Another key consideration was model interpretation. The positive examples were gathered using articles that currently exist in the Neotoma database, and it was difficult to tell if there are existing biases in the training data. A more interpretable model would help identify model biases and make corrections in the long run.
 
 ## Article Data Extraction
 
@@ -228,7 +228,7 @@ def load_model_evaluation_results(results_path: str, results_type: str = "val"):
 
 ```
 
-The article data extraction is posed as a Named Entity Recognition (NER) problem. The NER tasks teaches the model to predict the correct label for each word where each word is assigned a label.
+The article data extraction was posed as a Named Entity Recognition (NER) problem. The NER tasks teaches the model to predict the correct label for each word where each word is assigned a label.
 
 ### Data Description
 
@@ -351,7 +351,7 @@ plot_distribution_of_entities(
 
 ### Approach
 
-The state of the art for NER tasks is currently dominated by transformer based models. The best performing non-transformer based models are a transition-based stack long-short term memory (S-LSTM) model used in the spaCy package.
+NER tasks are dominated by transformer based models. The best performing non-transformer based models are a transition-based stack long-short term memory (S-LSTM) model used in the spaCy package.
 
 The approaches considered along with the rationale for their inclusion/rejection from development are outlined in @tbl-ner-approaches.
 
@@ -458,7 +458,7 @@ Final hyper parameters used to train the spaCy models along with comments on eac
 
 : spaCy CLI Final Hyperparameters {#tbl-spacy-hyperparams tbl-colwidths="[30,70]"}
 
-Interesting difference to note here are the architectures of the NER models. Both the models use a RoBERTa-base model to tokenize the input sentence and generate word embeddings, but the HuggingFace NER model fine-tunes a token classification head, which consists of a set of linear layer and soft max, whereas, the spaCy NER model chunks and labels a sequence of inputs using an algorithm similar to transition-based dependency parsing using (Stack-LSTMs)[@S-LSTM].
+An interesting difference were the architectures of the NER models. Both the models use a RoBERTa-base model to tokenize the input sentence and generate word embeddings, but the HuggingFace NER model fine-tunes a token classification head, which consists of a set of linear layer and soft max, whereas, the spaCy NER model chunks and labels a sequence of inputs using an algorithm similar to transition-based dependency parsing using (Stack-LSTMs)[@S-LSTM].
 
 The workflow in @fig-training_pipeline shows the primary steps for training with the Entity Extraction models with intermediate files and processes.
 
@@ -555,11 +555,11 @@ In order to create an interactive tool that would be appropriate and efficient f
 
 ![Model Performance Comparison using Cross-Validation Scores](assets/relevance-model-comparison.png){#fig-relevance_performance}
 
-Among all the models trained, Naive Bayes has the highest recall score (96.7%), but its precision score was low (70.1%) and will introduce false positive. Among all gradient boosted models, LGBM has the highest precision (93.9%), but its recall score (89.3%) did not outperform logistic regression (94.8%). Among the analogy-based models, SVM with RBF kernel achieve a recall performance (94.8%) that's comparable to logistic regression (95.0%), and both are sufficiently high (@fig-relevance_performance). The final decision was to use logistic regression with tuned hyperparameters for its good performance and better interpretability. On the test data set, the final model achieved a recall score of 96.5%, and a precision score of 85.2%. To put this into actual article counts, among the 666 articles in the test set, there are 5 false negatives and 24 false positives.
+Among all the models trained, Naive Bayes had the highest recall score (96.7%), but its precision score was low (70.1%) and would introduce false positives. Among all gradient boosted models, LGBM had the highest precision (93.9%), but its recall score (89.3%) did not outperform logistic regression (94.8%). Among the analogy-based models, SVM with RBF kernel achieve a recall performance (94.8%) that's comparable to logistic regression (95.0%), and both had sufficiently high precision (@fig-relevance_performance). The final decision was to use logistic regression with tuned hyperparameters for its good performance and better interpretability. On the test data set, the final model achieved a recall score of 96.5%, and a precision score of 85.2%. To put this into actual article counts, among the 666 articles in the test set, there are 5 false negatives and 24 false positives.
 
 ## Article Data Extraction
 
-Of the two approaches developed using the spaCy and Hugging Face model training systems there are two candidate models proposed to be used. The first is the Hugging Face finetuned RoBERTa based model which performed best of the Hugging Face models. The second is spaCy's transformer based model. The reason for proposing two models moving forward is the spaCy transformer model has better entity based recall along with better precision, meaning the extracted data is more often correctly extracted. Whereas the Hugging Face RoBERTa model achieves better token recall but has lower precision, meaning it detects more of the overall entities but contains more false detections which must be deleted by the reviewers. The slight differences in the accuracies and varying strengths can be attributed to the different NER models leveraging the RoBERTa-base transformer embeddings differently.
+Of the two approaches developed using the spaCy and Hugging Face model training systems there were two candidate models proposed to be used. The first was the Hugging Face finetuned RoBERTa based model which performed best of the Hugging Face models. The second is spaCy's transformer based model. The reason for proposing two models moving forward is the spaCy transformer model had better entity based recall along with better precision, meaning the extracted data was more often correctly extracted. Whereas the Hugging Face RoBERTa model achieves better token recall but has lower precision, meaning it detects more of the overall entities but contains more false detections which must be deleted by the reviewers. The slight differences in the accuracies and varying strengths can be attributed to the different NER models leveraging the RoBERTa-base transformer embeddings differently.
 
 @fig-extraction-recall-results shows the primary candidate models token and entity based recall.
 
@@ -662,7 +662,6 @@ The token based recall for each model on the test set by entity type are shown i
 #| label: tbl-token-recall
 #| tbl-cap: 'Entity extraction model results for token based recall, overall and by entity type'
 #| tbl-cap-location: bottom
-#| tbl-colwidths: [0.2,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]
 #| output: markdown
 
 # render the token_recall, token_precision, and token_f1 scores for each model and each entity type
@@ -721,7 +720,7 @@ render_df = render_df[
 Markdown(render_df.to_markdown())
 ```
 
-An important observation to make here is that even the top models have a lower precision score for the SITE names and REGION names. The models gets confused when deciding whether an entity should be classified as a SITE or a REGION. This is partially due to quality of labeling entities as well as the fact that both these types correspond to the name of a place or a wider area. See @fig-confusion_matrix for a confusion matrix generated using the test set assets highlights the issue.
+An important observation to make here is that even the top models had a lower precision score for the SITE names and REGION names. The models got confused when deciding whether an entity should be classified as a SITE or a REGION. This was partially due to quality of labeling entities as well as the fact that both these types correspond to the name of a place or a wider area. See @fig-confusion_matrix for a confusion matrix generated using the test set assets highlights the issue.
 
 ![Confusion Matrix for RoBERTa Model](../../results/ner/roberta-finetuned-v3/roberta-finetuned-v3_test_confusion_matrix.png){#fig-confusion_matrix}
 
@@ -759,7 +758,7 @@ The implemented Dash application fulfills all the requirements stated in the pro
 
 The end goal of this project is to have each data product running in a semi/un-supervised fashion. The article relevance prediction pipeline is containerized using Docker. It is expected to run on a daily or a weekly basis by the Neotoma and to fetch the latest published articles from the public xDD API, run the article relevance prediction, and finally submits relevant articles to xDD to have their full text processed. 
 
-The Article Data Extraction pipeline is containerized using Docker and contains the entity extraction model within it. It is run on the xDD servers as xDD is not legally allowed to send full text articles off their servers. The container accepts full text articles, extracts the entities, and outputs a single JSON object for each article which is then exported by xDD back to the Neotoma team. The extracted entity JSON objects are combined with the article relevance prediction results and are loaded into the Data Review Tool. @fig-deployment_pipeline depicts the work flow.
+The Article Data Extraction pipeline is containerized using Docker and contains the entity extraction model within it. It is run on the xDD servers as xDD is not legally allowed to send full text articles off their servers. The container accepts full text articles, extracts the entities, and outputs a single JSON object for each article which is then exported by xDD back to the Neotoma team. The extracted entity JSON objects were combined with the article relevance prediction results and loaded into the Data Review Tool. @fig-deployment_pipeline depicts the work flow.
 
 ```{mermaid}
 %%| label: fig-deployment_pipeline

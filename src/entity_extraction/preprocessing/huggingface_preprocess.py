@@ -74,18 +74,22 @@ def convert_labelled_data_to_hf_format(
         labelled_chunks = []
 
         for file in os.listdir(data_folder):
-            # if file doesn't end with txt skip it
-            if not file.endswith(".txt"):
-                continue
-
-            with open(os.path.join(data_folder, file), "r") as f:
-                task = json.load(f)
-
             try:
-                raw_text = task["task"]["data"]["text"]
-                annotation_result = task["result"]
-                gdd_id = task["task"]["data"]["gdd_id"]
-
+                if file.endswith(".txt"):
+                    with open(os.path.join(data_folder, file), "r") as f:
+                        task = json.load(f)
+                    annotation_result = task["result"]
+                    gdd_id = task["task"]["data"]["gdd_id"]
+                    raw_text = task["task"]["data"]["text"]
+                elif file.endswith(".json"):
+                    with open(os.path.join(data_folder, file), "r") as f:
+                        task = json.load(f)
+                    annotation_result = task["result"]
+                    gdd_id = task["data"]["gdd_id"]
+                    raw_text = task["data"]["text"]
+                else:
+                    continue      
+                
                 labelled_entities = [
                     annotation["value"] for annotation in annotation_result
                 ]

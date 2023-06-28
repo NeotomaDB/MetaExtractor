@@ -327,13 +327,17 @@ def extract_parquet_file(labelled_file_path: str):
                     
                     for ent_type in corrected_entities.keys():
                         for entity in corrected_entities[ent_type].keys():
+                            if corrected_entities[ent_type][entity]['corrected_name']:
+                                entity_text = corrected_entities[ent_type][entity]['corrected_name']
+                            else:
+                                entity_text = entity
                             for sentence in corrected_entities[ent_type][entity]['sentence']:
                                 if (sentence['char_index']['start'] != -1 and
                                     sentence['char_index']['end'] != -1):
                                     all_sentences[sentence['sentid']] = sentence['text']
                                     output_files[sentence['sentid']].append({
                                         "value": {
-                                            "text": corrected_entities[ent_type][entity]['corrected_name'],
+                                            "text": entity_text,
                                             "start": sentence['char_index']['start'],
                                             "end": sentence['char_index']['end'],
                                             "labels": [ent_type]

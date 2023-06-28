@@ -66,7 +66,6 @@ def crossref_extract(doi_path):
         logger.warning(f'Last xDD API query did not retrieve any article. Please verify the arguments.')
         raise ValueError("No article to process. Script terminated.")
 
-
     doi_col = 'DOI'
 
     # a list of doi
@@ -424,8 +423,11 @@ def main():
     send_xdd = opt['--send_xdd']
 
     metadata_df = crossref_extract(doi_list_file_path)
+
     preprocessed = data_preprocessing(metadata_df)
+
     embedded = add_embeddings(preprocessed, 'text_with_abstract', model = 'allenai/specter2')
+
     predicted = relevance_prediction(embedded, model_path, predict_thld = 0.5)
 
     if send_xdd =="True":

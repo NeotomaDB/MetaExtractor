@@ -293,8 +293,12 @@ def relevance_prediction(input_df, model_path, predict_thld = 0.5):
     """
     logger.info(f'Prediction start.')
     
-    # load model
-    model_object = joblib.load(model_path)
+    try:
+        # load model
+        model_object = joblib.load(model_path)
+    except OSError:
+        logger.error("Model for article relevance not found.")
+        raise(FileNotFoundError)
 
     # split by valid_for_prediction
     valid_df = input_df.query('valid_for_prediction == 1')

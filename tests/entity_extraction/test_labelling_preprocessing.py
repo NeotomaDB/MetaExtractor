@@ -11,7 +11,7 @@ from collections import namedtuple
 # ensure that the parent directory is on the path for relative imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from src.preprocessing.labelling_preprocessing import (
+from src.entity_extraction.preprocessing.labelling_preprocessing import (
     clean_words,
     return_json,
     chunk_text

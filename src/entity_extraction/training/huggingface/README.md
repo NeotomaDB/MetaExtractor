@@ -111,7 +111,7 @@ This notebook sets up the NER model training on Google Colab with GPU. Use the f
 3. Create a `data` folder inside the folder you just created and upload the `train.json` and `val.json` files into it
 4. Create a `models` folder with a `logs` folder inside of it, this is where checkpoints will be saved during training
 5. Create an `evaluation-results` folder, this is where the evaluation results will be saved
-6. Create a copy of the `run_training.sh` and `run_evaluation.sh` files from `src/entity_extraction/training/hf_token_classification` and place it in training run folder
+6. Create a copy of the `run_training.sh` and `run_evaluation.sh` files from `src/entity_extraction/training/huggingface` and place it in training run folder
 7. Your folder structure should now look like:
    ```
    roberta-base-v1

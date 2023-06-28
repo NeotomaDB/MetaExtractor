@@ -30,7 +30,7 @@ export MLFLOW_FLATTEN_PARAMS="2" # azure mlflow has a limit of 200 params, levei
 export AZUREML_ARTIFACTS_DEFAULT_TIMEOUT="3600" # large file upload times reuqire longer time out
 
 # split up the labelled data by GDD ID and create train/val/test splits
-python src/preprocessing/labelling_data_split.py \
+python src/entity_extraction/preprocessing/labelling_data_split.py \
     --raw_label_path "$(pwd)$RAW_LABELLED_FILE_LOCATION" \
     --output_path "$(pwd)$PROCESSED_LABELS_LOCATION" \
     --train_split 0.7 \
@@ -40,16 +40,16 @@ python src/preprocessing/labelling_data_split.py \
 # split labelled files into training chunks
 # max_seq_length - how many words are in each chunk, ensures once tokenized each is less than 512
 # stride - how many words overlap between chunks, ensures context is maximized
-python src/entity_extraction/training/hf_token_classification/huggingface_preprocess.py \
+python src/entity_extraction/preprocessing/huggingface_preprocess.py \
     --label_files "$(pwd)$PROCESSED_LABELS_LOCATION" \
     --max_seq_length 256 \
     --stride 196
 
 # Kick off the training script. Use max_train_samples and max_eval_samples for local CPU testing
-python src/entity_extraction/training/hf_token_classification/ner_training.py \
+python src/entity_extraction/training/huggingface/ner_training.py \
     --seed 42 \
     --load_best_model_at_end True \
-    --metric_for_best_model overall_recall \
+    --metric_for_best_model overall_f1 \
     --run_name finetuning-logging \
     --model_name_or_path "$MODEL_NAME_OR_PATH" \
     --output_dir "$(pwd)$MODEL_OUTPUT_DIR" \

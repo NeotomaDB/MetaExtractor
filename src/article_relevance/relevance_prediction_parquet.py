@@ -32,9 +32,7 @@ import datetime
 
 # Locate src module
 current_dir = os.path.dirname(os.path.abspath(__file__))
-print(current_dir)
 src_dir = os.path.dirname(current_dir)
-print(src_dir)
 sys.path.append(src_dir)
 
 from logs import get_logger
@@ -67,7 +65,6 @@ def crossref_extract(doi_path):
     if df.shape[0] == 0:
         logger.warning(f'Last xDD API query did not retrieve any article. Please verify the arguments.')
         raise ValueError("No article to process. Script terminated.")
-
 
     doi_col = 'DOI'
 
@@ -317,14 +314,15 @@ def relevance_prediction(input_df, model_path, predict_thld = 0.5):
     valid_df['prediction'] = valid_df.loc[:,'predict_proba'].apply(lambda x: 1 if x >= predict_thld else 0)
 
     # Filter results, store key information that could possibly be useful downstream
-    keyinfo_col = ['DOI', 'URL', 'gddid', 'valid_for_prediction',
-                    'prediction', 'predict_proba', 'title', 'subtitle', 'abstract',
-                'subject_clean', 'journal', 'author', 'text_with_abstract',
-                'is-referenced-by-count', 'has_abstract', 'language', 'published', 'publisher',
-                'queryinfo_min_date',
-                'queryinfo_max_date',
-                'queryinfo_term',
-                'queryinfo_n_recent']
+    keyinfo_col = (['DOI', 'URL', 'gddid', 'valid_for_prediction',
+                    'prediction', 'predict_proba'] + 
+                    feature_col + 
+                    ['title', 'subtitle', 'abstract', 'journal', 
+                     'author', 'text_with_abstract', 'language', 'published', 'publisher',
+                     'queryinfo_min_date',
+                     'queryinfo_max_date',
+                     'queryinfo_term',
+                     'queryinfo_n_recent'])
     invalid_col = ['DOI', 'URL', 'gddid', 'valid_for_prediction',
                  'title', 'subtitle', 'abstract',
                 'subject_clean', 'journal', 'author', 'text_with_abstract',
@@ -404,7 +402,6 @@ def prediction_export(input_df, output_path):
     # Check if a file with the current batch number already exists
     parquet_file_name = os.path.join(parquet_folder, f"article-relevance-prediction_{formatted_datetime}.parquet")
     while os.path.isfile(parquet_file_name):
-        # If the file exists, increment the batch number and try again
         parquet_file_name = os.path.join(parquet_folder, f"article-relevance-prediction_{formatted_datetime}.parquet")
 
     # Write the Parquet file
@@ -426,8 +423,11 @@ def main():
     send_xdd = opt['--send_xdd']
 
     metadata_df = crossref_extract(doi_list_file_path)
+
     preprocessed = data_preprocessing(metadata_df)
+
     embedded = add_embeddings(preprocessed, 'text_with_abstract', model = 'allenai/specter2')
+
     predicted = relevance_prediction(embedded, model_path, predict_thld = 0.5)
 
     if send_xdd =="True":

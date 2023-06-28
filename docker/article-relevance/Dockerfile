@@ -22,5 +22,9 @@ COPY docker/article-relevance/run-prediction.sh .
 # Make the shell script executable
 RUN chmod +x run-prediction.sh
 
+# Mount volumes
+RUN mkdir -p /output
+VOLUME ["/output"]
+
 # Set the entry point for the Docker container
 ENTRYPOINT ["./run-prediction.sh"]

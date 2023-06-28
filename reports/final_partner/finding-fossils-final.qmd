@@ -808,13 +808,13 @@ The Neotoma database plays a crucial role in paleoecological research by providi
 
 ## Recommendations
 
-Due to time constraints, improvements were identified but could not be implemented within the project's timeframe. To provide a concise summary for future project contributors, three essential features have been identified that would significantly enhance the overall pipeline.
+Due to time constraints, improvements were identified but could not be implemented within the project's timeframe. To provide a concise summary for future project contributors, four essential features have been identified that would significantly enhance the overall pipeline.
 
 1.  **Relevance Review Page:** incorporating an article would help minimize the bias present in the original model and improve the overall accuracy. This additional step would allow for a thorough assessment of article relevance, reducing both false positives and false negatives in the predictions. It will also reduce the bias in the training dataset that currently exists due to our data collection strategy.
 
 2.  **Adding new entities:** Although the focus was primarily on accurately extracting the required entities, there are additional entities that are considered beneficial but not mandatory by the Neotoma team. To address this, the Label Studio setup that was created through the project enables future contributors to easily add these additional entities. By implementing these changes, the pipeline can be further refined and optimized to benefit the Neotoma community at large.
 
-3.  There are likely many corrections that will be performed frequently on the data review tool by the Neotoma Data Stewards. Therefore, a model could be implemented to learn these corrections and preprocess these corrections in future improving efficiency and reducing time spent reviewing. 
+3.  **Correction Model** There are likely many corrections that will be performed frequently on the data review tool by the Neotoma Data Stewards. Therefore, a model could be implemented to learn these corrections and preprocess these corrections in future improving efficiency and reducing time spent reviewing. 
 
 4.  **Computer Vision:** Using PDF images and OCR technology to extract figures and table data for richer information extraction and inclusion of higher quality data into the Neotoma database.
 

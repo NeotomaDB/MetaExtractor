@@ -33,7 +33,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
 from src.logs import get_logger
 # logger = logging.getLogger(__name__)
 logger = get_logger(__name__)
-logger.setLevel(logging.INFO)
 
 from src.entity_extraction.baseline_entity_extraction import baseline_extract_all
 from src.entity_extraction.spacy_entity_extraction import spacy_extract_all

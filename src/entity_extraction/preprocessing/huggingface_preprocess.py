@@ -25,7 +25,7 @@ from src.logs import get_logger
 
 logger = get_logger(__name__)
 
-from src.entity_extraction.entity_extraction_evaluation import get_token_labels
+from src.entity_extraction.evaluation.entity_extraction_evaluation import get_token_labels
 
 
 def convert_labelled_data_to_hf_format(

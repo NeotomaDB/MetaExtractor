@@ -12,7 +12,7 @@ from collections import namedtuple
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
-from src.entity_extraction.ner_eval import (
+from src.entity_extraction.evaluation.ner_eval import (
     Evaluator,
     collect_named_entities,
     compute_metrics,

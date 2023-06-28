@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 # ensure that the parent directory is on the path for relative imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from src.entity_extraction.training.hf_token_classification.hf_evaluate import (
+from src.entity_extraction.evaluation.hf_evaluate import (
     get_hf_token_labels,
     get_predicted_labels,
     generate_classification_results,

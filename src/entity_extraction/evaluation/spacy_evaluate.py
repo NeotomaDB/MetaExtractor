@@ -26,7 +26,7 @@ sys.path.append(
     os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, os.pardir)
 )
 
-from src.entity_extraction.entity_extraction_evaluation import (
+from src.entity_extraction.evaluation.entity_extraction_evaluation import (
     calculate_entity_classification_metrics,
     plot_token_classification_report,
     generate_confusion_matrix,
@@ -37,9 +37,6 @@ from src.entity_extraction.entity_extraction_evaluation import (
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-opt = docopt(__doc__)
-
 
 def get_spacy_token_labels(labelled_entities, raw_text):
     """
@@ -93,7 +90,7 @@ def get_spacy_token_labels(labelled_entities, raw_text):
     return split_text, token_labels
 
 
-def load_ner_model_pipeline(model_path: str, gpu: bool = False):
+def load_ner_model_pipeline(model_path: str, gpu: str = "False"):
     """
     Loads a spacy named entity recognition model.
 
@@ -206,6 +203,7 @@ def get_labels(ner_model, data):
 
 
 def main():
+    opt = docopt(__doc__)
     # load the model
     model = load_ner_model_pipeline(opt["--model_path"], opt["--gpu"])
     all_predicted_labels = []

@@ -97,7 +97,6 @@ pip install -r requirements.txt
 ```
 
 For conda:
-
 ```bash
 conda install environment.yml
 ```

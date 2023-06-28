@@ -28,7 +28,7 @@ sys.path.append(
     os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, os.pardir)
 )
 
-from src.entity_extraction.entity_extraction_evaluation import (
+from src.entity_extraction.evaluation.entity_extraction_evaluation import (
     calculate_entity_classification_metrics,
     plot_token_classification_report,
     generate_classification_results,

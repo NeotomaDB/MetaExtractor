@@ -20,7 +20,7 @@ from src.pipeline.entity_extraction_pipeline import (
     recreate_original_sentences_with_labels,
 )
 
-from src.entity_extraction.hf_entity_extraction import load_ner_model_pipeline
+from src.entity_extraction.prediction.hf_entity_extraction import load_ner_model_pipeline
 
 
 # create test input_data

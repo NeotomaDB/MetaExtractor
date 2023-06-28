@@ -10,7 +10,7 @@ import pandas as pd
 # ensure that the parent directory is on the path for relative imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from src.entity_extraction.hf_entity_extraction import (
+from src.entity_extraction.prediction.hf_entity_extraction import (
     load_ner_model_pipeline,
     get_hf_token_labels,
     get_predicted_labels,

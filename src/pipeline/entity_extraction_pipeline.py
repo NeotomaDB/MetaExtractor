@@ -22,12 +22,12 @@ from dotenv import load_dotenv, find_dotenv
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from src.preprocessing.labelling_preprocessing import get_journal_articles
+from src.entity_extraction.preprocessing.labelling_preprocessing import get_journal_articles
 from src.logs import get_logger
-from src.entity_extraction.hf_entity_extraction import (
+from src.entity_extraction.prediction.hf_entity_extraction import (
     load_ner_model_pipeline,
 )
-from src.entity_extraction.spacy_entity_extraction import (
+from src.entity_extraction.prediction.spacy_entity_extraction import (
     spacy_extract_all,
 )
 

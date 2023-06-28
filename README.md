@@ -56,6 +56,8 @@ Articles predicted to be relevant will then be submitted to the Data Extraction 
 
 To run the Docker image for article relevance prediction pipeline, please refer to the instructions [here](docker/article-relevance/README.md)
 
+The model could be retrained using reviewed article data. Please refer to [here](docker/article-relevance-retrain/README.md) for the instructions.
+
 ### **Data Extraction Pipeline**
 
 The full text is provided by the xDD team for the articles that are deemed to be relevant and a custom trained **Named Entity Recognition (NER)** model is used to extract entities of interest from the article.

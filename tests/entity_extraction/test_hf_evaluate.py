@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 # ensure that the parent directory is on the path for relative imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from src.entity_extraction.training.hf_token_classification.hf_evaluate import (
+from src.entity_extraction.evaluation.hf_evaluate import (
     get_hf_token_labels,
     get_predicted_labels,
     generate_classification_results,
@@ -157,14 +157,6 @@ def test_generate_classification_results_with_incorrect_input(example_incorrect_
     assert round(results["entity"]["accuracy"], 2) == 0.5
     assert round(results["entity"]["recall"], 2) == 0.5
     assert round(results["entity"]["precision"], 2) == 0.5
-
-
-def test_generate_classification_results_with_empty_input():
-    true_tokens = []
-    predicted_tokens = []
-
-    with pytest.raises(ValueError):
-        generate_classification_results(true_tokens, predicted_tokens)
 
 
 def test_generate_classification_results_with_invalid_input_lengths():

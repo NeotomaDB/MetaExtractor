@@ -62,8 +62,11 @@ services:
       # Arguments for relevance prediction script
       - DOI_FILE_PATH=data/article-relevance/raw/gdd_api_return.json
       - MODEL_PATH=models/article-relevance/logistic_regression_model.joblib
-      - OUTPUT_PATH=data/article-relevance/processed
+      - OUTPUT_PATH=/outputs/
       - SEND_XDD=False
+
+    volumes:
+      - ./data/article-relevance/outputs:/outputs/
 ```
 
 Sample 2: Query by date range
@@ -86,6 +89,9 @@ services:
       # Arguments for relevance prediction script
       - DOI_FILE_PATH=data/article-relevance/raw/gdd_api_return.json
       - MODEL_PATH=models/article-relevance/logistic_regression_model.joblib
-      - OUTPUT_PATH=data/article-relevance/processed
+      - OUTPUT_PATH=/outputs/
       - SEND_XDD=False
+
+    volumes:
+      - ./data/article-relevance/outputs:/outputs/
 ```

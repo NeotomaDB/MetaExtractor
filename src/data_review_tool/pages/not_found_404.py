@@ -1,3 +1,5 @@
+# Author: Shaun Hutchinson,
+# Date: 2023-06-22
 from dash import html, dcc
 import dash
 
@@ -12,4 +14,3 @@ layout = html.Div(
         dcc.Link("Go back to Home", href="/"),
     ]
 )
-

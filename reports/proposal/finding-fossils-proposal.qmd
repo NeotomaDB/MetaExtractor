@@ -37,7 +37,6 @@ Finding Fossils in the Literature is sponsored by the Neotoma database (Neotoma)
 \setcounter{tocdepth}{4}
 \tableofcontents
 ```
-
 \newpage
 
 # Introduction
@@ -45,7 +44,6 @@ Finding Fossils in the Literature is sponsored by the Neotoma database (Neotoma)
 The Neotoma database (Neotoma) [@NeotomaDB] is used by researchers studying ecological changes over the past 5 million years. However, the data collection process relies heavily on manual submissions by researchers, leading to challenges in data entry and hindering collaborative efforts to comprehend ecological changes comprehensively. This project aims to automate the extraction of data from relevant journal articles which can be added to Neotoma. This will be done in three parts. First article relevancy to the Neotoma will be predicted. Relevant articles will be parsed using natural language processing (NLP) techniques. Finally a tool will be built to review the extracted data before it is submitted to Neotoma.
 
 \newpage
-
 
 # Article Relevance Prediction
 
@@ -68,7 +66,7 @@ The data to be used for developing the article relevance prediction model comes 
 +------------------------+----------------------------------------+----------------------------------------------------------------+
 | language               | Article language                       | One-hot encoding                                               |
 +------------------------+----------------------------------------+----------------------------------------------------------------+
-| published              | Date article was published             | Year as numeric features                                 |
+| published              | Date article was published             | Year as numeric features \|                                    |
 +------------------------+----------------------------------------+----------------------------------------------------------------+
 | publisher              | Publisher name                         | One-hot encoding                                               |
 +------------------------+----------------------------------------+----------------------------------------------------------------+
@@ -89,13 +87,13 @@ It is proposed that supervised machine learning approaches are used to predict a
 
 Approaches will be evaluated primarily on F1-Score with recall being monitored to reduce false negatives (Table 2).
 
-+-------------+------------------+
-| **Metric**  | **Target**       |
-+:===========:+:================:+
-| F1-Score    | \> 83%           |
-|             |                  |
-|             | [@alex2022raft]  |
-+-------------+------------------+
++---------------+-----------------+
+| **Metric**    | **Target**      |
++:=============:+:===============:+
+| F1-Score      | \> 83%          |
+|               |                 |
+|               | [@alex2022raft] |
++---------------+-----------------+
 
 : Proposed evaluation metric and target value for article relevancy prediction.
 
@@ -120,7 +118,6 @@ The above models are proposed as they can represent non-linear relationships fro
 Additionally, we will leverage pre-trained BERT based large language models for text embeddings for feature engineering. We will explore transfer learning to fine-tune the BERT pre-trained model so that it better learns the contextual information represented in paleoecology-related articles.
 
 \newpage
-
 
 # Fossil Data Extraction Pipeline
 
@@ -183,7 +180,6 @@ For each entity to be extracted the following approaches are proposed in Table 5
 
 : Proposed baseline approach for each entity.
 
-
 ### Approach 1: Fine Tuned SpaCy NER Model
 
 The spaCy Python package (@spacy) includes the en_core_web_lg NER model. This model utilizes convolutional neural networks to generate text embeddings, which are used to classify each token of text according to the custom entity labels specific to the dataset. It has been pre-trained on texts from the English language and achieves NER accuracy of 85.5% on the OntoNotes 5.0 corpus [@ontonotes].
@@ -200,7 +196,7 @@ The final step in the process is data stewards from Neotoma reviewing the extrac
 
 ## Success Criteria
 
-Requirements are summarized in Table 6. 
+Requirements are summarized in Table 6.
 
 +-------------------------------------------------------+-------------------------------------------------+
 | **Requirement**                                       | **Target**                                      |
@@ -224,10 +220,9 @@ Requirements are summarized in Table 6.
 
 A draft wireframe for how the tool may look is below in Figure 1.
 
-![Data review tool wireframe.](assets/data-review-tool-wireframe.png){width=350 fig.pos='h'}
+![Data review tool wireframe.](assets/data-review-tool-wireframe.png){width="350" fig.pos="h"}
 
 \newpage
-
 
 # Timeline
 
@@ -243,8 +238,6 @@ Deadlines and proposed intermediate milestones are outlined below and in Figure 
 
 -   *Milestone 4 - June 9th*: Solution deployment & final presentation.
 
-
-
 ![Proposed project timeline](assets/timeline.png)
 
 \newpage
@@ -254,7 +247,6 @@ Deadlines and proposed intermediate milestones are outlined below and in Figure 
 Data were obtained from the Neotoma Paleoecology Database (http://www.neotomadb.org) and its constituent database(s). The work of data contributors, data stewards, and the Neotoma community is gratefully acknowledged.
 
 A huge thanks to Simon Goring & Socorro Dominguez from the Neotoma Database team for their support on this project thus far.
-
 
 \newpage
 

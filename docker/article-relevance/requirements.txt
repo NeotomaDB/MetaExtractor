@@ -7,4 +7,4 @@ pyarrow==11.0.0
 langdetect==1.0.9
 joblib==1.2.0
 scikit-learn==1.2.2
-sentence-transformers==2.2.2
+sentence-transformers~=2.2

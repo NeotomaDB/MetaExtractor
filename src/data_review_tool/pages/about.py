@@ -1,13 +1,18 @@
+# Author: Shaun Hutchinson,
+# Date: 2023-06-22
 import dash
 import sys
 import os
-from pages.config import *
+from dash import html
+import os
 import dash_player as dp
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+from src.data_review_tool.pages.config import *
 
 dash.register_page(__name__)
 
-from dash import dash, dcc, html, Input, Output, callback
-import os
 
 layout = html.Div(
     [

@@ -1,36 +1,38 @@
+# Author: Shaun Hutchinson, Jenit Jain
+# Date: 2023-06-22
 import dash
-from dash import dash_table
 import json
+import sys
 import os
 import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
+import pyarrow.compute as pc
 from dash.dependencies import Input, Output, State
+from dash import dcc, html, Input, Output, callback, dash_table
+import dash_bootstrap_components as dbc
+import dash_mantine_components as dmc
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+from src.data_review_tool.pages.config import *
+from src.logs import get_logger
+
+logger = get_logger(__name__)
 
 dash.register_page(__name__, path="/")
 
-from dash import dcc, html, Input, Output, callback
-import dash_bootstrap_components as dbc
-import dash_mantine_components as dmc
-from pages.config import *
+article_relevance_data_path = os.path.join(
+    "/MetaExtractor",
+    "inputs",
+    os.environ["ARTICLE_RELEVANCE_BATCH"]
+)
 
-suppress_callback_exceptions = True
+def layout():    
+    combined_df = load_data(f"/entity_extraction/")
 
-
-def layout():
-    combined_df = read_articles("data/data-review-tool")
-
-    combined_df = combined_df[
-        ["title", "doi", "gddid", "status", "date_processed", "last_updated"]
-    ].rename(
-        columns={
-            "title": "Article",
-            "doi": "DOI",
-            "status": "Status",
-            "date_processed": "Date Added",
-            "last_updated": "Date Updated",
-        }
-    )
     combined_df["Review"] = "Review"
-
+    
     current = combined_df.query("Status == 'False' | Status =='In Progress'")
     completed = combined_df[combined_df["Status"] == "Completed"]
     nonrelevant = combined_df[combined_df["Status"] == "Non-relevant"]
@@ -126,6 +128,7 @@ def current_article_clicked(
             if col == "Review":
                 selected = data[row]["gddid"]
                 return f"/article/{selected}"
+                return f"/article/{selected}"
             else:
                 return dash.no_update
 
@@ -193,9 +196,9 @@ def get_article_table(table_id, location_id, tab_header, data):
         value=tab_header,
     )
 
-
-def read_articles(directory):
-    """Read the articles from the specified directory
+def load_data(directory):
+    """Read the articles from the entity extraction directory \
+       and adds relevant article metadata to it
 
     Args:
         directory (str): dirtectory to read the articles from
@@ -203,37 +206,100 @@ def read_articles(directory):
     Returns:
         pandas.DataFrame: The articles in the directory
     """
+    
+    articles = read_entities(directory)
+    filtered_df = add_article_metadata(articles)
+    combined_df = pd.merge(articles, filtered_df, on="gddid", how='left')
+    combined_df = combined_df[["Article", "DOI", "gddid", "Status", "Date Added", "Date Updated"]]
+    
+    return combined_df
+    
+def read_entities(directory):
+    """Reads the extracted data from all articles under the specified directory
     try:
+        logger.info(f"Reading articles from {directory}")
         directories = [os.path.join(directory, dir) for dir in ["processed", "raw"]]
 
-        # Initialize an empty dictionary to store the dataframes
+    Parameter
+    ---------
+    directory: str 
+        dirtectory to read the articles from
+
+    Returns
+    -------
+    pandas.DataFrame: The articles in the directory
+    """
+    try:
+        # Initialize an empty dictionary to store the 
+        # data for all the articles
         dfs = {}
 
-        # Iterate through the directories
-        for directory in directories:
-            # List all files in the directory
-            files = os.listdir(directory)
-            # Filter JSON files
-            json_files = [file for file in files if file.endswith(".json")]
-            # Read each JSON file into a dataframe and store it in the dictionary
-            for file in json_files:
-                file_path = os.path.join(directory, file)
-                article = open(file_path, "r")
-                df = pd.json_normalize(json.loads(article.read()))
-                # Only keep the dataframe if the file is not already in the dictionary
-                if file not in dfs:
-                    dfs[file] = df
+        files = os.listdir(directory)
+        # Filter JSON files
+        json_files = [file for file in files if file.endswith(".json")]
+        # Read each JSON file into a dataframe and store it in the dictionary
+        for file in json_files:
+            file_path = os.path.join(directory, file)
+            article = open(file_path, "r")
+            df = pd.json_normalize(json.loads(article.read()))
+            # Only keep the data if the file is not already in the dictionary
+            if file not in dfs:
+                dfs[file.split(".")[0]] = df
+        
         # Combine all dataframes into a single dataframe
-        combined_df = pd.concat(list(dfs.values()), ignore_index=True)
-    except ValueError:
-        combined_df = pd.DataFrame(
+        df = pd.concat(list(dfs.values()), ignore_index=True)
+        df = df[['gddid', 'date_processed',]].rename(
+            columns={"date_processed": "Date Added"}
+        )
+    except ValueError as e:
+        print(str(e))
+        df = pd.DataFrame(
             columns=[
-                "title",
-                "doi",
                 "gddid",
-                "status",
-                "date_processed",
-                "last_updated",
+                "Date Added",
             ]
         )
-    return combined_df
+    return df
+
+def add_article_metadata(df):
+    """Retreive article metadata
+
+    Parameter
+    ---------
+    df: pd.DataFrame
+        Data frame containing gddid and entities from an article
+
+    Returns
+    -------
+    filtered_df: pd.DataFrame
+        metadata for articles relevant for the UI 
+    """
+    gddid = df['gddid'].tolist()
+    
+    schema = pq.read_schema(article_relevance_data_path)
+    # Read the Parquet file with pushdown predicate
+    results = pd.read_parquet(article_relevance_data_path)
+
+    if "status" not in results.columns:
+        results["status"] = "False"
+        schema = schema.append(pa.field('status', pa.string())) # False, In Progress, Non-relevant, Completed
+    # TODO: improve the following 2 datatypes for the future
+    if "last_updated" not in results.columns:
+        results["last_updated"] = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
+        schema = schema.append(pa.field('last_updated', pa.string())) # Date in string format
+    if "corrected_entities" not in results.columns:
+        results["corrected_entities"] = "None"
+        schema = schema.append(pa.field('corrected_entities', pa.string())) # JSON in string format
+
+    results.to_parquet(article_relevance_data_path, schema=schema)
+    
+    filtered_df = results[results['gddid'].isin(gddid)].rename(
+        columns={
+            "status": "Status",
+            "title": "Article", 
+            "doi": "DOI",
+            "last_updated": "Date Updated"
+        }
+    )
+
+    return filtered_df

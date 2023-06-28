@@ -8,19 +8,21 @@ COPY ./docker/data-review-tool/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 WORKDIR MetaExtractor/
+
+ENV LOG_LEVEL=DEBUG
 # Copy the entire repository folder into the container
 COPY src ./src
 
-# RUN git clone https://github.com/NeotomaDB/MetaExtractor
-# WORKDIR MetaExtractor/
-# RUN git switch dev
-
 # Expose the port your Dash app is running on
 EXPOSE 8050
+
+RUN pip install pyarrow
+
+RUN mkdir -p ./inputs
+
+VOLUME ["/MetaExtractor/inputs"]
 
 # Set the entrypoint command to run your Dash app
 #CMD ["python", "src/data_review_tool/app.py"]
 
 ENTRYPOINT python src/data_review_tool/app.py
-
-# VOLUME [ "/MetaExtractor/data/data-review-tool" ]

@@ -2,15 +2,22 @@
 
 This docker image contains `Finding Fossils`, a data review tool built using Dash, Python. It is used to visualize the outputs of the models and verify the extracted entities for inclusion in the Neotoma Database. 
 
-## Docker Compose Setup
+The expected inputs are mounted onto the newly created container as volumes and can be dumped in any folder. An environment variable is setup to provide the path to this folder. It assumes the following:
+1. A parquet file containing the outputs from the article relevance prediction component.
+2. A zipped file containing the outputs from the named entity extraction component.
+3. Once the articles have been verified we update the same parquet file referenced using the environment variable `ARTICLE_RELEVANCE_BATCH` with the entities verified by the steward and the status of review for the article.
 
-We first build the docker image to install the required dependencies that can be run using `docker-compose` as follows:
-```bash
-docker-compose build
-docker-compose up data-review-tool
-```
+## Additional Options Enabled by Environment Variables
 
-This is the basic docker compose configuration for running the image.
+The following environment variables can be set to change the behavior of the pipeline:
+- `ARTICLE_RELEVANCE_BATCH`: This variable gives the name of the article relevance output parquet file.
+- `ENTITY_EXTRACTION_BATCH`: This variable gives the name of the entity extraction compressed output file.
+
+## Sample Docker Compose Setup
+
+Update the environment variables and the volume paths defined under the `data-review-tool` service in the `docker-compose.yml` file under the root directory. The volume paths are:
+
+`INPUT_PATH`: The path to the directory where the data is dumped. eg. `./data/data-review-tool` (recommended)
 
 ```yaml
 version: "3.9"
@@ -21,13 +28,13 @@ services:
     ports:
       - "8050:8050"
     volumes:
-    - ./data/data-review-tool:/MetaExtractor/data/data-review-tool
+    - {INPUT_PATH}:/MetaExtractor/inputs
+    environment:
+    - ARTICLE_RELEVANCE_BATCH=sample_parquet_output.parquet
+    - ENTITY_EXTRACTION_BATCH=sample_ner_output.zip
 ```
-
-### Input
-The expected inputs are mounted onto the newly created container as volumes and can be dumped in the `data/data-review-tool` folder. The artifacts required by the data review tool to verify a batch of processed articles are:
-- A parquet file containing the outputs from the article relevance prediction component.
-- A zipped file containing the outputs from the named entity extraction component.
-
-### Output
-Once the articles have been verified and the container has been destroyed, we update the same parquet file referenced in the `Input` with the extracted (predicted by the model) and verified (correct by data steward) entities.
+Then build and run the docker image to install the required dependencies using `docker-compose` as follows:
+```bash
+docker-compose build
+docker-compose up data-review-tool
+```

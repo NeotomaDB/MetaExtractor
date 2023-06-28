@@ -4,22 +4,22 @@ tab_header_style = {
     "font-size": "25px",
     "font-family": "Lato",
     "padding-top": "20px",
-    "padding-bottom": "10px"
+    "padding-bottom": "10px",
 }
 
-#Home page badge style
+# Home page badge style
 badge_style = {
     "background-color": "#b8864b",
     "font-size": "15px",
     "color": "white",
-    "font-weight": "bold"
+    "font-weight": "bold",
 }
 
 nav_button_style = {
     "font-weight": "bold",
     "border-radius": "3px",
     "background-color": "#1F3A5F",
-    "padding-left": "1rem"
+    "padding-left": "1rem",
 }
 
 nav_text_style = {
@@ -45,64 +45,65 @@ toggle_style = {
     "label": {
         "display": "inline-flex",
         "justifyContent": "space-between",
-        "&[data-checked]":{
+        "&[data-checked]": {
             "borderColor": "#b8864b",
-            "fontWeight": "bold",                                                    
-        }
+            "fontWeight": "bold",
+        },
     }
 }
 
-review_badge_style = {
-    "color": "white",
-    "font-size": "12px",
-    "font-weight": "bold"
-}
+review_badge_style = {"color": "white", "font-size": "12px", "font-weight": "bold"}
 
 # Data table conditional style
 table_conditional_style = [
-    {'if': {'column_id': 'Review'}, 
-        'backgroundColor': '#1F3A5F', 
-        'text_align':'center',
-        'color': 'white',
+    {
+        "if": {"column_id": "Review"},
+        "backgroundColor": "#1F3A5F",
+        "text_align": "center",
+        "color": "white",
         "fontWeight": "1000",
-        'font-family': 'montserrat',},
-    {'if': {'column_id': 'Article'}, 
-        'text_align':'left',
-        'font-family': 'montserrat',},
-    {'if': {'column_id': 'Status'},
-        'fontWeight': 'bold'},
+        "font-family": "montserrat",
+    },
+    {
+        "if": {"column_id": "Article"},
+        "text_align": "left",
+        "font-family": "montserrat",
+    },
+    {"if": {"column_id": "Status"}, "fontWeight": "bold"},
 ]
 
 # Data table data style
 table_data_style = {
-    'whiteSpace': 'normal',
-    'height': 'auto',
-    'lineHeight': '15px',
-    'font-family': 'montserrat',
+    "whiteSpace": "normal",
+    "height": "auto",
+    "lineHeight": "15px",
+    "font-family": "montserrat",
 }
 
 # Data table cell style
 table_cell_style = {
-    'textAlign': 'center',
-    'font-family': 'montserrat',
+    "textAlign": "center",
+    "font-family": "montserrat",
     "background-color": "#fffff0",
 }
 
 # Data table header style
 table_header_style = {
     "text-align": "center",
-    'font-family': 'montserrat',
-    "font-weight": "bold"
+    "font-family": "montserrat",
+    "font-weight": "bold",
 }
 # Describe the configuration and the HTML styles for the review page
-chip_style={"scrollbar-width": "none", 
-        "overflow": "auto",
-        "height": "auto",
-        "max-height": "200px",
-        "padding-bottom": "10px",}
+chip_style = {
+    "scrollbar-width": "none",
+    "overflow": "auto",
+    "height": "auto",
+    "max-height": "200px",
+    "padding-bottom": "10px",
+}
 
 tab_body_style = {
-    "scrollbar-width": "none", 
+    "scrollbar-width": "none",
     "overflow": "auto",
     "height": "auto",
     "max-height": "800px",
@@ -141,7 +142,7 @@ h2_style = {
     "padding-bottom": "10px",
     "padding-left": "20px",
     "padding-right": "20px",
-    "text-overflow": "inherit"
+    "text-overflow": "inherit",
 }
 
 h3_style = {
@@ -154,7 +155,7 @@ h3_style = {
     "padding-left": "100px",
     "text-overflow": "inherit",
     "background-color": "#b8864b",
-    "text-shadow": "1px 1px #000000"
+    "text-shadow": "1px 1px #000000",
 }
 
 h4_style = {
@@ -165,17 +166,17 @@ h4_style = {
     "color": "#000000",
     "padding-bottom": "10px",
     "border-bottom": "1px solid #000000",
-    "text-overflow": "inherit"
+    "text-overflow": "inherit",
 }
 
 entity_name_mapping = {
-    "SITE": "Site Name", 
+    "SITE": "Site Name",
     "REGION": "Region Name",
     "TAXA": "Taxa",
     "GEOG": "Geographic Coordinates",
     "ALTI": "Altitude",
-    "AGE": "Age", 
-    "EMAIL": "Email Address"
+    "AGE": "Age",
+    "EMAIL": "Email Address",
 }
 
 entity_id_mapping = {
@@ -184,8 +185,8 @@ entity_id_mapping = {
     "TAXA": "chips_taxa",
     "GEOG": "chips_geog",
     "ALTI": "chips_alti",
-    "AGE": "chips_age", 
-    "EMAIL": "chips_email"
+    "AGE": "chips_age",
+    "EMAIL": "chips_email",
 }
 
 entity_add_mapping = {
@@ -194,6 +195,6 @@ entity_add_mapping = {
     "TAXA": "new_taxa",
     "GEOG": "new_geog",
     "ALTI": "new_alti",
-    "AGE": "new_age", 
-    "EMAIL": "new_email"
+    "AGE": "new_age",
+    "EMAIL": "new_email",
 }

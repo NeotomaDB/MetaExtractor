@@ -123,7 +123,7 @@ Each of the components of this project have different data requirements. The dat
 
 #### Article Relevance Prediction
 
-The article relevance prediction component requires a list of journals that are relevant to Neotoma. This dataset used to train and develop the model is available for download [HERE](). Once downloaded extract the contents into `MetaExtractor/data/article-relevance/raw/training`.
+The article relevance prediction component requires a list of journals that are relevant to Neotoma. This dataset used to train and develop the model is available for download [HERE](https://drive.google.com/drive/folders/1NpOO7vSnVY0Wi0rvkuwNiSo3sqq-5AkY?usp=sharing). Download all files and extract the contents into `MetaExtractor/data/article-relevance/raw/`.
 
 #### Data Extraction Pipeline
 

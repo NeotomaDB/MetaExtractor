@@ -1,0 +1,33 @@
+name: ffossils
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - sentence-transformers=2.2*
+  - seaborn=0.12*
+  - dash=2.11*
+  - dash-bootstrap-components=1.4*
+  - mlflow=1.2*
+  - lightgbm=3.3*
+  - python-dotenv=1.0*
+  - flake8=6.0*
+  - langdetect=1.0*
+  - matplotlib=3.7*
+  - pytest=7.4*
+  - seqeval=1.2*
+  - spacy=3.5*
+  - pip=23.1*
+  - pip:
+      - dash[testing]
+      - dash_iconify==0.1.2
+      - dash_mantine_components==0.12.1
+      - dash_player==1.1.0
+      - datasets~=2.13
+      - docopt-ng~=0.8
+      - evaluate==0.4.0
+      - mlflow_skinny~=2.3
+      - pytest-cov~=4.0
+      - https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.5.0/en_core_web_lg-3.5.0-py3-none-any.whl
+
+prefix: /opt/miniconda3/envs/ffossils

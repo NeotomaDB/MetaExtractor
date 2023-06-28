@@ -85,7 +85,7 @@ A conda environment file will be provided in the final release.
 
 ### Entity Extraction Model Training
 
-The Entity Extraction Models can be trained using the HuggingFace API by following the instructions in the [Entity Extraction Training README](src/entity_extraction/training/hf_token_classification/README.md).
+The Entity Extraction Models can be trained using the HuggingFace API by following the instructions in the [Entity Extraction Training README](src/entity_extraction/training/huggingface/README.md).
 
 The spaCy model training documentation is a WIP.
 

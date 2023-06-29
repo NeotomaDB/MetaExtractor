@@ -100,7 +100,7 @@ pip install -r requirements.txt
 
 For conda:
 ```bash
-conda install environment.yml
+conda env create -f environment.yml
 ```
 
 If you plan to use the pre-built Docker images, install Docker following these [instructions](https://docs.docker.com/get-docker/)

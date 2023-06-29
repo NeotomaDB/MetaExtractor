@@ -422,9 +422,19 @@ def main():
     opt = docopt(__doc__)
 
     doi_list_file_path = opt["--doi_file_path"]
-    model_path = opt['--model_path']
     output_path = opt['--output_path']
     send_xdd = opt['--send_xdd']
+    
+    # # /models directory is a mounted volume, containing the model object
+    # models = os.listdir("/models")
+    # models = [f for f in models if f.endswith(".joblib")]
+    
+    # if models:
+    #     model_path = os.path.join("/models", models[0])
+    # else:
+    #     model_path = ""
+    
+    model_path = opt['--model_path']
 
     metadata_df = crossref_extract(doi_list_file_path)
 

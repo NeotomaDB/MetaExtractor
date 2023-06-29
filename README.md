@@ -125,6 +125,8 @@ Each of the components of this project have different data requirements. The dat
 
 The article relevance prediction component requires a list of journals that are relevant to Neotoma. This dataset used to train and develop the model is available for download [HERE](https://drive.google.com/drive/folders/1NpOO7vSnVY0Wi0rvkuwNiSo3sqq-5AkY?usp=sharing). Download all files and extract the contents into `MetaExtractor/data/article-relevance/raw/`.
 
+The prediction pipeline requires the trained model object. The model is available [HERE](https://drive.google.com/drive/folders/1NpOO7vSnVY0Wi0rvkuwNiSo3sqq-5AkY?usp=sharing). Download the model file and put the .joblib file in `MetaExtractor/models/article-relevance/`.
+
 #### **Data Extraction Pipeline**
 
 As the full text articles provided by the xDD team are not publicly available we cannot create a public link to download the labelled training data. For access requests please contact Simon Goring at <goring@wisc.edu> or Ty Andrews at <ty.elgin.andrews@gmail.com>.

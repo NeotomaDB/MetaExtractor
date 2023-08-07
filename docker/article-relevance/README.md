@@ -18,11 +18,12 @@ docker build -t metaextractor-article-relevance-prediction:v0.0.1 -f docker/arti
 
 ## Additional Options Enabled by Environment Variables
 
-Specifying the search criteria of article list and file paths is done through environment variables. 
+Specifying the search criteria of article list and file paths is done through environment variables.
 
 The following environment variables can be set to change the behavior of the pipeline:
 
 Arguments for controlling the xDD API Query:
+
 - `DOI_PATH`: Mandatory. The JSON file containing the queried article list will be saved here.
 - `PARQUET_PATH`: Mandatory. This is the folder where processed parquet files are stored.
 - `N_RECENT`: This variable can be set to a number to retrieve the n most recently added articles. When this variable is set, no MIN_DATE or MAX_DATE should be set.
@@ -33,16 +34,18 @@ Arguments for controlling the xDD API Query:
 - `AUTO_CHECK_DUP`:  This variable can be set to True or False. If set to True, the pipeline will screen through the date of existing processed parquet files and exclude the already-processed articles from the list.
 
 Arguments for controlling the relevance prediction:
+
 - `DOI_FILE_PATH`: This is the path to the JSON ile containing the article list.
 - `MODEL_PATH`: This is the path to the classification model.
 - `OUTPUT_PATH`: This is the path to save the parquet files (contain article metadata and prediction results)
-- `SEND_XDD`: This variable can be set to True or False. If set to True, the articles that predicted to be relevant will be sent to xDD API and go through the name entity extraction (NER) process. 
+- `SEND_XDD`: This variable can be set to True or False. If set to True, the articles that predicted to be relevant will be sent to xDD API and go through the name entity extraction (NER) process.
 
 ## Sample Docker Compose Setup
 
 Below is a sample docker compose configuration for running the image。
 
 Sample 1: Query by number of most recently added articles
+
 ```yaml
 version: "0.0.1"
 services:
@@ -70,6 +73,7 @@ services:
 ```
 
 Sample 2: Query by date range
+
 ```yaml
 version: "0.0.1"
 services:

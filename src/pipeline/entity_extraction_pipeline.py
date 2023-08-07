@@ -8,7 +8,7 @@ Options:
 --output_path=<output_path> The path to export the extracted entities to.
 --max_sentences=<max_sentences> The maximum number of sentences to extract entities from. [default: -1]
 --max_articles <max_articles> The maximum number of articles to extract entities from. [default: -1]
-"""
+""" 
 
 import os
 import sys

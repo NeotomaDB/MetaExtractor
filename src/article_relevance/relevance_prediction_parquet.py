@@ -410,6 +410,7 @@ def prediction_export(input_df, output_path):
 
     # Write the Parquet file
     input_df.to_parquet(parquet_file_name)
+    input_df.to_csv(os.path.join(parquet_folder, f"article-relevance-prediction_{formatted_datetime}.csv"))
 
     # ===== log important information ======
     logger.info(f'Total number of DOI processed: {input_df.shape[0]}')
@@ -439,9 +440,9 @@ def main():
     metadata_df = crossref_extract(doi_list_file_path)
 
     preprocessed = data_preprocessing(metadata_df)
-
+    
     embedded = add_embeddings(preprocessed, 'text_with_abstract', model = 'allenai/specter2')
-
+    
     predicted = relevance_prediction(embedded, model_path, predict_thld = 0.5)
 
     if send_xdd =="True":
@@ -449,8 +450,6 @@ def main():
         predicted.loc[:, 'xdd_querystatus'] = predicted.apply(xdd_put_request, axis=1)
     
     prediction_export(predicted, output_path)
-
-
 
 if __name__ == "__main__":
     main()

@@ -178,11 +178,15 @@ def get_new_gdd_articles(output_path,
     # initialize the resulting dataframe
     gdd_df = pd.DataFrame()
 
+    counter = 0
     for article in data:
+        counter +=1
         one_article_dict = {}
         one_article_dict['gddid'] = [article['_gddid']]
 
-        if article['identifier'][0]['type'] == 'doi':
+        if article['identifier'] == []:
+             one_article_dict['DOI'] = ['Non-DOI Article ID type']
+        elif article['identifier'][0]['type'] == 'doi':
             one_article_dict['DOI'] = [article['identifier'][0]['id']]
         else: 
             one_article_dict['DOI'] = ['Non-DOI Article ID type']
@@ -198,7 +202,7 @@ def get_new_gdd_articles(output_path,
 
 
     # ========== Get list of existing gddids from the parquet files =========
-    if auto_check_dup.lower() == "true":
+    if auto_check_dup == True:
         # Get the list of existing IDs from the Parquet files
         logger.info(f'auto_check_dup is True. Removing duplicates.')
 
@@ -280,7 +284,6 @@ def find_max_date_from_parquet(parquet_path):
 
 
 def main():
-
     opt = docopt(__doc__)
     doi_file_storage = opt["--doi_path"]
     parquet_file_path = opt["--parquet_path"]
@@ -312,7 +315,6 @@ def main():
     param_max_date = opt["--max_date"]
     param_term = opt["--term"]
 
-
     get_new_gdd_articles(output_path = doi_file_storage, 
                          parquet_path = parquet_file_path,
                          min_date = param_min_date, 
@@ -321,7 +323,6 @@ def main():
                          term = param_term,
                          auto_check_dup = param_auto_check_dup
                          )
-    
 
 if __name__ == "__main__":
     main()

@@ -5,37 +5,40 @@
 # Input: list of doi
 # output: df containing all metadata, predicted relevance, predict_proba
 
-"""This script takes a list of DOI as input and output a dataframe containing all metadata, predicted relevance, predict_proba of each article.
+"""
+  This script takes a list of DOI as input and output a dataframe containing 
+  all metadata, predicted relevance, predict_proba of each article.
 
-Usage: relevance_prediction_parquet.py --doi_file_path=<doi_path> --model_path=<model_path> --output_path=<output_path> --send_xdd=<send_xdd>
+  Usage: relevance_prediction_parquet.py --doi_file_path=<doi_path>
+    --model_path=<model_path> --output_path=<output_path> --send_xdd=<send_xdd>
 
 Options:
     --doi_file_path=<doi_file_path>         The path to where the list of DOI is.
     --model_path=<model_path>               The path to where the model object is stored.
     --output_path=<output_path>             The path to where the output files will be saved.
-    --send_xdd=<send_xdd>                   When True, relevant articles will be sent to xDD through API query. Default is False.
+    --send_xdd=<send_xdd>                   When True, relevant articles will be sent to xDD
+                                              through API query. Default is False.
 """
 
-import pandas as pd
-import numpy as np
 import os
-import requests
 import json
 import sys
+import datetime
+import pandas as pd
+import numpy as np
+import requests
 from langdetect import detect
 from sentence_transformers import SentenceTransformer
 import joblib
 from docopt import docopt
 import pyarrow as pa
 import pyarrow.parquet as pq
-import datetime
+from logs import get_logger
 
 # Locate src module
 current_dir = os.path.dirname(os.path.abspath(__file__))
 src_dir = os.path.dirname(current_dir)
 sys.path.append(src_dir)
-
-from logs import get_logger
 
 logger = get_logger(__name__) # this gets the object with the current modules name
 
@@ -44,26 +47,27 @@ def crossref_extract(doi_path):
     """Extract metadata from the Crossref API for article's in the doi csv file.
     Extracted data are returned in a pandas dataframe.
 
-    If certain DOI is not found on CrossRef, the DOI will be logged in the prediction_pipeline.log file. 
-    
+    If certain DOI is not found on CrossRef, the DOI will be logged in the
+    prediction_pipeline.log file.
+
     Args:
         doi_path (str): Path to the doi list JSON file.
         doi_col (str): Column name of DOI.
-    
+
     Return:
         pandas Dataframe containing CrossRef metadata.
     """
 
-    logger.info(f'Running crossref_extract function.')
+    logger.info("Running crossref_extract function.")
 
 
-    with open(doi_path) as json_file:
+    with open(doi_path, mode = "r", encoding = "UTF-8") as json_file:
         data_dictionary = json.load(json_file)
 
     df = pd.DataFrame(data_dictionary['data'])
 
     if df.shape[0] == 0:
-        logger.warning(f'Last xDD API query did not retrieve any article. Please verify the arguments.')
+        logger.warning("Last xDD API query did not retrieve any article. Please verify the arguments.")
         raise ValueError("No article to process. Script terminated.")
 
     doi_col = 'DOI'
@@ -74,14 +78,16 @@ def crossref_extract(doi_path):
     # Initialize
     crossref = pd.DataFrame()
 
-    logger.info(f'Querying CrossRef API for article metadata.')
+    logger.info("Querying CrossRef API for article metadata.")
 
     # Loop through all doi, concatenate metadata into dataframe
     for doi in input_doi:
         cross_ref_url = f"https://api.crossref.org/works/{doi}"
 
          # make a request to the API
-        cross_ref_response = requests.get(cross_ref_url)
+        cross_ref_response = requests.get(cross_ref_url, timeout=5000,
+            headers= {"User-Agent":"""NeotomaArticleRelevanceTracker;
+                      (https://neotomadb.org; mailto:goring@wisc.edu)"""})
 
         if cross_ref_response.status_code == 200:
 
@@ -92,12 +98,12 @@ def crossref_extract(doi_path):
                 ref_df['abstract'] = ''
             crossref = pd.concat([crossref, ref_df])
 
-        else: 
+        else:
             pass
-    
+
     logger.info(f'CrossRef API query completed for {len(input_doi)} articles.')
 
-    
+
     # Clean up columns and return the resulting pandas data frame
     crossref_keep_col = ['valid_for_prediction', 'DOI',
         'URL',
@@ -107,12 +113,12 @@ def crossref_extract(doi_path):
         'is-referenced-by-count', # times cited
         'language',
         'published', # datetime
-        'publisher', 
+        'publisher',
         'subject', # keywords of journal
         'subtitle', # subtitle are missing sometimes
         'title'
         ]
-    
+
     crossref = crossref.loc[:, crossref_keep_col].reset_index(drop = True)
 
 
@@ -135,17 +141,17 @@ def crossref_extract(doi_path):
 
 
 def en_only_helper(value):
-    ''' Helper function for en_only. 
+    ''' Helper function for en_only.
     Apply row-wise to impute missing language data.'''
-     
+
     try:
         detect_lang = detect(value)
     except:
         detect_lang = "error"
         logger.info("This text throws an error:", value)
-     
+
     return detect_lang
-     
+
 
 def data_preprocessing(metadata_df):
     """
@@ -153,9 +159,9 @@ def data_preprocessing(metadata_df):
     Feature engineer for descriptive text column.
     Impute language.
     The outputted dataframe is ready to be used in model prediction.
-    
+
     Args:
-        metadata_df (pd DataFrame): Input data frame. 
+        metadata_df (pd DataFrame): Input data frame.
 
     Returns:
         pd DataFrame containing all info required for model prediction.
@@ -209,7 +215,7 @@ def data_preprocessing(metadata_df):
     metadata_df.loc[cannot_impute_condition, 'valid_for_prediction'] = 0
     en_condition = (metadata_df['language'] != 'en')
     metadata_df.loc[en_condition, 'valid_for_prediction'] = 0
-    
+
     logger.info("Missing language imputation completed")
     logger.info(f"After imputation, there are {metadata_df.loc[en_condition, :].shape[0]} non-English articles in total excluded from the prediction pipeline.")
 
@@ -220,13 +226,13 @@ def data_preprocessing(metadata_df):
                 'queryinfo_max_date',
                 'queryinfo_term',
                 'queryinfo_n_recent']
-    
+
     metadata_df = metadata_df.loc[:, keep_col]
 
     metadata_df = metadata_df.rename(columns={'title_clean': 'title',
                                 'subtitle_clean': 'subtitle',
                                 'abstract_clean': 'abstract'})
-    
+
     # invalid when required input field is Null
     mask = metadata_df[['text_with_abstract', 'subject_clean', 'is-referenced-by-count', 'has_abstract']].isnull().any(axis=1)
     metadata_df.loc[mask, 'valid_for_prediction'] = 0
@@ -238,16 +244,15 @@ def data_preprocessing(metadata_df):
     logger.info(f'{with_missing_df.shape[0]} articles has missing feature and its relevance cannot be predicted.')
     logger.info(f'Data preprocessing completed.')
 
-    
     return metadata_df
 
 
 def add_embeddings(input_df, text_col, model = 'allenai/specter2'):
     """
     Add sentence embeddings to the dataframe using the specified model.
-    
+
     Args:
-        input_df (pd DataFrame): Input data frame. 
+        input_df (pd DataFrame): Input data frame.
         text_col (str): Column with text feature.
         model(str): model name on hugging face model hub.
 
@@ -279,26 +284,26 @@ def add_embeddings(input_df, text_col, model = 'allenai/specter2'):
 
 def relevance_prediction(input_df, model_path, predict_thld = 0.5):
     """
-    Make prediction on article relevancy. 
+    Make prediction on article relevancy.
     Add prediction and predict_proba to the resulting dataframe.
     Save resulting dataframe with all information in output_path directory.
     Return the resulting dataframe.
 
     Args:
-        input_df (pd DataFrame): Input data frame. 
+        input_df (pd DataFrame): Input data frame.
         model_path (str): Directory to trained model object.
 
     Returns:
         pd DataFrame with prediction and predict_proba added.
     """
-    logger.info(f'Prediction start.')
-    
+    logger.info("Prediction start.")
+
     try:
         # load model
         model_object = joblib.load(model_path)
-    except OSError:
+    except OSError as exc:
         logger.error("Model for article relevance not found.")
-        raise(FileNotFoundError)
+        raise FileNotFoundError from exc
 
     # split by valid_for_prediction
     valid_df = input_df.query('valid_for_prediction == 1')
@@ -308,6 +313,7 @@ def relevance_prediction(input_df, model_path, predict_thld = 0.5):
 
     # filter out rows with NaN value
     feature_col = ['has_abstract', 'subject_clean', 'is-referenced-by-count'] + [str(i) for i in range(0,768)]
+    logger.info(feature_col)
     nan_exists = valid_df.loc[:, feature_col].isnull().any(axis = 1)
     df_nan_exist = valid_df.loc[nan_exists, :]
     valid_df.loc[nan_exists, 'valid_for_prediction'] = 0
@@ -319,9 +325,9 @@ def relevance_prediction(input_df, model_path, predict_thld = 0.5):
 
     # Filter results, store key information that could possibly be useful downstream
     keyinfo_col = (['DOI', 'URL', 'gddid', 'valid_for_prediction',
-                    'prediction', 'predict_proba'] + 
-                    feature_col + 
-                    ['title', 'subtitle', 'abstract', 'journal', 
+                    'prediction', 'predict_proba'] +
+                    feature_col +
+                    ['title', 'subtitle', 'abstract', 'journal',
                      'author', 'text_with_abstract', 'language', 'published', 'publisher',
                      'queryinfo_min_date',
                      'queryinfo_max_date',
@@ -335,7 +341,7 @@ def relevance_prediction(input_df, model_path, predict_thld = 0.5):
                 'queryinfo_max_date',
                 'queryinfo_term',
                 'queryinfo_n_recent']
-    
+
     keyinfo_df = valid_df.loc[:, keyinfo_col]
 
     # Join it with invalid df to get back to the full dataframe
@@ -352,9 +358,9 @@ def relevance_prediction(input_df, model_path, predict_thld = 0.5):
 def xdd_put_request(row):
     """
     If the article is predicted to be relevant, query xDD for full text.
-    
+
     Args:
-        row (a row in pd DataFrame) 
+        row (a row in pd DataFrame)
 
     Returns:
         'success' if the query was successful, otherwise 'failed'
@@ -372,7 +378,7 @@ def xdd_put_request(row):
         # ========= Mock output ========
         status = 200
 
-        # ===== 
+        # =====
         if status == 200:
             return "success"
         else:
@@ -381,13 +387,13 @@ def xdd_put_request(row):
 
 def prediction_export(input_df, output_path):
     """
-    Make prediction on article relevancy. 
+    Make prediction on article relevancy.
     Add prediction and predict_proba to the resulting dataframe.
     Save resulting dataframe with all information in output_path directory.
     Return the resulting dataframe.
 
     Args:
-        input_df (pd DataFrame): Input data frame. 
+        input_df (pd DataFrame): Input data frame.
         model_path (str): Directory to trained model object.
 
     Returns:
@@ -398,7 +404,7 @@ def prediction_export(input_df, output_path):
     parquet_folder = os.path.join(output_path, 'prediction_parquet')
     if not os.path.exists(parquet_folder):
         os.makedirs(parquet_folder)
-    
+
     # Generate file name based on run date and batch
     now = datetime.datetime.now()
     formatted_datetime = now.strftime("%Y-%m-%dT%H-%M-%S")
@@ -424,16 +430,16 @@ def main():
     doi_list_file_path = opt["--doi_file_path"]
     output_path = opt['--output_path']
     send_xdd = opt['--send_xdd']
-    
+
     # # /models directory is a mounted volume, containing the model object
     # models = os.listdir("/models")
     # models = [f for f in models if f.endswith(".joblib")]
-    
+
     # if models:
     #     model_path = os.path.join("/models", models[0])
     # else:
     #     model_path = ""
-    
+
     model_path = opt['--model_path']
 
     metadata_df = crossref_extract(doi_list_file_path)
@@ -447,7 +453,7 @@ def main():
     if send_xdd =="True":
         # run xdd_put_request function, add the xddquery_status column to the parquet
         predicted.loc[:, 'xdd_querystatus'] = predicted.apply(xdd_put_request, axis=1)
-    
+
     prediction_export(predicted, output_path)
 
 

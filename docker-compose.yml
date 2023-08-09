@@ -36,7 +36,7 @@ services:
     volumes:
       - ./data/data-review-tool:/MetaExtractor/inputs:rw
   entity-extraction-pipeline:
-    image: metaextractor-entity-extraction-pipeline:v0.0.3
+    image: metaextractor-entity-extraction-pipeline:v0.0.4
     build: 
       dockerfile: ./docker/entity-extraction-pipeline/Dockerfile
       context: .

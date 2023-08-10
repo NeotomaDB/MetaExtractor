@@ -5,7 +5,7 @@
 # Input: parameters to specify article range
 # output: JSON containing article gddid, doi, url, and other metadata about the query process
 
-"""This script takes in user specified parameter values and query the GDD API for recently acquired articles. 
+"""This script takes in user specified parameter values and query the GDD API for recently acquired articles.
 
 Usage: gdd_api_query.py --doi_path=<doi_path> --parquet_path=<parquet_path> [--n_recent=<n_recent>] [--min_date=<min_date>] [--max_date=<max_date>] [--term=<term>] [--auto_min_date=<auto_min_date>] [--auto_check_dup=<auto_check_dup>]
 
@@ -33,7 +33,6 @@ import pyarrow.parquet as pq
 from datetime import datetime, date
 
 
-
 # Locate src module
 current_dir = os.path.dirname(os.path.abspath(__file__))
 src_dir = os.path.dirname(current_dir)
@@ -43,15 +42,15 @@ from logs import get_logger
 
 logger = get_logger(__name__) # this gets the object with the current modules name
 
-def get_new_gdd_articles(output_path, 
+def get_new_gdd_articles(output_path,
                          parquet_path,
-                         n_recent_articles = None, 
-                         min_date = None, 
-                         max_date = None, 
+                         n_recent_articles = None,
+                         min_date = None,
+                         max_date = None,
                          term = None,
                          auto_check_dup = False):
-    """ 
-    Get newly acquired articles from min_date to (optional) max_date. 
+    """
+    Get newly acquired articles from min_date to (optional) max_date.
     Or get the most recent new articles added to GeoDeepDive.
     Return API resuls as a list of article metadata information.
 
@@ -62,7 +61,7 @@ def get_new_gdd_articles(output_path,
         min_date (str)          Lower limit of GeoDeepDive acquired date.
         max_date (str)          Upper limit of GeoDeepDive acquired date.
         term (str)              Term to search for.
-    
+
     Return:
         Write JSON output to output_path.
 
@@ -72,42 +71,42 @@ def get_new_gdd_articles(output_path,
         get_new_gdd_articles(n_recent_articles = 1000)
     """
 
-    # ======== To handle placeholder for arguments in the docker compose, convert empty str to None ===
+    # == convert empty str to None to handle placeholder for docker compose arguments  ==
     if n_recent_articles == '':
-         n_recent_articles = None
+        n_recent_articles = None
     if min_date == '':
-         min_date = None
+        min_date = None
     if max_date == '':
-         max_date = None
+        max_date = None
     if term == '':
-         term = None
-        
+        term = None
+
     # ======== Tests for input data type ==========
     if (n_recent_articles is None) and (min_date is None and max_date is None):
-            raise ValueError("Either n_recent_articles or a date range should be specified.")
-    
+        raise ValueError("Either n_recent_articles or a date range should be specified.")
+
     if (n_recent_articles is not None) and (min_date is not None or max_date is not None):
-            raise ValueError("Only one of n_recent_articles or a date range should be specified.")
-    
+        raise ValueError("Only one of n_recent_articles or a date range should be specified.")
+
     if (n_recent_articles is None) and (min_date is not None or max_date is not None):
             pattern = r'^\d{4}-\d{2}-\d{2}$'
-    
+
             if min_date is not None:
                 if not isinstance(min_date, str):
                      raise ValueError("min_date should be a string. min_date should be a string with format 'yyyy-mm-dd'.")
                 if re.match(pattern, min_date) is False:
                      raise ValueError("min_date does not follow the correct format. min_date should be a string with format 'yyyy-mm-dd'.")
-            
+
             if max_date is not None:
                 if not isinstance(max_date, str):
                      raise ValueError("min_date should be a string. min_date should be a string with format 'yyyy-mm-dd'.")
                 if re.match(pattern, max_date) is False:
                      raise ValueError("min_date does not follow the correct format. min_date should be a string with format 'yyyy-mm-dd'.")
-            
+
     if (n_recent_articles is not None) and (min_date is None and max_date is None):
          if not isinstance(n_recent_articles, int):
                 raise ValueError("n_recent_articles should be an integer.")
-            
+
     # ========== Query API ==========
     if n_recent_articles is not None:
         logger.info(f'Querying by n_recent = {n_recent_articles}')
@@ -117,7 +116,7 @@ def get_new_gdd_articles(output_path,
     elif (min_date is not None) and (max_date is not None):
         logger.info(f'Querying by min_date = {min_date} and max_date = {max_date}')
         api_call = f"https://xdd.wisc.edu/api/articles?min_acquired={min_date}&max_acquired={max_date}&full_results=true"
-    
+
     elif (min_date is not None) and (max_date is None):
         logger.info(f'Querying by min_date = {min_date}.')
         api_call = f"https://xdd.wisc.edu/api/articles?min_acquired={min_date}&full_results=true"
@@ -125,10 +124,10 @@ def get_new_gdd_articles(output_path,
     elif (min_date is None) and (max_date is not None):
         logger.info(f'Querying by max_date = {max_date}.')
         api_call = f"https://xdd.wisc.edu/api/articles?max_acquired={max_date}&full_results=true"
-    
+
     else:
         raise ValueError("Please check input parameter values.")
-    
+
     if term is not None:
         logger.info(f'Search term = {term}.')
         api_extend = f"&term={term}"
@@ -136,14 +135,15 @@ def get_new_gdd_articles(output_path,
 
 
     # =========== Query xDD API to get data ==========
+    logger.info(f'{api_call}')
     session = requests.Session()
     response = session.get(api_call)
 
     n_refresh = 0
     while response.status_code != 200 and n_refresh < 10:
-        response = requests.get(api_call)
+        response = requests.get(api_call, headers={"User-Agent":"Neotoma-Article-Relevance-Tool (mailto:goring@wisc.edu)"})
         n_refresh += 1
-    
+
     response_dict = response.json()
     data = response_dict['success']['data']
 
@@ -167,7 +167,7 @@ def get_new_gdd_articles(output_path,
             new_data = next_response_dict['success']['data']
             logger.info(f'{len(new_data)} articles queried from GeoDeepDive (page {i}).')
             data.extend(new_data)
-            
+
             next_page = next_response_dict['success']['next_page']
             n_refresh += 1
 
@@ -188,15 +188,15 @@ def get_new_gdd_articles(output_path,
              one_article_dict['DOI'] = ['Non-DOI Article ID type']
         elif article['identifier'][0]['type'] == 'doi':
             one_article_dict['DOI'] = [article['identifier'][0]['id']]
-        else: 
+        else:
             one_article_dict['DOI'] = ['Non-DOI Article ID type']
-        
+
         one_article_dict['url'] = [article['link'][0]['url']]
         one_article_dict['status'] = 'queried'
 
         one_article = pd.DataFrame(one_article_dict)
         gdd_df = pd.concat([gdd_df, one_article])
-    
+
     gdd_df = gdd_df.reset_index(drop=True)
     logger.info(f'{gdd_df.shape[0]} articles returned from GeoDeepDive.')
 
@@ -219,11 +219,11 @@ def get_new_gdd_articles(output_path,
                     # Read only the ID column from the Parquet file
                     gdd_one_file = pq.read_table(file_path, columns=["gddid"]).to_pandas()
                     existing_ids.update(gdd_one_file["gddid"])
-        
+
             # remove the duplicates
             result_df = gdd_df[~gdd_df["gddid"].isin(existing_ids)]
             logger.info(f'{result_df.shape[0]} articles are new addition for relevance prediction.')
-        
+
     else:
          result_df = gdd_df.copy()
 
@@ -232,7 +232,7 @@ def get_new_gdd_articles(output_path,
 
     # pass the query info to prediction step (for saving in the parquet file)
     result_dict['queryinfo_min_date'] = min_date
-    
+
     if max_date is None:
         current_date = date.today()
         formatted_date = current_date.strftime("%Y-%m-%d")
@@ -255,13 +255,13 @@ def get_new_gdd_articles(output_path,
 
 
 def find_max_date_from_parquet(parquet_path):
-    """ 
+    """
     Based on the filename, find the last date when the pipeline was run.
     Return this data in yy-mm-dd format as a string.
 
     Args:
         parquet_path (str)      The path to the folder that stores the processed parquet files.
-    
+
     Return:
         Date as a string.
     """
@@ -273,11 +273,11 @@ def find_max_date_from_parquet(parquet_path):
             # Extract date from the file_name
             curr_date_str = file_name.split('_')[1][0:10]
             curr_date = datetime.strptime(curr_date_str, "%Y-%m-%d").date()
-            
+
             # Compare with result and update if the date is newer
             if curr_date > min_date:
                  min_date = curr_date
-    
+
     min_date_str = min_date.strftime("%Y-%m-%d")
 
     return min_date_str
@@ -298,7 +298,7 @@ def main():
     param_min_date = opt["--min_date"]
 
     param_auto_min_date = opt['--auto_min_date']
-    
+
     if param_auto_min_date.lower() == 'true':
         file_list = os.listdir(parquet_file_path)
         if len(file_list) == 0:
@@ -307,18 +307,18 @@ def main():
              param_min_date = find_max_date_from_parquet(parquet_file_path)
              logger.warning(f'auto_min_date is True. {param_min_date} is set as the min_date.')
 
-    
+
     param_auto_check_dup = opt['--auto_check_dup']
     if param_auto_check_dup is None:
         param_auto_check_dup = False
-         
+
     param_max_date = opt["--max_date"]
     param_term = opt["--term"]
 
-    get_new_gdd_articles(output_path = doi_file_storage, 
+    get_new_gdd_articles(output_path = doi_file_storage,
                          parquet_path = parquet_file_path,
-                         min_date = param_min_date, 
-                         max_date = param_max_date, 
+                         min_date = param_min_date,
+                         max_date = param_max_date,
                          n_recent_articles= param_n_recent,
                          term = param_term,
                          auto_check_dup = param_auto_check_dup

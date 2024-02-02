@@ -20,6 +20,7 @@ authors:
   given-names: "Simon James"
   orcid: "https://orcid.org/0000-0002-2700-4605"
 title: "MetaExtractor: A tool to predict and populate metadata from full text journal articles."
-version: 1.0.0
+version: 1.0.1
+doi: 10.5281/zenodo.10611652
 date-released: 2024-02-02
 url: "https://github.com/NeotomaDB/MetaExtractor"

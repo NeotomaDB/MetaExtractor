@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Andrews"
+  given-names: "Ty"
+  orcid: "https://orcid.org/0009-0003-0699-5838"
+- family-names: "Wu"
+  given-names: "Kelly"
+  orcid: "https://orcid.org/0009-0004-2508-4746"
+- family-names: "Hutchinson"
+  given-names: "Shaun"
+  orcid: "https://orcid.org/0009-0007-1998-3392"
+- family-names: "Jain"
+  given-names: "Jenit"
+  orcid: "https://orcid.org/0009-0007-8913-2403"
+- family-names: "Dominguez-Vidaña"
+  given-names: "Socorro"
+  orcid: "https://orcid.org/0000-0002-7926-4935"
+- family-names: "Goring"
+  given-names: "Simon James"
+  orcid: "https://orcid.org/0000-0002-2700-4605"
+title: "MetaExtractor: A tool to predict and populate metadata from full text journal articles."
+version: 1.0.0
+date-released: 2024-02-02
+url: "https://github.com/NeotomaDB/MetaExtractor"

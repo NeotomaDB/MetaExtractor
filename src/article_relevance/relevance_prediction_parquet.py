@@ -16,11 +16,10 @@ Options:
     --send_xdd=<send_xdd>                   When True, relevant articles will be sent to xDD through API query. Default is False.
 """
 
-import pandas as pd
-import numpy as np
 import os
-import requests
+import datetime
 import json
+import requests
 import sys
 from langdetect import detect
 from sentence_transformers import SentenceTransformer
@@ -28,7 +27,8 @@ import joblib
 from docopt import docopt
 import pyarrow as pa
 import pyarrow.parquet as pq
-import datetime
+import pandas as pd
+import numpy as np
 
 # Locate src module
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -54,16 +54,16 @@ def crossref_extract(doi_path):
         pandas Dataframe containing CrossRef metadata.
     """
 
-    logger.info(f'Running crossref_extract function.')
+    logger.info("Running crossref_extract function.")
 
 
-    with open(doi_path) as json_file:
+    with open(doi_path, encoding="utf-8") as json_file:
         data_dictionary = json.load(json_file)
 
     df = pd.DataFrame(data_dictionary['data'])
 
     if df.shape[0] == 0:
-        logger.warning(f'Last xDD API query did not retrieve any article. Please verify the arguments.')
+        logger.warning("xDD API query did not retrieve any articles. Please verify the arguments.")
         raise ValueError("No article to process. Script terminated.")
 
     doi_col = 'DOI'
@@ -74,14 +74,16 @@ def crossref_extract(doi_path):
     # Initialize
     crossref = pd.DataFrame()
 
-    logger.info(f'Querying CrossRef API for article metadata.')
+    logger.info("Querying CrossRef API for article metadata.")
 
     # Loop through all doi, concatenate metadata into dataframe
     for doi in input_doi:
         cross_ref_url = f"https://api.crossref.org/works/{doi}"
 
          # make a request to the API
-        cross_ref_response = requests.get(cross_ref_url)
+        cross_ref_response = requests.get(cross_ref_url,
+            headers={"User-Agent":"Neotoma-Article-Relevance-Tool (mailto:goring@wisc.edu)"},
+            timeout = 600)
 
         if cross_ref_response.status_code == 200:
 
@@ -161,7 +163,7 @@ def data_preprocessing(metadata_df):
         pd DataFrame containing all info required for model prediction.
     """
 
-    logger.info(f'Prediction data preprocessing begin.')
+    logger.info("Prediction data preprocessing begin.")
 
     metadata_df = metadata_df.reset_index(drop = True)
 
@@ -186,7 +188,7 @@ def data_preprocessing(metadata_df):
     metadata_df['text_with_abstract'] =  metadata_df['title_clean'] + ' ' + metadata_df['subtitle_clean'] + ' ' + metadata_df['abstract_clean']
 
     # Impute missing language
-    logger.info(f'Running article language imputation.')
+    logger.info("Running article language imputation.")
 
     metadata_df['language'] = metadata_df['language'].fillna(value = '')
     metadata_df['text_with_abstract'] = metadata_df['text_with_abstract'].fillna(value = '')
@@ -254,7 +256,7 @@ def add_embeddings(input_df, text_col, model = 'allenai/specter2'):
     Returns:
         pd DataFrame with origianl features and sentence embedding features added.
     """
-    logger.info(f'Sentence embedding start.')
+    logger.info("Sentence embedding start.")
 
     embedding_model = SentenceTransformer(model)
 
@@ -272,7 +274,7 @@ def add_embeddings(input_df, text_col, model = 'allenai/specter2'):
     # concatenate invalid_df with valid_df
     result = pd.concat([df_with_embeddings, invalid_df])
 
-    logger.info(f'Sentence embedding completed.')
+    logger.info("Sentence embedding completed.")
 
     return result
 
@@ -410,6 +412,7 @@ def prediction_export(input_df, output_path):
 
     # Write the Parquet file
     input_df.to_parquet(parquet_file_name)
+    input_df.to_csv(os.path.join(parquet_folder, f"article-relevance-prediction_{formatted_datetime}.csv"))
 
     # ===== log important information ======
     logger.info(f'Total number of DOI processed: {input_df.shape[0]}')
@@ -439,9 +442,9 @@ def main():
     metadata_df = crossref_extract(doi_list_file_path)
 
     preprocessed = data_preprocessing(metadata_df)
-
+    
     embedded = add_embeddings(preprocessed, 'text_with_abstract', model = 'allenai/specter2')
-
+    
     predicted = relevance_prediction(embedded, model_path, predict_thld = 0.5)
 
     if send_xdd =="True":
@@ -449,8 +452,6 @@ def main():
         predicted.loc[:, 'xdd_querystatus'] = predicted.apply(xdd_put_request, axis=1)
     
     prediction_export(predicted, output_path)
-
-
 
 if __name__ == "__main__":
     main()

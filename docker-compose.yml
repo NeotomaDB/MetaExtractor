@@ -6,10 +6,10 @@ services:
       dockerfile: ./docker/article-relevance/Dockerfile
       context: .
     environment:
-      - N_RECENT=10
-      - MIN_DATE=
+      - N_RECENT=
+      - MIN_DATE=12M
       - MAX_DATE=
-      - TERM=
+      - TERM=holocene
       - AUTO_MIN_DATE=False
       - AUTO_CHECK_DUP=False
       - OUTPUT_PATH=/outputs/
@@ -18,7 +18,7 @@ services:
       - MODEL_PATH=/models/logistic_regression_model.joblib
 
     volumes:
-      - ./data/article-relevance/outputs:/output
+      - ./data/article-relevance/outputs:/outputs
       - ./data/article-relevance/processed/prediction_parquet:/parquet
       - ./data/article-relevance/raw:/raw
       - ./models/article-relevance:/models

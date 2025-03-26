@@ -1,3 +1,10 @@
+<!-- badges: start -->
+
+[![lifecycle](https://img.shields.io/badge/lifecycle-paused-orange.svg)](https://www.tidyverse.org/lifecycle/#paused)
+
+<!-- badges: end -->
+
+
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
